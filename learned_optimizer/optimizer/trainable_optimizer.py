@@ -51,7 +51,7 @@ update_results = collections.namedtuple(
 )
 
 
-class TrainableOptimizer(tf.train.Optimizer):
+class TrainableOptimizer(tf.compat.v1.train.Optimizer):
     """Base class for trainable optimizers.
 
     A trainable optimizer is an optimizer that has parameters that can
