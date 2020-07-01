@@ -474,7 +474,7 @@ class TrainableOptimizer(tf.compat.v1.train.Optimizer):
 
         global_shapes = []
         for item in initial_global_state:
-            global_shapes.append(item.get_shape())
+            global_shapes.append(item.shape)
 
         # build the list of loop variables:
         loop_vars = [
@@ -578,7 +578,7 @@ def local_state_variables(init_values, return_init_values):
         # inter-variable initialization order dependence which TensorFlow
         # sucks at making easy.
         for init_value in init_values:
-            if not init_value.get_shape.is_fully_defined():
+            if not init_value.shape.is_fully_defined():
                 raise ValueError(
                     "Need a fully specified shape to create a local variable.")
             name = (

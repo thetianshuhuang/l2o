@@ -963,7 +963,7 @@ class MatMulAlgorithm(Problem):
     # Initialize params such that the columns of theta_a and theta_b have L2
     # norm 1.
     def _param_initializer(shape, seed=None):
-      x = tf.random_normal(shape, dtype=tf.float32, seed=seed)
+      x = tf.random.normal(shape, dtype=tf.float32, seed=seed)
       return tf.transpose(tf.nn.l2_normalize(tf.transpose(x), 1))
 
     return [_param_initializer(shape, seed) for shape in self.param_shapes]
