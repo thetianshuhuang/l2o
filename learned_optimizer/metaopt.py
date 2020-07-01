@@ -29,28 +29,28 @@ from optimizer import utils
 from problems import datasets
 from problems import problem_generator
 
-tf.app.flags.DEFINE_integer("ps_tasks", 0,
+tf.compat.v1.app.flags.DEFINE_integer("ps_tasks", 0,
                             """Number of tasks in the ps job.
                             If 0 no ps job is used.""")
-tf.app.flags.DEFINE_float("nan_l2_reg", 1e-2,
+tf.compat.v1.app.flags.DEFINE_float("nan_l2_reg", 1e-2,
                           """Strength of l2-reg when NaNs are encountered.""")
-tf.app.flags.DEFINE_float("l2_reg", 0.,
+tf.compat.v1.app.flags.DEFINE_float("l2_reg", 0.,
                           """Lambda value for parameter regularization.""")
 # Default is 0.9
-tf.app.flags.DEFINE_float("rms_decay", 0.9,
+tf.compat.v1.app.flags.DEFINE_float("rms_decay", 0.9,
                           """Decay value for the RMSProp metaoptimizer.""")
 # Default is 1e-10
-tf.app.flags.DEFINE_float("rms_epsilon", 1e-20,
+tf.compat.v1.app.flags.DEFINE_float("rms_epsilon", 1e-20,
                           """Epsilon value for the RMSProp metaoptimizer.""")
-tf.app.flags.DEFINE_boolean("set_profiling", False,
+tf.compat.v1.app.flags.DEFINE_boolean("set_profiling", False,
                             """Enable memory usage and computation time """
                             """tracing for tensorflow nodes (available in """
                             """TensorBoard).""")
-tf.app.flags.DEFINE_boolean("reset_rnn_params", True,
+tf.compat.v1.app.flags.DEFINE_boolean("reset_rnn_params", True,
                             """Reset the parameters of the optimizer
                                from one meta-iteration to the next.""")
 
-FLAGS = tf.app.flags.FLAGS
+FLAGS = tf.compat.v1.app.flags.FLAGS
 OPTIMIZER_SCOPE = "LOL"
 OPT_SUM_COLLECTION = "LOL_summaries"
 
