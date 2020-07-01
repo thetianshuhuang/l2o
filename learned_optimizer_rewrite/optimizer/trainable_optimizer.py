@@ -255,7 +255,7 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
             # minimize(meta_loss, self.trainable_weights)
 
             # this calls self._compute_update via self._apply_dense
-            self.minimize(current_obj, problem.trainable_weights)
+            self.minimize(problem.objective, problem.trainable_weights)
 
             # Add to loss
             loss += self._scale_objective(current_obj)
