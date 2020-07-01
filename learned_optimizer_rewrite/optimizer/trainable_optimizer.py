@@ -35,6 +35,7 @@ def recursive_assign(tgt, src):
     res = []
     for t, s in zip(tgt, src):
         res += recursive_assign(t, s)
+    return res
 
 
 class TrainableOptimizer(tf.keras.optimizers.Optimizer):
