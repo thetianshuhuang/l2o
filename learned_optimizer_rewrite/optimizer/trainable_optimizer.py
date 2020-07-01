@@ -274,7 +274,7 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
             self.minimize(problem.objective, problem.trainable_weights)
 
             # Add to loss
-            loss += self._scale_objective(current_obj)
+            loss += self._scale_objective(current_obj, init_obj, weight)
 
         # @tf.function should compile this down as per tensorflow 2 best
         # practices
