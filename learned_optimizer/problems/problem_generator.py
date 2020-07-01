@@ -33,7 +33,7 @@ from . import problem_spec as prob_spec
 tf.app.flags.DEFINE_float("l2_reg_scale", 1e-3,
                           """Scaling factor for parameter value regularization
                              in softmax classifier problems.""")
-FLAGS = tf.app.flags.FLAGS
+FLAGS = tf.compat.v1.app.flags.FLAGS
 
 EPSILON = 1e-6
 MAX_SEED = 2147483647
@@ -96,7 +96,7 @@ class Problem(object):
 
   def init_variables(self, seed=None):
     """Returns a list of variables with the given shape."""
-    with tf.variable_scope(PARAMETER_SCOPE):
+    with tf.compat.v1.variable_scope(PARAMETER_SCOPE):
       params = [tf.Variable(param) for param in self.init_tensors(seed)]
     return params
 
