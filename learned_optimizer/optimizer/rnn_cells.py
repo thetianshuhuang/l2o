@@ -25,7 +25,7 @@ from . import utils
 
 
 # @replace tf.keras.layers.GRUCell
-class BiasGRUCell(tf.contrib.rnn.RNNCell):
+class BiasGRUCell(tf.compat.v1.nn.rnn_cell.RNNCell):
   """GRU cell (cf. http://arxiv.org/abs/1406.1078) with an additional bias."""
 
   def __init__(self, num_units, activation=tf.tanh, scale=0.1,
