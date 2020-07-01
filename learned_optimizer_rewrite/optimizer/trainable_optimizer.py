@@ -6,7 +6,8 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
     def __init__(
             self, name, state_keys,
             use_attention=False, use_log_objective=False,
-            obj_train_max_multiplier=-1, use_second_derivatives=True,
+            obj_train_max_multiplier=-1,
+            # use_second_derivatives=True,
             use_numerator_epsilon=False, epsilon=1e-6, **kwargs):
         """Initializes the optimizer with the given name and settings.
 
@@ -30,7 +31,7 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
             The maximum multiplier for the increase in the objective before
             meta-training is stopped. If <= 0, meta-training is not stopped
             early.
-        use_second_derivatives : bool
+        use_second_derivatives : bool (NOT IMPLEMENTED)
             Whether this optimizer uses second derivatives in meta-training.
             This should be set to False if some second derivatives in the
             meta-training problem set are not defined in tensorflow.
@@ -41,7 +42,7 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
             Epsilon value.
         """
 
-        self.use_second_derivatives = use_second_derivatives
+        # self.use_second_derivatives = use_second_derivatives
         self.state_keys = sorted(state_keys)
         self.use_attention = use_attention
         self.use_log_objective = use_log_objective
@@ -192,8 +193,9 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
 
         Parameters
         ----------
-        problem : tbd
-            Optimizee module.
+        problem : problems.Problem
+            Optimizee module. Should have a trainable_weights @property and a
+            .objective() method, and should own its own parameters.
         weights : tf.Tensor
             Tensor specifying loss weights. The dimensionality specifies the
             number of unrolls. For example, [1 ... 1] indicates total loss,

@@ -3,16 +3,33 @@ from . import trainable_optimizer as opt
 
 
 class CoordinateWiseOptimizer(opt.TrainableOptimizer):
+    """Coordinatewise Optimizer as described by DM
+
+    Parameters
+    ----------
+    network : tf.keras.Model
+        Module to apply to each coordinate.
+
+    Keyword Args
+    ------------
+    name : str
+        Optimizer name
+    **kwargs : dict
+        Passed on to TrainableOptimizer.
+    """
+
     def __init__(self, network, name="Coordinatewise Optimizer", **kwargs):
 
         super().__init__(name, **kwargs)
         self.network = network
 
     def _initialize_state(self, var):
+        """Fetch initial states from child network."""
 
         return self.network.get_initial_state(var)
 
     def _compute_update(self, param, grad, state):
+        """Compute updates from child network."""
 
         return self.network(grad, state)
 

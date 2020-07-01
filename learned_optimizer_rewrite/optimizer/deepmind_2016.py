@@ -3,10 +3,20 @@ from tf.keras.layers import LSTMCell, Dense
 
 
 class DMOptimizer(tf.keras.Model):
+    """DMOptimizer network; inherits tf.keras.Model.
+
+    Keyword Args
+    ------------
+    layers : int[]
+        Sizes of LSTM layers.
+    name : str
+        Name of optimizer network.
+    **kwargs : dict
+        Passed onto tf.keras.Model
+    """
 
     def __init__(
-            self, output_size, layers=(20, 20),
-            name="DMOptimizer", **kwargs):
+            self, layers=(20, 20), name="DMOptimizer", **kwargs):
 
         super(DMOptimizer, self).__init__(name=name)
 
@@ -20,8 +30,23 @@ class DMOptimizer(tf.keras.Model):
         self.postprocess = Dense(1, input_shape=(layers[-1],))
 
     def call(self, inputs, states):
+        """Network call override (handled by tf.keras.Model)
 
-        input_shape = inputs.get_shape().as_list()
+        Parameters
+        ----------
+        inputs : tf.Tensor
+            Inputs; should be gradients
+        states : tf.Tensor
+            Current hidden states; encoded by .get_initial_state
+
+        Returns
+        -------
+        (tf.Tensor, tf.Tensor)
+            [0] : Output; gradient delta
+            [1] : New state
+        """
+
+        input_shape = inputs.shape
 
         x = tf.reshape(inputs, [-1, 1])
 
@@ -33,6 +58,19 @@ class DMOptimizer(tf.keras.Model):
         return tf.reshape(x, input_shape), states
 
     def get_initial_state(self, var):
+        """Get initial model state as a dictionary
+
+        Parameters
+        ----------
+        var : tf.Variable
+            Variable to create initial states for
+
+        Returns
+        -------
+        dict (str -> tf.Tensor)
+            Hidden state information serialized by string keys.
+        """
+
         batch_size = tf.size(var)
         return {
             "lstm_{}".format(i): layer.get_initial_state(batch_size=batch_size)

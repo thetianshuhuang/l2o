@@ -39,7 +39,7 @@ class ScaleBasicOptimizer(tf.keras.Model):
         states["decay"] = self.decay(x)
         states["learning_rate"] *= 2. * self.learning_rate_change(x)
         update = tf.reshape(
-            states["learning_rate"] * self.delta(x), grad.shape())
+            states["learning_rate"] * self.delta(x), grad.shape)
 
         return update, states
 
