@@ -29,14 +29,14 @@ from . import trainable_optimizer as opt
 
 
 # Default was 1e-3
-tf.app.flags.DEFINE_float("crnn_rnn_readout_scale", 0.5,
+tf.compat.v1.app.flags.DEFINE_float("crnn_rnn_readout_scale", 0.5,
                           """The initialization scale for the RNN readouts.""")
-tf.app.flags.DEFINE_float("crnn_default_decay_var_init", 2.2,
+tf.compat.v1.app.flags.DEFINE_float("crnn_default_decay_var_init", 2.2,
                           """The default initializer value for any decay/
                              momentum style variables and constants.
                              sigmoid(2.2) ~ 0.9, sigmoid(-2.2) ~ 0.01.""")
 
-FLAGS = tf.flags.FLAGS
+FLAGS = tf.compat.v1.flags.FLAGS
 
 
 class CoordinatewiseRNN(opt.TrainableOptimizer):

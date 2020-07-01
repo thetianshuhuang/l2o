@@ -30,32 +30,32 @@ from . import trainable_optimizer as opt
 from . import utils
 
 # Default was 0.1
-tf.app.flags.DEFINE_float("biasgrucell_scale", 0.5,
+tf.compat.v1.app.flags.DEFINE_float("biasgrucell_scale", 0.5,
                           """The scale for the internal BiasGRUCell vars.""")
 # Default was 0
-tf.app.flags.DEFINE_float("biasgrucell_gate_bias_init", 2.2,
+tf.compat.v1.app.flags.DEFINE_float("biasgrucell_gate_bias_init", 2.2,
                           """The bias for the internal BiasGRUCell reset and
                              update gate variables.""")
 # Default was 1e-3
-tf.app.flags.DEFINE_float("hrnn_rnn_readout_scale", 0.5,
+tf.compat.v1.app.flags.DEFINE_float("hrnn_rnn_readout_scale", 0.5,
                           """The initialization scale for the RNN readouts.""")
-tf.app.flags.DEFINE_float("hrnn_default_decay_var_init", 2.2,
+tf.compat.v1.app.flags.DEFINE_float("hrnn_default_decay_var_init", 2.2,
                           """The default initializer value for any decay/
                              momentum style variables and constants.
                              sigmoid(2.2) ~ 0.9, sigmoid(-2.2) ~ 0.01.""")
 # Default was 2.2
-tf.app.flags.DEFINE_float("scale_decay_bias_init", 3.2,
+tf.compat.v1.app.flags.DEFINE_float("scale_decay_bias_init", 3.2,
                           """The initialization for the scale decay bias. This
                              is the initial bias for the timescale for the
                              exponential avg of the mean square gradients.""")
-tf.app.flags.DEFINE_float("learning_rate_momentum_logit_init", 3.2,
+tf.compat.v1.app.flags.DEFINE_float("learning_rate_momentum_logit_init", 3.2,
                           """Initialization for the learning rate momentum.""")
 # Default was 0.1
-tf.app.flags.DEFINE_float("hrnn_affine_scale", 0.5,
+tf.compat.v1.app.flags.DEFINE_float("hrnn_affine_scale", 0.5,
                           """The initialization scale for the weight matrix of
                              the bias variables in layer0 and 1 of the hrnn.""")
 
-FLAGS = tf.flags.FLAGS
+FLAGS = tf.compat.v1.flags.FLAGS
 
 
 class HierarchicalRNN(opt.TrainableOptimizer):
