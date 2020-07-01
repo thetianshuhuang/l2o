@@ -21,6 +21,22 @@ def _var_key(var):
     return var._unique_id
 
 
+def recursive_assign(tgt, src):
+    # Reached tensorflow object
+    if hasattr(tgt, "assign"):
+        return [tgt.assign(src)]
+
+    # Dict
+    if type(tgt) == dict:
+        tgt = [v for k, v in tgt.items()]
+        src = [v for k, v in src.items()]
+
+    # Now handle lists
+    res = []
+    for t, s in zip(tgt, src):
+        res += recursive_assign(t, s)
+
+
 class TrainableOptimizer(tf.keras.optimizers.Optimizer):
 
     def __init__(
@@ -72,6 +88,9 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
     def assign_state(self, var, value):
 
         self._state_dict[_var_key(var)] = value
+
+    def get_state(self, var):
+        return self._state_dict[_var_key(var)]
 
     def _create_slots(self, var_list):
         """Create slots function required by tf.keras.optimizers.Optimizer
@@ -134,13 +153,13 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
             Tensorflow operation that assigns new values to the variable and
             defines dependencies (used for control flow)
         """
-        state = {key: self.get_slot(var, key) for key in self.get_slot_names()}
-        new_var, new_state = self._compute_update(var, grad, state)
+        # state = {
+        # key: self.get_slot(var, key) for key in self.get_slot_names()}
+        new_var, new_state = self._compute_update(
+            var, grad, self.get_state(var))
 
-        state_assign_ops = [
-            tf.assign(state_var, new_state[key])
-            for key, state_var in state.items()
-        ]
+        state_assign_ops = recursive_assign(self.get_state(var), new_state)
+
         with tf.control_dependencies(state_assign_ops):
             update_op = var.assign_add(new_var)
 
