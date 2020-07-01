@@ -37,14 +37,16 @@ class Problem:
 
 class Quadratic:
 
-    def __init__(self, ndim, random_seed=None, noise_stdev=0.0):
+    def __init__(self, ndim):  # , random_seed=None, noise_stdev=0.0):
         self.w = tf.random.normal([ndim, ndim])
-        self.y = tf.random.normal([ndim])
+        self.y = tf.random.normal([ndim, 1])
 
-        self.params = tf.Variable(tf.zeros([ndim], tf.float32), trainable=True)
+        self.params = tf.Variable(
+            tf.zeros([ndim, 1], tf.float32), trainable=True)
 
     def objective(self):
         return tf.nn.l2_loss(tf.matmul(self.w, self.params) - self.y)
 
+    @property
     def trainable_weights(self):
         return [self.params]

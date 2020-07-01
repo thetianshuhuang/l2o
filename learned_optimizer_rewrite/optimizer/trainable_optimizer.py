@@ -1,10 +1,30 @@
 import tensorflow as tf
 
 
+def _var_key(var):
+    """Key for representing a primary variable, for looking up slots.
+    In graph mode the name is derived from the var shared name.
+    In eager mode the name is derived from the var unique id.
+    If distribution strategy exists, get the primary variable first.
+    Args:
+        var: the variable.
+    Returns:
+        the unique name of the variable.
+    """
+
+    # pylint: disable=protected-access
+    # Get the distributed variable if it exists.
+    if hasattr(var, "_distributed_container"):
+        var = var._distributed_container()
+    if var._in_graph_mode:
+        return var._shared_name
+    return var._unique_id
+
+
 class TrainableOptimizer(tf.keras.optimizers.Optimizer):
 
     def __init__(
-            self, name, state_keys,
+            self, name,
             use_attention=False, use_log_objective=False,
             obj_train_max_multiplier=-1,
             # use_second_derivatives=True,
@@ -15,10 +35,6 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
         ----------
         name : str
             Optimizer name
-        state_keys : str[]
-            Names of any required state variables. Note that state variables
-            are unique across optimization problems, so trainable weights
-            should not go here.
 
         Keyword Args
         ------------
@@ -43,7 +59,6 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
         """
 
         # self.use_second_derivatives = use_second_derivatives
-        self.state_keys = sorted(state_keys)
         self.use_attention = use_attention
         self.use_log_objective = use_log_objective
         self.obj_train_max_multiplier = obj_train_max_multiplier
@@ -51,6 +66,12 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
         self.epsilon = epsilon
 
         super(TrainableOptimizer, self).__init__(name)
+
+        self._state_dict = {}
+
+    def assign_state(self, var, value):
+
+        self._state_dict[_var_key(var)] = value
 
     def _create_slots(self, var_list):
         """Create slots function required by tf.keras.optimizers.Optimizer
@@ -62,10 +83,11 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
         """
         for var in var_list:
             init_states = self._initialize_state(var)
-            for name, initial in init_states:
-                # add_slot does nothing if the given var/name are already
-                # present. This forces reinitialization.
-                self.add_slot(var, name).assign(initial)
+            # for name, initial in init_states.items():
+            # add_slot does nothing if the given var/name are already
+            # present. This forces reinitialization.
+            # self.add_slot(var, name).assign(initial)
+            self.assign_state(var, init_states)
 
     def _initialize_state(self, var):
         """Initialize any states required for this variable.
@@ -202,7 +224,7 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
             while [1/d ... 1/d] indicates mean loss and [0 ... 0 1] final loss.
         """
 
-        loss = 0
+        loss = 0.
 
         if self.obj_train_max_multiplier > 0:
             init_obj = problem.objective()
@@ -213,7 +235,7 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
         # Create new slots
         # Should reset values if they already exist
         # Should also initialize state
-        self._create_slots(problem.trainable_variables)
+        self._create_slots(problem.trainable_weights)
 
         # Size of weights determines unroll length
         for weight in tf.unstack(weights):
@@ -230,10 +252,10 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
 
             # call this optimizer on the problem
             # outside in the meta-training loop, we will call
-            # minimize(meta_loss, self.trainable_variables)
+            # minimize(meta_loss, self.trainable_weights)
 
             # this calls self._compute_update via self._apply_dense
-            self.minimize(current_obj, problem.trainable_variables)
+            self.minimize(current_obj, problem.trainable_weights)
 
             # Add to loss
             loss += self._scale_objective(current_obj)
@@ -241,3 +263,6 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
         # @tf.function should compile this down as per tensorflow 2 best
         # practices
         return loss
+
+    def get_config(self):
+        return {}

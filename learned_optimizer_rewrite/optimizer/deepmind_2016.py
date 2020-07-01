@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tf.keras.layers import LSTMCell, Dense
+from tensorflow.keras.layers import LSTMCell, Dense
 
 
 class DMOptimizer(tf.keras.Model):
@@ -26,7 +26,7 @@ class DMOptimizer(tf.keras.Model):
         }
         defaults.update(kwargs)
 
-        self.layers = [LSTMCell(hsize, **defaults) for hsize in layers]
+        self.recurrent = [LSTMCell(hsize, **defaults) for hsize in layers]
         self.postprocess = Dense(1, input_shape=(layers[-1],))
 
     def call(self, inputs, states):
@@ -50,7 +50,7 @@ class DMOptimizer(tf.keras.Model):
 
         x = tf.reshape(inputs, [-1, 1])
 
-        for i, layer in enumerate(self.layers):
+        for i, layer in enumerate(self.recurrent):
             hidden_name = "lstm_{}".format(i)
             x, states[hidden_name] = layer(x, states[hidden_name])
         x = self.postprocess(x)
@@ -73,6 +73,7 @@ class DMOptimizer(tf.keras.Model):
 
         batch_size = tf.size(var)
         return {
-            "lstm_{}".format(i): layer.get_initial_state(batch_size=batch_size)
-            for i, layer in enumerate(self.layers)
+            "lstm_{}".format(i): layer.get_initial_state(
+                batch_size=batch_size, dtype=tf.float32)
+            for i, layer in enumerate(self.recurrent)
         }

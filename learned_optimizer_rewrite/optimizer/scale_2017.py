@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from tf.keras.layers import LSTMCell, Dense
+from tensorflow.keras.layers import LSTMCell, Dense
 
 from .moments import rms_scaling
 

@@ -1,1 +1,1 @@
-from .problem import *
+from .problem import Quadratic
