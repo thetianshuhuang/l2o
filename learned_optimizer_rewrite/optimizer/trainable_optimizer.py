@@ -159,12 +159,8 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
         new_var, new_state = self._compute_update(
             var, grad, self.get_state(var))
 
-        state_assign_ops = recursive_assign(self.get_state(var), new_state)
-
-        with tf.control_dependencies(state_assign_ops):
-            update_op = var.assign_add(new_var)
-
-        return update_op
+        self.assign_state(var, new_state)
+        return var.assign_add(new_var)
 
     def _resource_update_sparse(self, grad, var):
         raise NotImplementedError()
