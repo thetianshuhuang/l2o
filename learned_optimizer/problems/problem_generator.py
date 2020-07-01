@@ -30,7 +30,7 @@ import tensorflow as tf
 
 from . import problem_spec as prob_spec
 
-tf.app.flags.DEFINE_float("l2_reg_scale", 1e-3,
+tf.compat.v1.app.flags.DEFINE_float("l2_reg_scale", 1e-3,
                           """Scaling factor for parameter value regularization
                              in softmax classifier problems.""")
 FLAGS = tf.compat.v1.app.flags.FLAGS
