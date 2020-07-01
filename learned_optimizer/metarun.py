@@ -335,7 +335,7 @@ def main(unused_argv):
       "init_lr_range": (FLAGS.min_lr, FLAGS.max_lr),
       "learnable_decay": FLAGS.learnable_decay,
       "dynamic_output_scale": FLAGS.dynamic_output_scale,
-      "cell_cls": getattr(tf.contrib.rnn, FLAGS.cell_cls),
+      "cell_cls": getattr(tf.compat.v1.nn.rnn_cell, FLAGS.cell_cls),
       "use_attention": FLAGS.use_attention,
       "use_log_objective": FLAGS.use_log_objective,
       "num_gradient_scales": FLAGS.num_gradient_scales,
