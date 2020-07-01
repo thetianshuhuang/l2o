@@ -18,7 +18,7 @@ class CoordinateWiseOptimizer(opt.TrainableOptimizer):
         Passed on to TrainableOptimizer.
     """
 
-    def __init__(self, network, name="Coordinatewise Optimizer", **kwargs):
+    def __init__(self, network, name="CoordinateWiseOptimizer", **kwargs):
 
         super().__init__(name, **kwargs)
         self.network = network
