@@ -242,8 +242,8 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
 
         loss = 0.
 
+        init_obj = problem.objective()
         if self.obj_train_max_multiplier > 0:
-            init_obj = problem.objective()
             max_obj = (
                 (self.obj_train_max_multiplier - 1) * tf.abs(init_obj)
                 + init_obj)
@@ -254,7 +254,9 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
         self._create_slots(problem.trainable_weights)
 
         # Size of weights determines unroll length
-        for weight in tf.unstack(weights):
+        # for weight in tf.unstack(weights):
+        for i in range(tf.size(weights)):
+            weight = weights[i]
 
             # cond2: objective is still finite
             if not tf.math.is_finite(loss):
