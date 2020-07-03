@@ -1,4 +1,5 @@
 import tensorflow as tf
+from .loss_mixins import LossMixin
 
 
 def _var_key(var):
@@ -38,7 +39,7 @@ def recursive_assign(tgt, src):
     return res
 
 
-class TrainableOptimizer(tf.keras.optimizers.Optimizer):
+class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
 
     def __init__(
             self, name,
@@ -185,102 +186,6 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
             [1] : updated state variables (same format as `state`)
         """
         raise NotImplementedError()
-
-    def _scale_objective(self, objective, initial_obj, weight):
-        """Normalizes the objective based on the initial objective value.
-
-        This function is not a @tf.function since it should be wrapped by
-        meta_loss, which should handle conversion.
-
-        Parameters
-        ----------
-        objective : tf.Tensor
-            Objective value. Nominally a scalar.
-        initial_obj : tf.Tensor
-            Initial objective value to normalize by.
-        weight : tf.Tensor
-            Weight for this objective value.
-
-        Returns
-        -------
-        tf.Tensor
-            Scaled objective according to rules described in initializer
-            (use_log_objective, use_numerator_epsilon, epsilon)
-        """
-
-        if self.use_log_objective:
-            if self.use_numerator_epsilon:
-                return weight * (
-                    tf.log(objective + self.epsilon)
-                    - tf.log(initial_obj + self.epsilon))
-            else:
-                return weight * (
-                    tf.log(objective) - tf.log(initial_obj + self.epsilon))
-        else:
-            return weight * objective / (initial_obj + self.epsilon)
-
-    @tf.function
-    def meta_loss(self, problem, weights):
-        """Get meta training loss
-
-        The caller is responsible for setting the initial values of the problem
-        parameters, which are owned by `problem`.
-
-        By decorating as @tf.function, the for loop should be wrapped into
-        a tf.while_loop. See `https://www.tensorflow.org/guide/function`.
-
-        Parameters
-        ----------
-        problem : problems.Problem
-            Optimizee module. Should have a trainable_weights @property and a
-            .objective() method, and should own its own parameters.
-        weights : tf.Tensor
-            Tensor specifying loss weights. The dimensionality specifies the
-            number of unrolls. For example, [1 ... 1] indicates total loss,
-            while [1/d ... 1/d] indicates mean loss and [0 ... 0 1] final loss.
-        """
-
-        loss = 0.
-
-        init_obj = problem.objective()
-        if self.obj_train_max_multiplier > 0:
-            max_obj = (
-                (self.obj_train_max_multiplier - 1) * tf.abs(init_obj)
-                + init_obj)
-
-        # Create new slots
-        # Should reset values if they already exist
-        # Should also initialize state
-        self._create_slots(problem.trainable_weights)
-
-        # Size of weights determines unroll length
-        # for weight in tf.unstack(weights):
-        for i in range(tf.size(weights)):
-            weight = weights[i]
-
-            # cond2: objective is still finite
-            if not tf.math.is_finite(loss):
-                break
-
-            current_obj = problem.objective()
-
-            # cond3: objective is a reasonable multiplier of the original
-            if self.obj_train_max_multiplier > 0 and current_obj > max_obj:
-                break
-
-            # call this optimizer on the problem
-            # outside in the meta-training loop, we will call
-            # minimize(meta_loss, self.trainable_weights)
-
-            # this calls self._compute_update via self._apply_dense
-            self.minimize(problem.objective, problem.trainable_weights)
-
-            # Add to loss
-            loss += self._scale_objective(current_obj, init_obj, weight)
-
-        # @tf.function should compile this down as per tensorflow 2 best
-        # practices
-        return loss
 
     def get_config(self):
         return {}

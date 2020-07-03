@@ -23,6 +23,9 @@ class CoordinateWiseOptimizer(opt.TrainableOptimizer):
         super().__init__(name, **kwargs)
         self.network = network
 
+        # Alias trainable_variables
+        self.trainable_variables = network.trainable_variables
+
     def _initialize_state(self, var):
         """Fetch initial states from child network."""
 
