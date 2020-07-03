@@ -1,4 +1,5 @@
 import tensorflow as tf
+import time
 
 
 class Problem:
@@ -97,8 +98,10 @@ class Problem:
 
 class Quadratic(Problem):
 
-    def __init__(self, ndim, w=None, y=None):
+    def __init__(self, ndim, w=None, y=None, **kwargs):
         # , random_seed=None, noise_stdev=0.0):
+
+        super().__init__(**kwargs)
 
         # New or use given
         self.w = tf.random.normal([ndim, ndim]) if w is None else w
@@ -123,10 +126,37 @@ class Quadratic(Problem):
 
 
 class ProblemSpec:
+    """Simple class used for storing problem specifications.
+
+    Parameters
+    ----------
+    callable : callable (*args, **kwargs -> problem)
+        Callable used to create problem
+    args : []
+        Array of arguments
+    kwargs : {}
+        Dictionary of keyword args
+    """
+
     def __init__(self, callable, args, kwargs):
         self.callable = callable
         self.args = args
         self.kwargs = kwargs
 
     def build(self):
-        return self.callable(*self.args, **self.kwargs)
+        """Initialize this problem
+
+        Returns
+        -------
+        problem.Problem
+            Class referenced by ``callable``
+        """
+        start = time.time()
+        res = self.callable(*self.args, **self.kwargs)
+        self._build_time = time.time() - start
+        return res
+
+    def print(self, itr):
+        print("--------- Problem #{} ---------".format(itr))
+        print("{}{}{}".format(self.callable.__name__, self.args, self.kwargs))
+        print("Took {} Seconds to initialize.", self._build_time)

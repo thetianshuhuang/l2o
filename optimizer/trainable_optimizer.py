@@ -1,42 +1,7 @@
 import tensorflow as tf
+
 from .loss_mixins import LossMixin
-
-
-def _var_key(var):
-    """Key for representing a primary variable, for looking up slots.
-    In graph mode the name is derived from the var shared name.
-    In eager mode the name is derived from the var unique id.
-    If distribution strategy exists, get the primary variable first.
-    Args:
-        var: the variable.
-    Returns:
-        the unique name of the variable.
-    """
-
-    # pylint: disable=protected-access
-    # Get the distributed variable if it exists.
-    if hasattr(var, "_distributed_container"):
-        var = var._distributed_container()
-    if var._in_graph_mode:
-        return var._shared_name
-    return var._unique_id
-
-
-def recursive_assign(tgt, src):
-    # Reached tensorflow object
-    if hasattr(tgt, "assign"):
-        return [tgt.assign(src)]
-
-    # Dict
-    if type(tgt) == dict:
-        tgt = [v for k, v in tgt.items()]
-        src = [v for k, v in src.items()]
-
-    # Now handle lists
-    res = []
-    for t, s in zip(tgt, src):
-        res += recursive_assign(t, s)
-    return res
+from tf_utils import _var_key
 
 
 class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):

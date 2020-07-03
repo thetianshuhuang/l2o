@@ -111,18 +111,19 @@ def train(
         resetting on each iteration.
     """
 
-    for problem in problems:
+    for itr, problem in enumerate(problems):
 
-        problem = problem.build()
+        built = problem.build()
+        problem.print(itr)
 
         if teacher is None:
             for _ in range(repeat):
                 train_meta(
-                    learner, problem, optimizer,
+                    learner, built, optimizer,
                     unroll_weights(unroll()))
         else:
-            copy = problem.clone_problem()
+            copy = built.clone_problem()
             for _ in range(repeat):
                 train_imitation(
-                    learner, teacher, problem, copy, optimizer,
+                    learner, teacher, built, copy, optimizer,
                     unroll_weights(unroll()))
