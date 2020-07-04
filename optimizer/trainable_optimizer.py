@@ -126,7 +126,7 @@ class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
             var, grad, self.get_state(var))
 
         self.assign_state(var, new_state)
-        return var.assign_add(new_var)
+        return var.assign_sub(new_var)
 
     def _resource_update_sparse(self, grad, var):
         raise NotImplementedError()

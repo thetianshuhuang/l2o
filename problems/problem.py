@@ -158,5 +158,6 @@ class ProblemSpec:
 
     def print(self, itr):
         print("--------- Problem #{} ---------".format(itr))
-        print("{}{}{}".format(self.callable.__name__, self.args, self.kwargs))
-        print("Took {} Seconds to initialize.", self._build_time)
+        print("{}, {}, {}".format(
+            self.callable.__name__, self.args, self.kwargs))
+        print("Took {:.3f} Seconds to initialize.".format(self._build_time))
