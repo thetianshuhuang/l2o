@@ -12,7 +12,7 @@ def create():
     train(
         opt, problems, tf.keras.optimizers.Adam(), repeat=1000)
 
-    opt.save("test")
+    opt.save("dmoptimizer")
 
 
 def load():

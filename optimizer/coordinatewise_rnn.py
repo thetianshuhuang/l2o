@@ -15,18 +15,21 @@ class CoordinateWiseOptimizer(opt.TrainableOptimizer):
     ------------
     name : str
         Optimizer name
+    weights_file : str | None
+        Optional filepath to load optimizer network weights from.
     **kwargs : dict
         Passed on to TrainableOptimizer.
     """
 
-    def __init__(self, network, name="CoordinateWiseOptimizer", **kwargs):
+    def __init__(
+            self, network,
+            weights_file=None, name="CoordinateWiseOptimizer", **kwargs):
 
         super().__init__(name, **kwargs)
 
-        if type(network) == str:
-            self.network = tf.keras.models.load_model(network)
-        else:
-            self.network = network
+        self.network = network
+        if weights_file is not None:
+            network.load_weights(weights_file)
 
         # Alias trainable_variables
         self.trainable_variables = network.trainable_variables
@@ -41,7 +44,7 @@ class CoordinateWiseOptimizer(opt.TrainableOptimizer):
 
     def save(self, filepath, **kwargs):
         """Save inernal model using keras model API"""
-        tf.keras.models.save_model(self.network, filepath, **kwargs)
+        self.network.save_weights(filepath, **kwargs)
 
 
 class HierarchicalOptimizer(opt.TrainableOptimizer):
@@ -79,4 +82,4 @@ class HierarchicalOptimizer(opt.TrainableOptimizer):
     def save(self, filepath, **kwargs):
 
         for name, net in self.nets.items():
-            tf.keras.models.save_model(net, filepath + "_" + name, **kwargs)
+            net.save_weights(filepath + '_' + name, **kwargs)
