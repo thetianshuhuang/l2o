@@ -11,10 +11,11 @@ train(
     opt, problems, tf.keras.optimizers.Adam(), repeat=1000)
 
 
-for _ in range(100):
+def test(log=False):
     test = Quadratic(20)
     start = test.objective(None)
     for _ in range(100):
         opt.minimize(lambda: test.objective(None), test.trainable_variables)
-    end = test.objective(None)
-    print("{} -> {}".format(start, end))
+        if log:
+            print(test.objective(None))
+    print("{} -> {}".format(start, test.objective(None)))

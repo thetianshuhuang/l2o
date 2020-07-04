@@ -1,4 +1,5 @@
 import tensorflow as tf
+import time
 
 
 def weights_sum(n):
@@ -27,6 +28,7 @@ def train_meta(
     """
 
     problem.reset(tf.size(unroll_weights))
+    learner._create_slots(problem.trainable_variables)
 
     if problem.dataset is None:
         optimizer.minimize(
@@ -111,6 +113,8 @@ def train(
         resetting on each iteration.
     """
 
+    start = time.time()
+
     for itr, problem in enumerate(problems):
 
         built = problem.build()
@@ -128,3 +132,5 @@ def train(
                 train_imitation(
                     learner, teacher, built, copy, optimizer,
                     unroll_weights(unroll(problem)))
+
+    return time.time() - start

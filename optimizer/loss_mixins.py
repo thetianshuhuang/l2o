@@ -90,7 +90,7 @@ class LossMixin:
         # Create new slots
         # Should reset values if they already exist
         # Should also initialize state
-        self._create_slots(problem.trainable_variables)
+        # self._create_slots(problem.trainable_variables)
 
         for i in range(unroll):
             weight = weights[i]
