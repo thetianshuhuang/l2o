@@ -8,8 +8,7 @@ class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
 
     def __init__(
             self, name,
-            use_attention=False, use_log_objective=False,
-            obj_train_max_multiplier=-1,
+            use_log_objective=True, obj_train_max_multiplier=-1,
             # use_second_derivatives=True,
             use_numerator_epsilon=False, epsilon=1e-6, **kwargs):
         """Initializes the optimizer with the given name and settings.
@@ -21,8 +20,6 @@ class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
 
         Keyword Args
         ------------
-        use_attention : bool
-            Whether this optimizer uses attention
         use_log_objective : bool
             Whether this optimizer uses the logarithm of the objective when
             computing the loss
@@ -42,7 +39,6 @@ class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
         """
 
         # self.use_second_derivatives = use_second_derivatives
-        self.use_attention = use_attention
         self.use_log_objective = use_log_objective
         self.obj_train_max_multiplier = obj_train_max_multiplier
         self.use_numerator_epsilon = use_numerator_epsilon
@@ -153,7 +149,12 @@ class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
         raise NotImplementedError()
 
     def get_config(self):
-        return {}
+        return {
+            "use_log_objective": self.use_log_objective,
+            "obj_train_max_multiplier": self.obj_train_max_multiplier,
+            "use_numerator_epsilon": self.use_numerator_epsilon,
+            "epsilon": self.epsilon
+        }
 
     def save(self, filepath, **kwargs):
         """Save model to file.

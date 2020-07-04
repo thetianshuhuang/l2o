@@ -3,15 +3,23 @@ from problems import Quadratic, ProblemSpec
 import tensorflow as tf
 
 
-problems = [ProblemSpec(Quadratic, [20], {})]
-net = DMOptimizer()
-opt = CoordinateWiseOptimizer(net)
+def create():
 
-train(
-    opt, problems, tf.keras.optimizers.Adam(), repeat=1000)
+    problems = [ProblemSpec(Quadratic, [20], {})]
+    net = DMOptimizer()
+    opt = CoordinateWiseOptimizer(net)
+
+    train(
+        opt, problems, tf.keras.optimizers.Adam(), repeat=1000)
+
+    opt.save("test")
 
 
-def test(log=False):
+def load():
+    return CoordinateWiseOptimizer(tf.keras.models.load_model("test"))
+
+
+def test(opt, log=False):
     test = Quadratic(20)
     start = test.objective(None)
     for _ in range(100):
