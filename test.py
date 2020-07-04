@@ -8,4 +8,4 @@ net = DMOptimizer()
 opt = CoordinateWiseOptimizer(net)
 
 train(
-    opt, problems, tf.keras.optimizers.Adam())
+    opt, problems, tf.keras.optimizers.Adam(), repeat=10)

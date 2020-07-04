@@ -81,7 +81,7 @@ def train(
         learner, problems, optimizer,
         unroll=lambda _: 20, unroll_weights=weights_mean, teacher=None,
         repeat=1):
-    """Main Training Loop.
+    """Main Training Loop; a single meta-epoch.
 
     NOTE: this function cannot be converted using @tf.function / AutoGraph
     since problem.build() creates new variables.
@@ -116,6 +116,7 @@ def train(
         built = problem.build()
         problem.print(itr)
 
+        # Everything beyond here is a @tf.function
         if teacher is None:
             for _ in range(repeat):
                 train_meta(

@@ -154,3 +154,13 @@ class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
 
     def get_config(self):
         return {}
+
+    def save(self, filepath, **kwargs):
+        """Save model to file.
+
+        Parameters
+        ----------
+        filepath : str
+            Destination file
+        """
+        raise NotImplementedError()
