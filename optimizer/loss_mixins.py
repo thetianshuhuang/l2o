@@ -72,7 +72,6 @@ class LossMixin:
 
         # Compute init_obj as mean over minibatches if dataset is available
         if data is None:
-            batches = [None for _ in range(unroll)]
             init_obj = problem.objective(None)
         else:
             batches = list(zip(
@@ -95,12 +94,13 @@ class LossMixin:
 
         for i in range(unroll):
             weight = weights[i]
+            batch = None if data is None else batches[i]
 
             # cond2: objective is still finite
             if not tf.math.is_finite(loss):
                 break
 
-            current_obj = problem.objective(batches[i])
+            current_obj = problem.objective(batch)
 
             # cond3: objective is a reasonable multiplier of the original
             if self.obj_train_max_multiplier > 0 and current_obj > max_obj:
@@ -112,7 +112,7 @@ class LossMixin:
 
             # this calls self._compute_update via self._apply_dense
             self.minimize(
-                lambda: problem.objective(batches[i]),
+                lambda: problem.objective(batch),
                 problem.trainable_variables)
 
             # Add to loss
@@ -157,21 +157,20 @@ class LossMixin:
         unroll = tf.size(weights)
 
         # Split batches between unrolls if needed
-        if data is None:
-            batches = [None for _ in range(unroll)]
-        else:
+        if data is not None:
             batches = list(zip(
                 *[tf.split(dim, num_or_size_splits=unroll) for dim in data]))
 
         for i in range(unroll):
             weight = weights[i]
+            batch = None if data is None else batches[i]
 
             # Run single step on student and teacher
             self.minimize(
-                lambda: student_cpy.objective(batches[i]),
+                lambda: student_cpy.objective(batch),
                 student_cpy.trainable_variables)
             teacher.minimize(
-                lambda: teacher_cpy.objective(batches[i]),
+                lambda: teacher_cpy.objective(batch),
                 teacher_cpy.trainable_variables)
 
             # Loss is l2 between parameter state

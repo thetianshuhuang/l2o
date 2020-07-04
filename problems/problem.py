@@ -116,7 +116,7 @@ class Quadratic(Problem):
 
         # Properties
         self.trainable_variables = [self.params]
-        self.initializers = [tf.keras.initailizers.Zeros()]
+        self.initializers = [tf.keras.initializers.Zeros()]
 
     def clone_problem(self):
         return Quadratic(self.ndim, w=self.w, y=self.y)
