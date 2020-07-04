@@ -72,7 +72,8 @@ class LossMixin:
 
         # Compute init_obj as mean over minibatches if dataset is available
         if data is None:
-            init_obj = problem.objective()
+            batches = [None for _ in range(unroll)]
+            init_obj = problem.objective(None)
         else:
             batches = list(zip(
                 *[tf.split(dim, num_or_size_splits=unroll) for dim in data]))
@@ -99,8 +100,7 @@ class LossMixin:
             if not tf.math.is_finite(loss):
                 break
 
-            batch = None if data is None else batches[i]
-            current_obj = problem.objective(batch)
+            current_obj = problem.objective(batches[i])
 
             # cond3: objective is a reasonable multiplier of the original
             if self.obj_train_max_multiplier > 0 and current_obj > max_obj:
@@ -112,7 +112,7 @@ class LossMixin:
 
             # this calls self._compute_update via self._apply_dense
             self.minimize(
-                lambda: problem.objective(batch),
+                lambda: problem.objective(batches[i]),
                 problem.trainable_variables)
 
             # Add to loss
@@ -157,7 +157,9 @@ class LossMixin:
         unroll = tf.size(weights)
 
         # Split batches between unrolls if needed
-        if data is not None:
+        if data is None:
+            batches = [None for _ in range(unroll)]
+        else:
             batches = list(zip(
                 *[tf.split(dim, num_or_size_splits=unroll) for dim in data]))
 

@@ -121,10 +121,10 @@ def train(
             for _ in range(repeat):
                 train_meta(
                     learner, built, optimizer,
-                    unroll_weights(unroll()))
+                    unroll_weights(unroll(problem)))
         else:
             copy = built.clone_problem()
             for _ in range(repeat):
                 train_imitation(
                     learner, teacher, built, copy, optimizer,
-                    unroll_weights(unroll()))
+                    unroll_weights(unroll(problem)))
