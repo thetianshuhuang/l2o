@@ -28,11 +28,12 @@ class LossMixin:
         if self.use_log_objective:
             if self.use_numerator_epsilon:
                 return weight * (
-                    tf.log(objective + self.epsilon)
-                    - tf.log(initial_obj + self.epsilon))
+                    tf.math.log(objective + self.epsilon)
+                    - tf.math.log(initial_obj + self.epsilon))
             else:
                 return weight * (
-                    tf.log(objective) - tf.log(initial_obj + self.epsilon))
+                    tf.math.log(objective)
+                    - tf.math.log(initial_obj + self.epsilon))
         else:
             return weight * objective / (initial_obj + self.epsilon)
 
