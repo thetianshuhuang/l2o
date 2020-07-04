@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from .loss_mixins import LossMixin
-from tf_utils import _var_key
+from .tf_utils import _var_key
 
 
 class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
