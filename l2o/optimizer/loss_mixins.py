@@ -37,8 +37,28 @@ class LossMixin:
         else:
             return weight * objective / (initial_obj + self.epsilon)
 
+    def _add_noise(self, grads, noise_stddev=0.0):
+        """Add normally distributed noise to gradients in order to simulate
+        minibatch noise.
+
+        Parameters
+        ----------
+        grads : tf.Tensor
+            Gradients to add noise to
+        noise_stddev : tf.Tensor | float
+            Noise stddev; if 0, no noise is added.
+        """
+
+        if noise_stddev > 0:
+            return [
+                g + tf.random.normal(g.shape(), stddev=noise_stddev)
+                for g in grads
+            ]
+        else:
+            return grads
+
     @tf.function
-    def meta_loss(self, problem, weights, data=None):
+    def meta_loss(self, problem, weights, data=None, noise_stddev=0.0):
         """Meta training loss
 
         The caller is responsible for setting the initial values of the problem
@@ -61,6 +81,9 @@ class LossMixin:
         ------------
         data : tf.Tensor[] | None
             Input data, with size of batch_size * unroll.
+        noise_stddev : tf.Tensor | float
+            Normally distributed noise to add to optimizee gradients; use to
+            simulate minibatch noise for full-batch problems.
 
         Returns
         -------
@@ -88,11 +111,7 @@ class LossMixin:
                 (self.obj_train_max_multiplier - 1) * tf.abs(init_obj)
                 + init_obj)
 
-        # Create new slots
-        # Should reset values if they already exist
-        # Should also initialize state
-        # self._create_slots(problem.trainable_variables)
-
+        # cond1: less than unroll iterations.
         for i in range(unroll):
             weight = weights[i]
             batch = None if data is None else batches[i]
@@ -101,20 +120,21 @@ class LossMixin:
             if not tf.math.is_finite(loss):
                 break
 
-            current_obj = problem.objective(batch)
+            # Compute gradient
+            with tf.GradientTape() as tape:
+                current_obj = problem.objective(batch)
+            grad = tape.gradient(current_obj, problem.trainable_variables)
+
+            # Optionally add artificial noise
+            self._add_noise(grad, noise_stddev=noise_stddev)
 
             # cond3: objective is a reasonable multiplier of the original
             if self.obj_train_max_multiplier > 0 and current_obj > max_obj:
                 break
 
-            # call this optimizer on the problem
-            # outside in the meta-training loop, we will call
-            # minimize(meta_loss, self.trainable_variables)
-
+            # Apply gradients
             # this calls self._compute_update via self._apply_dense
-            self.minimize(
-                lambda: problem.objective(batch),
-                problem.trainable_variables)
+            self.apply_gradients(zip(grad, problem.trainable_variables))
 
             # Add to loss
             loss += self._scale_objective(current_obj, init_obj, weight)
@@ -166,13 +186,24 @@ class LossMixin:
             weight = weights[i]
             batch = None if data is None else batches[i]
 
+            # Compute gradient on same batch
+            with tf.GradientTape() as tape:
+                student_obj = student_cpy.objective(batch)
+                teacher_obj = teacher_cpy.objective(batch)
+            student_grad = tape.gradient(
+                student_obj, student_cpy.trainable_variables)
+            teacher_grad = tape.gradient(
+                teacher_obj, teacher_cpy.trainable_variables)
+
+            # Optionally add artificial noise
+            student_grad = self._add_noise(student_grad)
+            teacher_grad = self._add_noise(teacher_grad)
+
             # Run single step on student and teacher
-            self.minimize(
-                lambda: student_cpy.objective(batch),
-                student_cpy.trainable_variables)
-            teacher.minimize(
-                lambda: teacher_cpy.objective(batch),
-                teacher_cpy.trainable_variables)
+            self.apply_gradients(
+                student_grad, student_cpy.trainable_variables)
+            teacher.apply_gradients(
+                teacher_grad, teacher_cpy.trainable_variables)
 
             # Loss is l2 between parameter state
             losses = [

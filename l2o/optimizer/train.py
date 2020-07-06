@@ -64,18 +64,30 @@ def train_imitation(
         Unroll weights
     """
 
-    loss_args = (student_cpy, teacher_cpy, teacher, unroll_weights)
-
+    # Reset problem
     student_cpy.reset(tf.size(unroll_weights), copy=teacher_cpy)
+
+    # Reset optimizers
+    learner._create_slots(student_cpy.trainable_variables)
+    # Teacher (i.e. Adam) must be manually reset
+    # We assume here that ``teacher`` is a tf.keras.optimizers built-in that
+    # only overwrites tensorflow-approved methods
+    for var in teacher.variables():
+        var.assign(tf.zeros_like(var))
 
     if student_cpy.dataset is None:
         optimizer.minimize(
-            lambda: learner.imitation_loss(*loss_args),
+            lambda: learner.imitation_loss(
+                student_cpy, teacher_cpy, teacher, unroll_weights),
             learner.trainable_variables)
     else:
         for batch in student_cpy.dataset:
+            # Sync student up with teacher first every unroll
+            student_cpy.sync(teacher_cpy)
             optimizer.minimize(
-                lambda: learner.imitation_loss(*loss_args, data=batch),
+                lambda: learner.imitation_loss(
+                    student_cpy, teacher_cpy, teacher, unroll_weights,
+                    data=batch),
                 learner.trainable_variables)
 
 
@@ -111,6 +123,11 @@ def train(
     repeat : int
         Number of consecutive meta-iterations to repeat each problem for,
         resetting on each iteration.
+
+    Returns
+    -------
+    float
+        Time used during training; can be ignored.
     """
 
     start = time.time()

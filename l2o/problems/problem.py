@@ -60,6 +60,22 @@ class Problem:
         """
         raise NotImplementedError()
 
+    def sync(self, copy):
+        """Set this problem's parameters to the values held by a copy.
+
+        Use this to sync teacher and student copies between batches in a single
+        problem.
+
+        Parameters
+        ----------
+        copy : problem.Problem
+            Copy of this problem to sync with. This problem's parameters are
+            overwritten.
+        """
+        pairs = zip(self.trainable_variables, copy.trainable_variables)
+        for var, cpy in pairs:
+            var.assign(cpy)
+
     def reset(self, unroll, copy=None):
         """Reset trainable variables.
 
@@ -86,43 +102,20 @@ class Problem:
             if copy is not None:
                 copy.dataset_batched = self.dataset_batched
 
-        for param, init in zip(self.trainable_variables, self.initializers):
-            param.assign(init(shape=param.shape, dtype=tf.float32))
+        if type(self.initializers) == list:
+            pairs = zip(self.trainable_variables, self.initializers)
+            for param, init in pairs:
+                param.assign(init(shape=param.shape, dtype=tf.float32))
+        else:
+            for param in self.trainable_variables:
+                param.assign(
+                    self.initializers(shape=param.shape, dtype=tf.float32))
 
         # Copy variable initializations
         if copy is not None:
             pairs = zip(self.trainable_variables, copy.trainable_variables)
             for param, dst in pairs:
                 dst.assign(param)
-
-
-class Quadratic(Problem):
-
-    def __init__(self, ndim, w=None, y=None, **kwargs):
-        # , random_seed=None, noise_stdev=0.0):
-
-        super().__init__(**kwargs)
-
-        # New or use given
-        self.w = tf.random.normal([ndim, ndim]) if w is None else w
-        self.y = tf.random.normal([ndim, 1]) if y is None else y
-
-        # save ndim for clone_problem
-        self.ndim = ndim
-
-        # Always create new parameters
-        self.params = tf.Variable(
-            tf.zeros([ndim, 1], tf.float32), trainable=True)
-
-        # Properties
-        self.trainable_variables = [self.params]
-        self.initializers = [tf.keras.initializers.Zeros()]
-
-    def clone_problem(self):
-        return Quadratic(self.ndim, w=self.w, y=self.y)
-
-    def objective(self, _):
-        return tf.nn.l2_loss(tf.matmul(self.w, self.params) - self.y)
 
 
 class ProblemSpec:
