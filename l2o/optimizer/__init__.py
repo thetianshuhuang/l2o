@@ -1,6 +1,6 @@
 from .coordinatewise import CoordinateWiseOptimizer
 from .hierarchical import HierarchicalOptimizer
-from .metaopt import train
+from .train import train
 from .networks import DMOptimizer, ScaleBasicOptimizer
 
 

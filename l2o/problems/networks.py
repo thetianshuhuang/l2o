@@ -129,7 +129,7 @@ def mlp_classifier(
         return tf.keras.Sequential(
             [tf.keras.layers.Flatten(input_shape=input_shape)]
             + [tf.keras.layers.Dense(d, activation=activation) for d in layers]
-            + [tf.keras.layers.Dense(labels, activation=activation)]
+            + [tf.keras.layers.Dense(labels, activation="softmax")]
         )
 
     return _make_tdfs(_network, dataset=dataset, **kwargs)
@@ -173,6 +173,6 @@ def conv_classifier(
             + [tf.keras.layers.Conv2D(
                 n, kernel_size=k, activation=activation) for n, k in layers]
             + [tf.keras.layers.Flatten()]
-            + [tf.keras.layers.Dense(labels, activation=activation)])
+            + [tf.keras.layers.Dense(labels, activation="softmax")])
 
     return _make_tdfs(_network, dataset=dataset, **kwargs)
