@@ -11,7 +11,7 @@ def weights_mean(n):
 
 
 def train_meta(
-        learner, problem, optimizer, unroll_weights, progress):
+        learner, problem, optimizer, unroll_weights, unroll, progress):
     """Meta training on a single problem (batched)
 
     Parameters
@@ -28,20 +28,20 @@ def train_meta(
         Can't do without a progress bar!
     """
 
-    problem.reset(tf.size(unroll_weights))
+    problem.reset(unroll)
     learner._create_slots(problem.trainable_variables)
 
     for batch in problem.dataset:
         optimizer.minimize(
             lambda: learner.meta_loss(
-                problem, unroll_weights, tf.size(unroll_weights), data=batch),
+                problem, unroll_weights, unroll, data=batch),
             learner.trainable_variables)
         progress.add(1)
 
 
 def train_imitation(
         learner, teacher, student_cpy, teacher_cpy, optimizer, unroll_weights,
-        progress):
+        unroll, progress):
     """Imitation learning on a single problem (batched)
 
     Parameters
@@ -140,11 +140,11 @@ def train(
             if teacher is None:
                 train_meta(
                     learner, built, optimizer,
-                    unroll_weights(unroll), progress)
+                    unroll_weights(unroll), unroll, progress)
             else:
                 copy = built.clone_problem()
                 train_imitation(
                     learner, teacher, built, copy, optimizer,
-                    unroll_weights(unroll), progress)
+                    unroll_weights(unroll), unroll, progress)
 
     return time.time() - start

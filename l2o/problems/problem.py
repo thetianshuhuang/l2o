@@ -30,10 +30,10 @@ class Problem:
         Batch size for dataset
     """
 
-    def __init__(self, shuffle_buffer=None, batch_size=1):
+    def __init__(self, shuffle_buffer=None, batch_size=32):
 
         self.dataset = [None]
-        self.batch_size = 1
+        self.batch_size = batch_size
         self.shuffle_buffer = shuffle_buffer
 
     def get_size(self, unroll):
@@ -54,7 +54,8 @@ class Problem:
         try:
             return len(self.dataset)
         except TypeError:
-            batched = self.dataset.batch(self.batch_size * unroll)
+            batched = self.dataset.batch(
+                self.batch_size * unroll, drop_remainder=True)
             for num, _ in enumerate(batched):
                 pass
             return num
