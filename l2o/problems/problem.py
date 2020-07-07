@@ -117,7 +117,10 @@ class Problem:
             If not None, copy will be reset with the exact same parameters.
         """
 
-        if self.dataset is not None and self.shuffle_buffer is not None:
+        do_shuffle = (
+            isinstance(self.dataset, tf.data.Dataset)
+            and self.shuffle_buffer is not None)
+        if do_shuffle:
             self.dataset_batched = (
                 self.dataset
                 .shuffle(self.shuffle_buffer)

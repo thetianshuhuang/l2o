@@ -133,7 +133,7 @@ def train(
         built = problem.build()
         problem.print(itr)
         unroll = unroll(problem)
-        size = problem.get_size(unroll)
+        size = built.get_size(unroll)
 
         progress = tf.keras.utils.Progbar(
             repeat * size, unit_name='meta-iteration')
