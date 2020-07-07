@@ -50,11 +50,15 @@ class Problem:
             Number of BPTT batches when split into batches with size
             ``batch_size * unroll``
         """
-        return (
-            self.dataset
-            .shuffle(self.shuffle_buffer)
-            .batch(self.batch_size * unroll)
-            .reduce(0, lambda x, _: x + 1))
+
+        try:
+            return len(self.dataset)
+        except TypeError:
+            return (
+                self.dataset
+                .shuffle(self.shuffle_buffer)
+                .batch(self.batch_size * unroll)
+                .reduce(0, lambda x, _: x + 1))
 
     def objective(self, data):
         """Objective function.
