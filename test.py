@@ -13,7 +13,7 @@ mlp = [l2o.problems.ProblemSpec(
 
 def create():
 
-    net = l2o.optimizer.DMOptimizer()
+    net = l2o.networks.DMOptimizer()
     opt = l2o.optimizer.CoordinateWiseOptimizer(net)
 
     opt.save("dmoptimizer")
@@ -21,7 +21,7 @@ def create():
 
 def load():
     return l2o.optimizer.CoordinateWiseOptimizer(
-        l2o.optimizer.DMOptimizer(), weights_file="dmoptimizer")
+        l2o.networks.DMOptimizer(), weights_file="dmoptimizer")
 
 
 def train(problems):
@@ -33,7 +33,7 @@ def train(problems):
 
 def test_quadratic(opt):
     problem = l2o.problems.Quadratic(20)
-    start = test.objective(None)
+    start = problem.objective(None)
     for _ in range(100):
         opt.minimize(
             lambda: problem.objective(None), problem.trainable_variables)
