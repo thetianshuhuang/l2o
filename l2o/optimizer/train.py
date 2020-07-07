@@ -31,7 +31,7 @@ def train_meta(
     problem.reset(unroll)
     learner._create_slots(problem.trainable_variables)
 
-    for batch in problem.dataset:
+    for batch in problem.dataset_batched:
         optimizer.minimize(
             lambda: learner.meta_loss(
                 problem, unroll_weights, unroll, data=batch),
@@ -74,7 +74,7 @@ def train_imitation(
     for var in teacher.variables():
         var.assign(tf.zeros_like(var))
 
-    for batch in student_cpy.dataset:
+    for batch in student_cpy.dataset_batched:
         # Sync student up with teacher first every unroll
         student_cpy.sync(teacher_cpy)
         optimizer.minimize(
