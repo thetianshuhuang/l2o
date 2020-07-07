@@ -10,10 +10,9 @@ def weights_mean(n):
     return tf.ones([n]) / n
 
 
-@tf.function
 def train_meta(
         learner, problem, optimizer, unroll_weights, progress):
-    """Meta training on a single problem
+    """Meta training on a single problem (batched)
 
     Parameters
     ----------
@@ -40,11 +39,10 @@ def train_meta(
         progress.add(1)
 
 
-@tf.function
 def train_imitation(
         learner, teacher, student_cpy, teacher_cpy, optimizer, unroll_weights,
         progress):
-    """Imitation learning on a single problem
+    """Imitation learning on a single problem (batched)
 
     Parameters
     ----------
@@ -81,8 +79,7 @@ def train_imitation(
         student_cpy.sync(teacher_cpy)
         optimizer.minimize(
             lambda: learner.imitation_loss(
-                student_cpy, teacher_cpy, teacher, unroll_weights,
-                data=batch),
+                student_cpy, teacher_cpy, teacher, unroll_weights, data=batch),
             learner.trainable_variables)
         progress.add(1)
 
@@ -138,15 +135,13 @@ def train(
         progress = tf.keras.utils.Progbar(
             repeat * size, unit_name='meta-iteration')
 
-        # Everything beyond here is a @tf.function
-        if teacher is None:
-            for _ in range(repeat):
+        for _ in range(repeat):
+            if teacher is None:
                 train_meta(
                     learner, built, optimizer,
                     unroll_weights(unroll), progress)
-        else:
-            copy = built.clone_problem()
-            for _ in range(repeat):
+            else:
+                copy = built.clone_problem()
                 train_imitation(
                     learner, teacher, built, copy, optimizer,
                     unroll_weights(unroll), progress)
