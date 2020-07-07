@@ -34,7 +34,7 @@ def train_meta(
     for batch in problem.dataset:
         optimizer.minimize(
             lambda: learner.meta_loss(
-                problem, unroll_weights, data=batch),
+                problem, unroll_weights, tf.size(unroll_weights), data=batch),
             learner.trainable_variables)
         progress.add(1)
 
@@ -79,7 +79,8 @@ def train_imitation(
         student_cpy.sync(teacher_cpy)
         optimizer.minimize(
             lambda: learner.imitation_loss(
-                student_cpy, teacher_cpy, teacher, unroll_weights, data=batch),
+                student_cpy, teacher_cpy, teacher, unroll_weights,
+                tf.size(unroll_weights), data=batch),
             learner.trainable_variables)
         progress.add(1)
 

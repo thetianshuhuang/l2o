@@ -54,10 +54,10 @@ class Problem:
         try:
             return len(self.dataset)
         except TypeError:
-            return (
-                self.dataset
-                .batch(self.batch_size * unroll)
-                .reduce(0, lambda x, _: x + 1))
+            batched = self.dataset.batch(self.batch_size * unroll)
+            for num, _ in enumerate(batched):
+                pass
+            return num
 
     def objective(self, data):
         """Objective function.

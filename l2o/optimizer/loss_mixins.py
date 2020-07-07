@@ -58,7 +58,7 @@ class LossMixin:
             return grads
 
     @tf.function
-    def meta_loss(self, problem, weights, data=None, noise_stddev=0.0):
+    def meta_loss(self, problem, weights, unroll, data=None, noise_stddev=0.0):
         """Meta training loss
 
         The caller is responsible for setting the initial values of the problem
@@ -76,6 +76,9 @@ class LossMixin:
             Tensor specifying loss weights. The dimensionality specifies the
             number of unrolls. For example, [1 ... 1] indicates total loss,
             while [1/d ... 1/d] indicates mean loss and [0 ... 0 1] final loss.
+        unroll : int
+            Size of weights. Must be passed separately since @tf.function does
+            not play nice with tf.size.
 
         Keyword Args
         ------------
@@ -92,7 +95,6 @@ class LossMixin:
         """
 
         loss = 0.
-        unroll = tf.size(weights)
 
         # Compute init_obj as mean over minibatches if dataset is available
         if data is None:
@@ -145,7 +147,8 @@ class LossMixin:
 
     @tf.function
     def imitation_loss(
-            self, student_cpy, teacher_cpy, teacher, weights, data=None):
+            self, student_cpy, teacher_cpy, teacher, weights, unroll,
+            data=None):
         """Imitation learning loss
 
         Parameters
@@ -162,6 +165,9 @@ class LossMixin:
         weights : tf.Tensor
             Tensor specifying loss weights. The dimensionality specifies the
             number of unrolls.
+        unroll : int
+            Size of weights. Must be passed separately since @tf.function does
+            not play nice with tf.size.
 
         Keyword Args
         ------------
@@ -175,7 +181,6 @@ class LossMixin:
         """
 
         loss = 0.
-        unroll = tf.size(weights)
 
         # Split batches between unrolls if needed
         if data is not None:
