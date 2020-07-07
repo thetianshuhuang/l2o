@@ -126,7 +126,7 @@ class LossMixin:
             grad = tape.gradient(current_obj, problem.trainable_variables)
 
             # Optionally add artificial noise
-            self._add_noise(grad, noise_stddev=noise_stddev)
+            grad = self._add_noise(grad, noise_stddev=noise_stddev)
 
             # cond3: objective is a reasonable multiplier of the original
             if self.obj_train_max_multiplier > 0 and current_obj > max_obj:

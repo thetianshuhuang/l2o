@@ -57,7 +57,7 @@ class Classifier(Problem):
 
     def objective(self, data):
         x, y = data
-        return self.loss(self.model(x), y)
+        return self.loss(y, self.model(x))
 
     def reset(self, *args, **kwargs):
 
@@ -71,7 +71,9 @@ class Classifier(Problem):
 def _make_tdfs(network, dataset="mnist", **kwargs):
     """Helper function to create training problem using tensorflow_datasets"""
 
-    dataset, info = tfds.load(dataset, shuffle_files=True, with_info=True)
+    dataset, info = tfds.load(
+        dataset, split="train", shuffle_files=True,
+        with_info=True, as_supervised=True)
 
     try:
         input_shape = info.features['image'].shape

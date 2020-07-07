@@ -24,10 +24,11 @@ def load():
         l2o.networks.DMOptimizer(), weights_file="dmoptimizer")
 
 
-def train(problems):
+def train(problems, repeat=1000):
 
     opt = load()
-    train(opt, problems, tf.keras.optimizers.Adam(), repeat=1000)
+    l2o.optimizer.train(
+        opt, problems, tf.keras.optimizers.Adam(), repeat=repeat)
     opt.save("dmoptimizer")
 
 
@@ -43,4 +44,7 @@ def test_quadratic(opt):
 def test_classify(opt):
     problem = l2o.problems.mlp_classifier(
         layers=[128, ], dataset="kmnist", activation="relu")
-    problem.network.fit(problem.dataset.batch(32), epochs=5)
+    problem.compile(
+        tf.keras.optimizers.Adam(),
+        tf.keras.losses.CategoricalCrossentropy())
+    problem.model.fit(problem.dataset.batch(32), epochs=5)
