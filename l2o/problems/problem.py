@@ -17,8 +17,8 @@ class Problem:
     initializers : tf.keras.initializers.Initializer
         Initializer to use for trainable_variables.
     dataset : tf.data.Dataset
-        Dataset associated with this problem. Set as None if no dataset is
-        defined.
+        Dataset associated with this problem. Set as [None] if no dataset is
+        defined (note: must be iterable, hence [None] instead of None)
 
     Keyword Args
     ------------
@@ -32,9 +32,33 @@ class Problem:
 
     def __init__(self, shuffle_buffer=None, batch_size=1):
 
-        self.dataset = None
+        self.dataset = [None]
         self.batch_size = 1
         self.shuffle_buffer = shuffle_buffer
+
+    def get_size(self, unroll):
+        """Get size of dataset, batched as specified for BPTT training
+
+        Parameters
+        ----------
+        unroll : int
+            Unroll length
+
+        Returns
+        -------
+        int
+            Number of BPTT batches when split into batches with size
+            ``batch_size * unroll``
+        """
+
+        try:
+            return len(self.dataset)
+        except TypeError:
+            return (
+                self.dataset
+                .shuffle(self.shuffle_buffer)
+                .batch(self.batch_size * unroll)
+                .reduce(0, lambda x, _: x + 1))
 
     def objective(self, data):
         """Objective function.

@@ -12,7 +12,7 @@ def weights_mean(n):
 
 @tf.function
 def train_meta(
-        learner, problem, optimizer, unroll_weights):
+        learner, problem, optimizer, unroll_weights, progress):
     """Meta training on a single problem
 
     Parameters
@@ -25,26 +25,25 @@ def train_meta(
         Optimizer for meta optimization
     unroll_weights : tf.Tensor
         Unroll weights
+    progress : tf.keras.utils.ProgBar
+        Can't do without a progress bar!
     """
 
     problem.reset(tf.size(unroll_weights))
     learner._create_slots(problem.trainable_variables)
 
-    if problem.dataset is None:
+    for batch in problem.dataset:
         optimizer.minimize(
-            lambda: learner.meta_loss(problem, unroll_weights),
+            lambda: learner.meta_loss(
+                problem, unroll_weights, data=batch),
             learner.trainable_variables)
-    else:
-        for batch in problem.dataset:
-            optimizer.minimize(
-                lambda: learner.meta_loss(
-                    problem, unroll_weights, data=batch),
-                learner.trainable_variables)
+        progress.add(1)
 
 
 @tf.function
 def train_imitation(
-        learner, teacher, student_cpy, teacher_cpy, optimizer, unroll_weights):
+        learner, teacher, student_cpy, teacher_cpy, optimizer, unroll_weights,
+        progress):
     """Imitation learning on a single problem
 
     Parameters
@@ -62,6 +61,8 @@ def train_imitation(
         Optimizer for meta optimization
     unroll_weights : tf.Tensor
         Unroll weights
+    progress : tf.keras.utils.ProgBar
+        Can't do without a progress bar!
     """
 
     # Reset problem
@@ -75,20 +76,15 @@ def train_imitation(
     for var in teacher.variables():
         var.assign(tf.zeros_like(var))
 
-    if student_cpy.dataset is None:
+    for batch in student_cpy.dataset:
+        # Sync student up with teacher first every unroll
+        student_cpy.sync(teacher_cpy)
         optimizer.minimize(
             lambda: learner.imitation_loss(
-                student_cpy, teacher_cpy, teacher, unroll_weights),
+                student_cpy, teacher_cpy, teacher, unroll_weights,
+                data=batch),
             learner.trainable_variables)
-    else:
-        for batch in student_cpy.dataset:
-            # Sync student up with teacher first every unroll
-            student_cpy.sync(teacher_cpy)
-            optimizer.minimize(
-                lambda: learner.imitation_loss(
-                    student_cpy, teacher_cpy, teacher, unroll_weights,
-                    data=batch),
-                learner.trainable_variables)
+        progress.add(1)
 
 
 def train(
@@ -136,18 +132,23 @@ def train(
 
         built = problem.build()
         problem.print(itr)
+        unroll = unroll(problem)
+        size = problem.get_size(unroll)
+
+        progress = tf.keras.utils.Progbar(
+            repeat * size, unit_name='meta-iteration')
 
         # Everything beyond here is a @tf.function
         if teacher is None:
             for _ in range(repeat):
                 train_meta(
                     learner, built, optimizer,
-                    unroll_weights(unroll(problem)))
+                    unroll_weights(unroll), progress)
         else:
             copy = built.clone_problem()
             for _ in range(repeat):
                 train_imitation(
                     learner, teacher, built, copy, optimizer,
-                    unroll_weights(unroll(problem)))
+                    unroll_weights(unroll), progress)
 
     return time.time() - start
