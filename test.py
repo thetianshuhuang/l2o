@@ -44,7 +44,12 @@ def test_quadratic(opt):
 def test_classify(opt):
     problem = l2o.problems.mlp_classifier(
         layers=[128, ], dataset="kmnist", activation="relu")
-    problem.compile(
+    problem.model.compile(
+        opt,
+        tf.keras.losses.SparseCategoricalCrossentropy())
+    problem.model.fit(problem.dataset.batch(32), epochs=5)
+
+    problem.model.compile(
         tf.keras.optimizers.Adam(),
-        tf.keras.losses.CategoricalCrossentropy())
+        tf.keras.losses.SparseCategoricalCrossentropy())
     problem.model.fit(problem.dataset.batch(32), epochs=5)

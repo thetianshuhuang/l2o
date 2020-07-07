@@ -87,13 +87,9 @@ def _make_tdfs(network, dataset="mnist", **kwargs):
     if None in input_shape:
         raise TypeError("Dataset does not have fixed input dimension.")
 
-    cce = tf.keras.losses.CategoricalCrossentropy()
-
-    def loss(y_hat, y):
-        return cce(tf.one_hot(y), y_hat)
-
     return Classifier(
-        network(input_shape, labels), loss, dataset, **kwargs)
+        network(input_shape, labels),
+        tf.keras.losses.SparseCategoricalCrossentropy(), dataset, **kwargs)
 
 
 def mlp_classifier(

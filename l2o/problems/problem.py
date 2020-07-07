@@ -56,7 +56,6 @@ class Problem:
         except TypeError:
             return (
                 self.dataset
-                .shuffle(self.shuffle_buffer)
                 .batch(self.batch_size * unroll)
                 .reduce(0, lambda x, _: x + 1))
 
