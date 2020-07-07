@@ -1,5 +1,6 @@
-from optimizer import DMOptimizer, CoordinateWiseOptimizer, train
-from problems import Quadratic, ProblemSpec
+from l2o.networks import DMOptimizer
+from l2o.optimizer import CoordinateWiseOptimizer, train
+from l2o.problems import Quadratic, ProblemSpec
 import tensorflow as tf
 
 
@@ -16,7 +17,7 @@ def create():
 
 
 def load():
-    return CoordinateWiseOptimizer(tf.keras.models.load_model("test"))
+    return CoordinateWiseOptimizer(DMOptimizer(), weights_file="dmoptimizer")
 
 
 def test(opt, log=False):
