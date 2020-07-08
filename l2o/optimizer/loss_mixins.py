@@ -72,10 +72,10 @@ class LossMixin:
         problem : problems.Problem
             Optimizee module. Should have a trainable_variables @property and a
             .objective() method, and should own its own parameters.
-        weights : tf.Tensor
-            Tensor specifying loss weights. The dimensionality specifies the
-            number of unrolls. For example, [1 ... 1] indicates total loss,
-            while [1/d ... 1/d] indicates mean loss and [0 ... 0 1] final loss.
+        weights : float[]
+            Array. The dimensionality specifies the number of unrolls.
+            For example, [1 ... 1] indicates total loss, while [1/d ... 1/d]
+            indicates mean loss and [0 ... 0 1] final loss.
         unroll : tf.constant
             Passsed separately so it can be cast as a tf.constant.
 
@@ -112,9 +112,9 @@ class LossMixin:
                 + init_obj)
 
         # cond1: less than unroll iterations.
-        for i in tf.range(unroll):
-            weight = weights[i]
-            batch = None if data is None else data[i]
+        for batch, weight in zip(data, weights):
+            # weight = weights[i]
+            # batch = None if data is None else data[i]
 
             # cond2: objective is still finite
             if not tf.math.is_finite(loss):

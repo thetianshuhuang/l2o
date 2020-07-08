@@ -1,14 +1,15 @@
 import tensorflow as tf
+import numpy as np
 import time
 import collections
 
 
 def weights_sum(n):
-    return tf.ones([n])
+    return np.ones(n, dtype=np.float32)
 
 
 def weights_mean(n):
-    return tf.ones([n]) / tf.cast(n, tf.float32)
+    return np.ones(n, dtype=np.float32) / n
 
 
 _MetaIteration = collections.namedtuple(
@@ -85,7 +86,7 @@ def _train_inner(itr):
                     tf.split(dim, num_or_size_splits=itr.unroll)
                     for dim in batch]))
             else:
-                sub_batches = None
+                sub_batches = [None for _ in range(itr.unroll)]
 
             with tf.GradientTape() as tape:
                 if itr.teacher is None:
