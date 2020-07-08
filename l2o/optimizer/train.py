@@ -63,7 +63,7 @@ def _train_inner(itr):
         itr.teacher._create_slots(problem_cpy.trainable_variables)
 
     progress = tf.keras.utils.Progbar(
-        itr.epochs * itr.problem.size(), unit_name='step')
+        itr.epochs * itr.problem.size(itr.unroll), unit_name='step')
 
     for _ in range(itr.epochs):
 

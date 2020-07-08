@@ -25,8 +25,10 @@ class Quadratic(Problem):
         # , random_seed=None, noise_stdev=0.0):
 
         # New or use given
-        self.W = tf.random.normal([ndim, ndim]) if W is None else W
-        self.y = tf.random.normal([ndim, 1]) if y is None else y
+        self.W = tf.Variable(
+            tf.random.normal([ndim, ndim]) if W is None else W)
+        self.y = tf.Variable(
+            tf.random.normal([ndim, 1]) if y is None else y)
 
         # save ndim for clone_problem
         self.ndim = ndim
@@ -53,9 +55,9 @@ class Quadratic(Problem):
         self.params.assign(tf.zeros([self.ndim, 1], tf.float32))
 
         # New problem
-        self.W = tf.random.normal([self.ndim, self.ndim])
-        self.y = tf.random.normal([self.ndim, 1])
+        self.W.assign(tf.random.normal([self.ndim, self.ndim]))
+        self.y.assign(tf.random.normal([self.ndim, 1]))
 
         if copy is not None:
-            copy.W = self.W
-            copy.y = self.y
+            copy.W.assign(self.W)
+            copy.y.assign(self.y)
