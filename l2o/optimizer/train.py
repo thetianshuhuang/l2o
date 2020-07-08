@@ -34,7 +34,7 @@ class MetaIteration(_MetaIteration):
         Optimizer to use for meta-optimization
     weights : tf.Tensor([unroll])
         Unroll weights.
-    unroll : tf.Constant
+    unroll : int
         Unroll length.
     noise_stddev : float
         Noise to add to problem gradients during meta-optimization.
@@ -62,10 +62,17 @@ def _train_inner(itr):
         problem_cpy = itr.problem.clone_problem()
         itr.teacher._create_slots(problem_cpy.trainable_variables)
 
-    progress = tf.keras.utils.Progbar(
-        itr.epochs * itr.problem.size(itr.unroll), unit_name='step')
+    # Have one progress bar per epoch unless there are too many epochs
+    if itr.epochs > 10:
+        progress = tf.keras.utils.Progbar(
+            itr.epochs * itr.problem.size(itr.unroll), unit_name='step')
 
-    for _ in range(itr.epochs):
+    for i in range(itr.epochs):
+
+        if itr.epochs <= 10:
+            print("Epoch {}".format(i + 1))
+            progress = tf.keras.utils.Progbar(
+                itr.problem.size(itr.unroll), unit_name='step')
 
         # Reset problem and rebatch
         # (both methods optionally implemented by problem)
@@ -76,12 +83,13 @@ def _train_inner(itr):
             with tf.GradientTape() as tape:
                 if itr.teacher is None:
                     loss = itr.learner.meta_loss(
-                        itr.problem, itr.weights, itr.unroll,
+                        itr.problem, itr.weights, tf.constant(itr.unroll),
                         data=batch, noise_stddev=itr.noise_stddev)
                 else:
                     loss = itr.learner.imitation_loss(
                         itr.problem, problem_cpy, itr.teacher, itr.weights,
-                        itr.unroll, data=batch, noise_stddev=itr.noise_stddev)
+                        tf.constant(itr.unroll), data=batch,
+                        noise_stddev=itr.noise_stddev)
 
             grads = tape.gradient(loss, itr.learner.trainable_variables)
             itr.optimizer.apply_gradients(
@@ -143,7 +151,7 @@ def train(
             problem=built,
             optimizer=optimizer,
             weights=unroll_weights(unroll),
-            unroll=tf.constant(unroll),
+            unroll=unroll,
             noise_stddev=noise_stddev,
             epochs=epochs,
             idx=itr))
