@@ -35,6 +35,10 @@ class Problem:
         """
         return [None]
 
+    def size(self, unroll):
+        """Get number of batches for this unroll duration."""
+        return None
+
     def objective(self, data):
         """Objective function.
 

@@ -62,7 +62,8 @@ def _train_inner(itr):
         problem_cpy = itr.problem.clone_problem()
         itr.teacher._create_slots(problem_cpy.trainable_variables)
 
-    progress = tf.keras.utils.Progbar(None, unit_name='meta-iteration')
+    progress = tf.keras.utils.Progbar(
+        itr.epochs * itr.problem.size(), unit_name='step')
 
     for _ in range(itr.epochs):
 
@@ -86,7 +87,7 @@ def _train_inner(itr):
             itr.optimizer.apply_gradients(
                 zip(grads, itr.learner.trainable_variables))
 
-            progress.add(1, values=[("meta-loss", loss)])
+            progress.add(1, values=[("loss", loss)])
 
 
 def train(
@@ -135,7 +136,7 @@ def train(
     for itr, problem in enumerate(problems):
 
         built = problem.build()
-        itr.problem.print(itr.idx)
+        problem.print(itr)
         _train_inner(MetaIteration(
             learner=learner,
             teacher=teacher,

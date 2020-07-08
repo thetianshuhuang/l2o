@@ -24,7 +24,7 @@ def load():
         l2o.networks.DMOptimizer(), weights_file="dmoptimizer")
 
 
-def train(problems, repeat=1000):
+def train(problems, repeat=1):
 
     opt = load()
     l2o.optimizer.train(

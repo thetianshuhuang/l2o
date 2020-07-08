@@ -1,4 +1,4 @@
-
+import math
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
@@ -27,17 +27,26 @@ class Classifier(Problem):
         is associated with this problem.
     batch_size : int
         Batch size for dataset
+    size : int
+        Number of elements in this dataset, if known.
     """
 
     def __init__(
             self, model, loss, dataset,
-            shuffle_buffer=None, batch_size=32, **kwargs):
+            shuffle_buffer=None, batch_size=32, size=None, **kwargs):
 
         # Optimizer params
         self.model = model
         self.loss = loss
         self.trainable_variables = model.trainable_variables
         self.dataset = dataset
+
+        self.shuffle_buffer = shuffle_buffer
+        self.batch_size = batch_size
+        self.size = size
+
+    def size(self, unroll):
+        return math.floor(self.size / (unroll * self.batch_size))
 
     def clone_problem(self):
         return Classifier(
@@ -74,7 +83,8 @@ def _make_tdfs(network, dataset="mnist", **kwargs):
 
     return Classifier(
         network(input_shape, labels),
-        tf.keras.losses.SparseCategoricalCrossentropy(), dataset, **kwargs)
+        tf.keras.losses.SparseCategoricalCrossentropy(), dataset,
+        size=info.splits['train'].num_examples, **kwargs)
 
 
 def mlp_classifier(

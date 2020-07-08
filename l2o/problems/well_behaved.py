@@ -38,6 +38,9 @@ class Quadratic(Problem):
         # Properties
         self.trainable_variables = [self.params]
 
+    def size(self, unroll):
+        return 1
+
     def clone_problem(self):
         return Quadratic(self.ndim, W=self.W, y=self.y)
 
