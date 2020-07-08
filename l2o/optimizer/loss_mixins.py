@@ -3,7 +3,7 @@ import tensorflow as tf
 
 class LossMixin:
 
-    def _scale_objective(self, objective, initial_obj, weight):
+    def _scale_objective(self, objectives, initial_obj, weights):
         """Normalizes the objective based on the initial objective value.
 
         This function is not a @tf.function since it should be wrapped by
@@ -11,11 +11,11 @@ class LossMixin:
 
         Parameters
         ----------
-        objective : tf.Tensor
-            Objective value. Nominally a scalar.
+        objectives : tf.Tensor
+            Objective values.
         initial_obj : tf.Tensor
             Initial objective value to normalize by.
-        weight : tf.Tensor
+        weights : tf.Tensor
             Weight for this objective value.
 
         Returns
@@ -27,15 +27,17 @@ class LossMixin:
 
         if self.use_log_objective:
             if self.use_numerator_epsilon:
-                return weight * (
-                    tf.math.log(objective + self.epsilon)
+                scaled = (
+                    tf.math.log(objectives + self.epsilon)
                     - tf.math.log(initial_obj + self.epsilon))
             else:
-                return weight * (
-                    tf.math.log(objective)
+                scaled = (
+                    tf.math.log(objectives)
                     - tf.math.log(initial_obj + self.epsilon))
         else:
-            return weight * objective / (initial_obj + self.epsilon)
+            scaled = objectives / (initial_obj + self.epsilon)
+
+        return tf.tensordot(scaled, weights)
 
     def _add_noise(self, grads, noise_stddev=0.0):
         """Add normally distributed noise to gradients in order to simulate
@@ -94,36 +96,23 @@ class LossMixin:
             Scalar meta loss value
         """
 
-        loss = 0.
-
         # # Compute init_obj as mean over minibatches if dataset is available
         if data is None:
             init_obj = problem.objective(None)
         else:
             init_obj = 1.
-        # else:
-        #     batches = list(zip(
-        #         *[tf.split(dim, num_or_size_splits=unroll) for dim in data]))
-        #     init_obj = tf.reduce_mean(
-        #         [problem.objective(batch) for batch in batches])
 
-        # Optional "reasonable limits" on objective over optimization period
-        # If obj_train_max_multiplier is defined > 0, meta-loss calculation
-        # will terminate if the loss explodes
-        # if self.obj_train_max_multiplier > 0:
-        #     max_obj = (
-        #         (self.obj_train_max_multiplier - 1) * tf.abs(init_obj)
-        #         + init_obj)
+        losses = tf.TensorArray(tf.float32, size=unroll)
 
         # cond1: less than unroll iterations.
         for i in tf.range(unroll):
-            weight = weights[i]
-            # batch = None if data is None else batches[i]
+            # weight = weights[i]
             batch = None if data is None else data[i]
+            # batch = None if data is None else tf.gather(data, i)
 
             # cond2: objective is still finite
-            if not tf.math.is_finite(loss):
-                break
+            # if not tf.math.is_finite(loss):
+            #     break
 
             # Compute gradient
             with tf.GradientTape() as tape:
@@ -142,11 +131,11 @@ class LossMixin:
             self.apply_gradients(zip(grad, problem.trainable_variables))
 
             # Add to loss
-            loss += self._scale_objective(current_obj, init_obj, weight)
+            losses.write(i, current_obj)
 
         # @tf.function should compile this down as per tensorflow 2 best
         # practices
-        return loss
+        return self._scale_objective(losses, init_obj, weights)
 
     @tf.function
     def imitation_loss(
