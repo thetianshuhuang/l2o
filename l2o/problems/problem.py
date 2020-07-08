@@ -1,4 +1,3 @@
-import tensorflow as tf
 import time
 
 
@@ -16,49 +15,25 @@ class Problem:
         objects or their equivalents.
     initializers : tf.keras.initializers.Initializer
         Initializer to use for trainable_variables.
-    dataset : tf.data.Dataset
-        Dataset associated with this problem. Set as [None] if no dataset is
-        defined (note: must be iterable, hence [None] instead of None)
-
-    Keyword Args
-    ------------
-    shuffle_buffer : int
-        Shuffle buffer size for dataset shuffling (see tf.data.Dataset). If
-        None, then the dataset is not shuffled. Does nothing if no dataset
-        is associated with this problem.
-    batch_size : int
-        Batch size for dataset
     """
 
-    def __init__(self, shuffle_buffer=None, batch_size=32):
-
-        self.dataset = [None]
-        self.batch_size = batch_size
-        self.shuffle_buffer = shuffle_buffer
-
-    def get_size(self, unroll):
-        """Get size of dataset, batched as specified for BPTT training
+    def get_dataset(self, unroll):
+        """Prepare dataset.
 
         Parameters
         ----------
         unroll : int
-            Unroll length
+            Number of unroll iterations. Batch should have size
+            ``unroll * batch_size``.
 
         Returns
         -------
-        int
-            Number of BPTT batches when split into batches with size
-            ``batch_size * unroll``
+        tf.data.Dataset | [None]
+            Dataset batched and shuffled as desired. Returns ``[None]`` if
+            no dataset is associated with this problem or this problem is a
+            full batch problem.
         """
-
-        try:
-            return len(self.dataset)
-        except TypeError:
-            batched = self.dataset.batch(
-                self.batch_size * unroll, drop_remainder=True)
-            for num, _ in enumerate(batched):
-                pass
-            return num
+        return [None]
 
     def objective(self, data):
         """Objective function.
@@ -100,51 +75,18 @@ class Problem:
         for var, cpy in pairs:
             var.assign(cpy)
 
-    def reset(self, unroll, copy=None):
-        """Reset trainable variables.
-
-        This will be called at the beginning of each training operation. If
-        keeping parameters between iterations is desired, this method can do
-        nothing.
-
-        If a dataset is present, it will also be shuffled.
-
-        Parameters
-        ----------
-        unroll : int
-            Unroll length. Will batch as ``unroll * batch_size``.
-        copy : problem.Problem
-            If not None, copy will be reset with the exact same parameters.
-        """
-
-        if isinstance(self.dataset, tf.data.Datset):
-            # Optional shuffle
-            if self.shuffle_buffer is not None:
-                self.dataset = self.dataset.shuffle(self.shuffle_buffer)
-            # Batch
-            self.datset_batched = self.dataset.batch(self.batch_size * unroll)
-            # Copy dataset batches
-            if copy is not None:
-                copy.dataset_batched = self.dataset_batched
-
-        if type(self.initializers) == list:
-            pairs = zip(self.trainable_variables, self.initializers)
-            for param, init in pairs:
-                param.assign(init(shape=param.shape, dtype=tf.float32))
-        else:
-            for param in self.trainable_variables:
-                param.assign(
-                    self.initializers(shape=param.shape, dtype=tf.float32))
-
-        # Copy variable initializations
-        if copy is not None:
-            pairs = zip(self.trainable_variables, copy.trainable_variables)
-            for param, dst in pairs:
-                dst.assign(param)
+    def reset(self, copy=None):
+        """Optionally reset between epochs."""
+        pass
 
 
 class ProblemSpec:
     """Simple class used for storing problem specifications.
+
+    Attributes
+    ----------
+    _build_time : float
+        How long it took to build the most recent problem. -1 if not built.
 
     Parameters
     ----------
@@ -160,6 +102,7 @@ class ProblemSpec:
         self.callable = callable
         self.args = args
         self.kwargs = kwargs
+        self._build_time = -1.
 
     def build(self):
         """Initialize this problem
@@ -176,6 +119,6 @@ class ProblemSpec:
 
     def print(self, itr):
         print("--------- Problem #{} ---------".format(itr))
-        print("{}, {}, {}".format(
+        print("{}, args={}, kwargs={}".format(
             self.callable.__name__, self.args, self.kwargs))
         print("Took {:.3f} Seconds to initialize.".format(self._build_time))

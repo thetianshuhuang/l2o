@@ -76,9 +76,8 @@ class LossMixin:
             Tensor specifying loss weights. The dimensionality specifies the
             number of unrolls. For example, [1 ... 1] indicates total loss,
             while [1/d ... 1/d] indicates mean loss and [0 ... 0 1] final loss.
-        unroll : int
-            Size of weights. Must be passed separately since @tf.function does
-            not play nice with tf.size.
+        unroll : tf.constant
+            Passsed separately so it can be cast as a tf.constant.
 
         Keyword Args
         ------------
@@ -114,7 +113,7 @@ class LossMixin:
                 + init_obj)
 
         # cond1: less than unroll iterations.
-        for i in range(unroll):
+        for i in tf.range(unroll):
             weight = weights[i]
             batch = None if data is None else batches[i]
 
@@ -148,7 +147,7 @@ class LossMixin:
     @tf.function
     def imitation_loss(
             self, student_cpy, teacher_cpy, teacher, weights, unroll,
-            data=None):
+            data=None, noise_stddev=0.0):
         """Imitation learning loss
 
         Parameters
@@ -165,14 +164,16 @@ class LossMixin:
         weights : tf.Tensor
             Tensor specifying loss weights. The dimensionality specifies the
             number of unrolls.
-        unroll : int
-            Size of weights. Must be passed separately since @tf.function does
-            not play nice with tf.size.
+        unroll : tf.constant
+            Passsed separately so it can be cast as a tf.constant.
 
         Keyword Args
         ------------
         data : tf.Tensor[] | None
             Input data, with size of batch_size * unroll.
+        noise_stddev : tf.Tensor | float
+            Normally distributed noise to add to optimizee gradients; use to
+            simulate minibatch noise for full-batch problems.
 
         Returns
         -------
@@ -187,7 +188,7 @@ class LossMixin:
             batches = list(zip(
                 *[tf.split(dim, num_or_size_splits=unroll) for dim in data]))
 
-        for i in range(unroll):
+        for i in tf.range(unroll):
             weight = weights[i]
             batch = None if data is None else batches[i]
 
@@ -201,8 +202,10 @@ class LossMixin:
                 teacher_obj, teacher_cpy.trainable_variables)
 
             # Optionally add artificial noise
-            student_grad = self._add_noise(student_grad)
-            teacher_grad = self._add_noise(teacher_grad)
+            student_grad = self._add_noise(
+                student_grad, noise_stddev=noise_stddev)
+            teacher_grad = self._add_noise(
+                teacher_grad, noise_stddev=noise_stddev)
 
             # Run single step on student and teacher
             self.apply_gradients(

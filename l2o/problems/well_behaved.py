@@ -24,8 +24,6 @@ class Quadratic(Problem):
     def __init__(self, ndim, W=None, y=None, **kwargs):
         # , random_seed=None, noise_stdev=0.0):
 
-        super().__init__(**kwargs)
-
         # New or use given
         self.W = tf.random.normal([ndim, ndim]) if W is None else W
         self.y = tf.random.normal([ndim, 1]) if y is None else y
@@ -39,10 +37,22 @@ class Quadratic(Problem):
 
         # Properties
         self.trainable_variables = [self.params]
-        self.initializers = tf.keras.initializers.Zeros()
 
     def clone_problem(self):
         return Quadratic(self.ndim, W=self.W, y=self.y)
 
     def objective(self, _):
         return tf.nn.l2_loss(tf.matmul(self.W, self.params) - self.y)
+
+    def reset(self, copy=None):
+
+        # New params
+        self.params.assign(tf.zeros([self.ndim, 1], tf.float32))
+
+        # New problem
+        self.W = tf.random.normal([self.ndim, self.ndim])
+        self.y = tf.random.normal([self.ndim, 1])
+
+        if copy is not None:
+            copy.W = self.W
+            copy.y = self.y

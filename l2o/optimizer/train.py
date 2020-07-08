@@ -1,5 +1,6 @@
 import tensorflow as tf
 import time
+import collections
 
 
 def weights_sum(n):
@@ -7,88 +8,132 @@ def weights_sum(n):
 
 
 def weights_mean(n):
-    return tf.ones([n]) / n
+    return tf.ones([n]) / tf.cast(n, tf.float32)
 
 
-def train_meta(
-        learner, problem, optimizer, unroll_weights, unroll, progress):
-    """Meta training on a single problem (batched)
+_MetaIteration = collections.namedtuple(
+    'MetaIteration', [
+        'learner', 'teacher', 'problem', 'optimizer',
+        'weights', 'unroll', 'noise_stddev',
+        'epochs', 'idx'
+    ])
 
-    Parameters
+
+class MetaIteration(_MetaIteration):
+    """Meta iteration specifications.
+
+    Attributes
     ----------
     learner : trainable_optimizer.TrainableOptimizer
-        Optimizer to train
-    problem : problem.Problem
-        Pre-built problem to train meta-epoch on.
-    optimizer : tf.keras.optimizers.Optimizer
-        Optimizer for meta optimization
-    unroll_weights : tf.Tensor
-        Unroll weights
-    progress : tf.keras.utils.ProgBar
-        Can't do without a progress bar!
-    """
-
-    problem.reset(unroll)
-    learner._create_slots(problem.trainable_variables)
-
-    for batch in problem.dataset_batched:
-        optimizer.minimize(
-            lambda: learner.meta_loss(
-                problem, unroll_weights, unroll, data=batch),
-            learner.trainable_variables)
-        progress.add(1)
-
-
-def train_imitation(
-        learner, teacher, student_cpy, teacher_cpy, optimizer, unroll_weights,
-        unroll, progress):
-    """Imitation learning on a single problem (batched)
-
-    Parameters
-    ----------
-    learner : trainable_optimizer.TrainableOptimizer
-        Optimizer to train
+        Optimizer train; owns the L2O algorithm to be trained.
     teacher : tf.keras.optimizers.Optimizer
-        Optimizer to emulate
-    student_cpy : problem.Problem
-        Student copy of the problem to train on
-    teacher_cpy : problem.Problem
-        Teacher copy of the problem to train on. Must be an exact copy of the
-        student problem.
+        Optimier to imitate. None if using standard meta-learning.
+    problem : problem.ProblemSpec
+        Problem specification to train meta-epoch on. Must be built outside of
+        a @tf.function before usage.
     optimizer : tf.keras.optimizers.Optimizer
-        Optimizer for meta optimization
-    unroll_weights : tf.Tensor
-        Unroll weights
-    progress : tf.keras.utils.ProgBar
-        Can't do without a progress bar!
+        Optimizer to use for meta-optimization
+    weights : callable (int -> tf.Tensor[unroll])
+        Callable to create unroll weights from unroll length. Does not need
+        to be constant.
+    unroll : int
+        Unroll length.
+    noise_stddev : float
+        Noise to add to problem gradients during meta-optimization.
+    epochs : int
+        Number of epochs to run meta-iteration problem for.
+    idx : int
+        Meta-iteration index for tracking
+    """
+    pass
+
+
+def train_meta(itr):
+    """Meta training on a single problem for a single meta-iteration
+
+    Parameters
+    ----------
+    itr : MetaIteration
+        Iteration to run
     """
 
-    # Reset problem
-    student_cpy.reset(tf.size(unroll_weights), copy=teacher_cpy)
+    # Build problem
+    problem = itr.problem.build()
+    itr.problem.print(itr.idx)
+    unroll_weights = itr.weights(itr.unroll)
 
-    # Reset optimizers
-    learner._create_slots(student_cpy.trainable_variables)
-    # Teacher (i.e. Adam) must be manually reset
-    # We assume here that ``teacher`` is a tf.keras.optimizers built-in that
-    # only overwrites tensorflow-approved methods
-    for var in teacher.variables():
-        var.assign(tf.zeros_like(var))
+    progress = tf.keras.utils.Progbar(
+        None, unit_name='meta-iteration')
 
-    for batch in student_cpy.dataset_batched:
-        # Sync student up with teacher first every unroll
-        student_cpy.sync(teacher_cpy)
-        optimizer.minimize(
-            lambda: learner.imitation_loss(
-                student_cpy, teacher_cpy, teacher, unroll_weights,
-                tf.size(unroll_weights), data=batch),
-            learner.trainable_variables)
-        progress.add(1)
+    # Prepare learner
+    itr.learner._create_slots(problem.trainable_variables)
+
+    for _ in range(itr.epochs):
+
+        # Reset problem and rebatch
+        # (both methods optionally implemented by problem)
+        dataset = problem.get_dataset(itr.unroll)
+        problem.reset()
+
+        for batch in dataset:
+            with tf.GradientTape() as tape:
+                loss = itr.learner.meta_loss(
+                    problem, unroll_weights, itr.unroll,
+                    data=batch, noise_stddev=itr.noise_stddev)
+
+            grads = tape.gradient(loss, itr.learner.trainable_variables)
+            itr.optimizer.apply_gradients(
+                zip(grads, itr.learner.trainable_variables))
+
+            progress.add(1, values=("meta-loss", loss))
+
+
+def train_imitation(itr):
+    """Imitation learning on a single problem
+
+    Parameters
+    ----------
+    itr : MetaIteration
+        Iteration to run
+    """
+
+    # Build problem
+    student_cpy = itr.problem.build()
+    teacher_cpy = student_cpy.clone_problem()
+    itr.problem.print(itr.idx)
+    unroll_weights = itr.weights(itr.unroll)
+
+    progress = tf.keras.utils.Progbar(
+        None, unit_name='meta-iteration')
+
+    # Prepare learner
+    itr.learner._create_slots(student_cpy.trainable_variables)
+    itr.teacher._create_slots(teacher_cpy.trainable_variables)
+
+    for _ in range(itr.epochs):
+
+        # Reset problem and rebatch
+        # (both methods optionally implemented by problem)
+        dataset = student_cpy.get_dataset(itr.unroll)
+        student_cpy.reset(copy=teacher_cpy)
+
+        for batch in dataset:
+            with tf.GradientTape() as tape:
+                loss = itr.learner.imitation_loss(
+                    student_cpy, teacher_cpy, itr.teacher, unroll_weights,
+                    itr.unroll, data=batch, noise_stddev=itr.noise_stddev)
+
+            grads = tape.gradient(loss, itr.learner.trainable_variables)
+            itr.optimizer.apply_gradients(
+                zip(grads, itr.learner.trainable_variables))
+
+            progress.add(1, values=("meta-loss", loss))
 
 
 def train(
         learner, problems, optimizer,
-        unroll=lambda _: 20, unroll_weights=weights_mean, teacher=None,
-        repeat=1):
+        unroll=20, unroll_weights=weights_mean, teacher=None,
+        epochs=1, noise_stddev=0.0):
     """Main Training Loop; a single meta-epoch.
 
     NOTE: this function cannot be converted using @tf.function / AutoGraph
@@ -105,18 +150,20 @@ def train(
 
     Keyword Args
     ------------
-    unroll : callable (problem.Problem -> int)
-        Returns the number of unroll iterations; called once for each problem.
-        Could be random!
+    unroll : int
+        Number of unroll iterations.
     unroll_weights : callable (int -> tf.Tensor[unroll])
         Function that creates a tensor encoding iteration weights for the
         truncated BPTT loss calculation
     teacher : tf.keras.optimizers.Optimizer
         Optimizer to emulate. If None, meta training loss is used. Otherwise,
         imitation learning is used.
-    repeat : int
-        Number of consecutive meta-iterations to repeat each problem for,
-        resetting on each iteration.
+    epochs : int
+        Number of consecutive meta-iterations or epochs to repeat each problem
+        for. The problem's ``reset`` method is called on each epoch.
+    noise_stddev : tf.Tensor | float
+        Normally distributed noise to add to optimizee gradients; use to
+        simulate minibatch noise for full-batch problems.
 
     Returns
     -------
@@ -128,23 +175,20 @@ def train(
 
     for itr, problem in enumerate(problems):
 
-        built = problem.build()
-        problem.print(itr)
-        unroll = unroll(problem)
-        size = built.get_size(unroll)
+        meta_itr = MetaIteration(
+            learner=learner,
+            teacher=teacher,
+            problem=problem,
+            optimizer=optimizer,
+            weights=unroll_weights,
+            unroll=tf.constant(unroll),
+            noise_stddev=noise_stddev,
+            epochs=epochs,
+            idx=itr)
 
-        progress = tf.keras.utils.Progbar(
-            repeat * size, unit_name='meta-iteration')
-
-        for _ in range(repeat):
-            if teacher is None:
-                train_meta(
-                    learner, built, optimizer,
-                    unroll_weights(unroll), unroll, progress)
-            else:
-                copy = built.clone_problem()
-                train_imitation(
-                    learner, teacher, built, copy, optimizer,
-                    unroll_weights(unroll), unroll, progress)
+        if teacher is None:
+            train_meta(meta_itr)
+        else:
+            train_imitation(meta_itr)
 
     return time.time() - start

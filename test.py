@@ -28,7 +28,7 @@ def train(problems, repeat=1000):
 
     opt = load()
     l2o.optimizer.train(
-        opt, problems, tf.keras.optimizers.Adam(), repeat=repeat)
+        opt, problems, tf.keras.optimizers.Adam(), epochs=repeat)
     opt.save("dmoptimizer")
 
 

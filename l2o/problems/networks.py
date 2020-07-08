@@ -6,28 +6,8 @@ import tensorflow_datasets as tfds
 from .problem import Problem
 
 
-def reset_recursive(layer):
-    """Recursively reset variables for a keras model or layer.
-
-    Will reset ``.kernel`` using ``.kernel_initializer``, ``.bias`` with
-    ``.bias_initializer``, and any layers held by ``.layers``.
-
-    Parameters
-    ----------
-    layer : tf.keras.Model | tf.keras.Layer
-        Model or layer to reset.
-    """
-    if hasattr(layer, 'kernel'):
-        layer.kernel.assign(layer.kernel_initializer(shape=layer.kernel.shape))
-    if hasattr(layer, 'bias'):
-        layer.bias.assign(layer.bias_initializer(shape=layer.bias.shape))
-    if hasattr(layer, 'layers'):
-        for x in layer.layers:
-            reset_recursive(x)
-
-
 class Classifier(Problem):
-    """Abstract classifier problem
+    """Generic classifier problem
 
     Parameters
     ----------
@@ -38,34 +18,39 @@ class Classifier(Problem):
         input as the first array and output as the second.
     dataset : tf.data.Dataset
         Tensorflow dataset to use
+
+    Keyword Args
+    ------------
+    shuffle_buffer : int
+        Shuffle buffer size for dataset shuffling (see tf.data.Dataset). If
+        None, then the dataset is not shuffled. Does nothing if no dataset
+        is associated with this problem.
+    batch_size : int
+        Batch size for dataset
     """
 
-    def __init__(self, model, loss, dataset, **kwargs):
+    def __init__(
+            self, model, loss, dataset,
+            shuffle_buffer=None, batch_size=32, **kwargs):
 
-        super().__init__(**kwargs)
-
+        # Optimizer params
         self.model = model
         self.loss = loss
-        self.dataset = dataset
-
         self.trainable_variables = model.trainable_variables
-        self.initializers = []
+        self.dataset = dataset
 
     def clone_problem(self):
         return Classifier(
-            tf.keras.models.clone_model(self.model), self.dataset)
+            tf.keras.models.clone_model(self.model), self.loss, None)
 
     def objective(self, data):
         x, y = data
         return self.loss(y, self.model(x))
 
-    def reset(self, *args, **kwargs):
-
-        # Manually reinitialize since keras.Model doesn't have a clean way
-        # of doing so
-        reset_recursive(self.model)
-
-        super().reset(*args, **kwargs)
+    def get_dataset(self, unroll):
+        if self.shuffle_buffer is not None:
+            self.dataset = self.dataset.shuffle(self.shuffle_buffer)
+        return self.dataset.batch(self.batch_size * unroll)
 
 
 def _make_tdfs(network, dataset="mnist", **kwargs):
