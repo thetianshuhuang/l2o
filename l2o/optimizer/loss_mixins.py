@@ -120,6 +120,7 @@ class LossMixin:
 
             # Compute gradient
             with tf.GradientTape() as tape:
+                tape.watch(problem.trainable_variables)
                 current_obj = problem.objective(batch)
             grad = tape.gradient(current_obj, problem.trainable_variables)
 

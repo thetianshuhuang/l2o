@@ -88,6 +88,7 @@ def _train_inner(itr):
                 sub_batches = None
 
             with tf.GradientTape() as tape:
+                tape.watch(itr.learner.trainable_variables)
                 if itr.teacher is None:
                     loss = itr.learner.meta_loss(
                         itr.problem, itr.weights, tf.constant(itr.unroll),
@@ -101,6 +102,9 @@ def _train_inner(itr):
             grads = tape.gradient(loss, itr.learner.trainable_variables)
             itr.optimizer.apply_gradients(
                 zip(grads, itr.learner.trainable_variables))
+
+            import pdb
+            pdb.set_trace()
 
             progress.add(1, values=[("loss", loss)])
 
