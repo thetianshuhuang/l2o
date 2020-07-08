@@ -72,10 +72,10 @@ class LossMixin:
         problem : problems.Problem
             Optimizee module. Should have a trainable_variables @property and a
             .objective() method, and should own its own parameters.
-        weights : float[]
-            Array. The dimensionality specifies the number of unrolls.
-            For example, [1 ... 1] indicates total loss, while [1/d ... 1/d]
-            indicates mean loss and [0 ... 0 1] final loss.
+        weights : tf.Tensor
+            Tensor specifying loss weights. The dimensionality specifies the
+            number of unrolls. For example, [1 ... 1] indicates total loss,
+            while [1/d ... 1/d] indicates mean loss and [0 ... 0 1] final loss.
         unroll : tf.constant
             Passsed separately so it can be cast as a tf.constant.
 
@@ -96,25 +96,30 @@ class LossMixin:
 
         loss = 0.
 
-        # Compute init_obj as mean over minibatches if dataset is available
+        # # Compute init_obj as mean over minibatches if dataset is available
         if data is None:
             init_obj = problem.objective(None)
         else:
-            init_obj = tf.reduce_mean(
-                [problem.objective(batch) for batch in data])
+            init_obj = 1.
+        # else:
+        #     batches = list(zip(
+        #         *[tf.split(dim, num_or_size_splits=unroll) for dim in data]))
+        #     init_obj = tf.reduce_mean(
+        #         [problem.objective(batch) for batch in batches])
 
         # Optional "reasonable limits" on objective over optimization period
         # If obj_train_max_multiplier is defined > 0, meta-loss calculation
         # will terminate if the loss explodes
-        if self.obj_train_max_multiplier > 0:
-            max_obj = (
-                (self.obj_train_max_multiplier - 1) * tf.abs(init_obj)
-                + init_obj)
+        # if self.obj_train_max_multiplier > 0:
+        #     max_obj = (
+        #         (self.obj_train_max_multiplier - 1) * tf.abs(init_obj)
+        #         + init_obj)
 
         # cond1: less than unroll iterations.
-        for batch, weight in zip(data, weights):
-            # weight = weights[i]
-            # batch = None if data is None else data[i]
+        for i in tf.range(unroll):
+            weight = weights[i]
+            # batch = None if data is None else batches[i]
+            batch = None if data is None else data[i]
 
             # cond2: objective is still finite
             if not tf.math.is_finite(loss):
@@ -129,8 +134,8 @@ class LossMixin:
             grad = self._add_noise(grad, noise_stddev=noise_stddev)
 
             # cond3: objective is a reasonable multiplier of the original
-            if self.obj_train_max_multiplier > 0 and current_obj > max_obj:
-                break
+            # if self.obj_train_max_multiplier > 0 and current_obj > max_obj:
+            #     break
 
             # Apply gradients
             # this calls self._compute_update via self._apply_dense
