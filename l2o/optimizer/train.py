@@ -81,9 +81,12 @@ def _train_inner(itr):
 
         for batch in dataset:
             if batch is not None:
-                sub_batches = list(zip(*[
-                    tf.split(dim, num_or_size_splits=itr.unroll)
-                    for dim in batch]))
+                # sub_batches = list(zip(*[
+                #     tf.split(dim, num_or_size_splits=itr.unroll)
+                #     for dim in batch]))
+                sub_batches = [
+                    tf.stack(tf.split(dim, num_or_size_splits=itr.unroll))
+                    for dim in batch]
             else:
                 sub_batches = None
 

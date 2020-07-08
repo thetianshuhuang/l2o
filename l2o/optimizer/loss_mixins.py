@@ -3,21 +3,18 @@ import tensorflow as tf
 
 class LossMixin:
 
-    def _scale_objective(self, objectives, initial_obj, weights):
+    def _scale_objective(self, objective, initial_obj, weight):
         """Normalizes the objective based on the initial objective value.
-
         This function is not a @tf.function since it should be wrapped by
         meta_loss, which should handle conversion.
-
         Parameters
         ----------
-        objectives : tf.Tensor
-            Objective values.
+        objective : tf.Tensor
+            Objective value. Nominally a scalar.
         initial_obj : tf.Tensor
             Initial objective value to normalize by.
-        weights : tf.Tensor
+        weight : tf.Tensor
             Weight for this objective value.
-
         Returns
         -------
         tf.Tensor
@@ -27,17 +24,15 @@ class LossMixin:
 
         if self.use_log_objective:
             if self.use_numerator_epsilon:
-                scaled = (
-                    tf.math.log(objectives + self.epsilon)
+                return weight * (
+                    tf.math.log(objective + self.epsilon)
                     - tf.math.log(initial_obj + self.epsilon))
             else:
-                scaled = (
-                    tf.math.log(objectives)
+                return weight * (
+                    tf.math.log(objective)
                     - tf.math.log(initial_obj + self.epsilon))
         else:
-            scaled = objectives / (initial_obj + self.epsilon)
-
-        return tf.tensordot(scaled, weights)
+            return weight * objective / (initial_obj + self.epsilon)
 
     def _add_noise(self, grads, noise_stddev=0.0):
         """Add normally distributed noise to gradients in order to simulate
@@ -102,7 +97,7 @@ class LossMixin:
         else:
             init_obj = 1.
 
-        losses = tf.TensorArray(tf.float32, size=unroll)
+        loss = 0.
 
         # cond1: less than unroll iterations.
         for i in tf.range(unroll):
@@ -131,11 +126,11 @@ class LossMixin:
             self.apply_gradients(zip(grad, problem.trainable_variables))
 
             # Add to loss
-            losses.write(i, current_obj)
+            loss += self._scale_objective(current_obj, init_obj, weights[i])
 
         # @tf.function should compile this down as per tensorflow 2 best
         # practices
-        return self._scale_objective(losses, init_obj, weights)
+        return loss
 
     @tf.function
     def imitation_loss(
