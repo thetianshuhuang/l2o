@@ -95,19 +95,20 @@ class LossMixin:
         if data is None:
             init_obj = problem.objective(None)
         else:
-            init_obj = 1.
+            init_obj = 0.
+            for i in tf.range(unroll):
+                init_obj += problem.objective([dim[i] for dim in data])
+            init_obj /= tf.cast(unroll, tf.float32)
 
         loss = 0.
 
         # cond1: less than unroll iterations.
         for i in tf.range(unroll):
-            # weight = weights[i]
-            batch = None if data is None else data[i]
-            # batch = None if data is None else tf.gather(data, i)
+            batch = None if data is None else [dim[i] for dim in data]
 
             # cond2: objective is still finite
-            # if not tf.math.is_finite(loss):
-            #     break
+            if not tf.math.is_finite(loss):
+                break
 
             # Compute gradient
             with tf.GradientTape() as tape:

@@ -10,7 +10,7 @@ class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
             self, name,
             use_log_objective=True, obj_train_max_multiplier=-1,
             # use_second_derivatives=True,
-            use_numerator_epsilon=False, epsilon=1e-6, **kwargs):
+            use_numerator_epsilon=True, epsilon=1e-6, **kwargs):
         """Initializes the optimizer with the given name and settings.
 
         Parameters
