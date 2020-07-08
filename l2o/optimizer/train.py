@@ -80,15 +80,22 @@ def _train_inner(itr):
         itr.problem.reset()
 
         for batch in dataset:
+            if batch is not None:
+                sub_batches = list(zip(*[
+                    tf.split(dim, num_or_size_splits=itr.unroll)
+                    for dim in batch]))
+            else:
+                sub_batches = None
+
             with tf.GradientTape() as tape:
                 if itr.teacher is None:
                     loss = itr.learner.meta_loss(
                         itr.problem, itr.weights, tf.constant(itr.unroll),
-                        data=batch, noise_stddev=itr.noise_stddev)
+                        data=sub_batches, noise_stddev=itr.noise_stddev)
                 else:
                     loss = itr.learner.imitation_loss(
                         itr.problem, problem_cpy, itr.teacher, itr.weights,
-                        tf.constant(itr.unroll), data=batch,
+                        tf.constant(itr.unroll), data=sub_batches,
                         noise_stddev=itr.noise_stddev)
 
             grads = tape.gradient(loss, itr.learner.trainable_variables)

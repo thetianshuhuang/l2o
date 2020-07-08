@@ -81,8 +81,9 @@ class LossMixin:
 
         Keyword Args
         ------------
-        data : tf.Tensor[] | None
-            Input data, with size of batch_size * unroll.
+        data : tf.Tensor[][unroll] | None
+            Input data; pre-split into a list of ``unroll`` tuples, with each
+            tuple representing a batch.
         noise_stddev : tf.Tensor | float
             Normally distributed noise to add to optimizee gradients; use to
             simulate minibatch noise for full-batch problems.
@@ -99,10 +100,8 @@ class LossMixin:
         if data is None:
             init_obj = problem.objective(None)
         else:
-            batches = list(zip(
-                *[tf.split(dim, num_or_size_splits=unroll) for dim in data]))
             init_obj = tf.reduce_mean(
-                [problem.objective(batch) for batch in batches])
+                [problem.objective(batch) for batch in data])
 
         # Optional "reasonable limits" on objective over optimization period
         # If obj_train_max_multiplier is defined > 0, meta-loss calculation
@@ -115,7 +114,7 @@ class LossMixin:
         # cond1: less than unroll iterations.
         for i in tf.range(unroll):
             weight = weights[i]
-            batch = None if data is None else batches[i]
+            batch = None if data is None else data[i]
 
             # cond2: objective is still finite
             if not tf.math.is_finite(loss):

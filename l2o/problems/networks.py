@@ -43,10 +43,10 @@ class Classifier(Problem):
 
         self.shuffle_buffer = shuffle_buffer
         self.batch_size = batch_size
-        self.size = size
+        self._size = size
 
     def size(self, unroll):
-        return math.floor(self.size / (unroll * self.batch_size))
+        return math.floor(self._size / (unroll * self.batch_size))
 
     def clone_problem(self):
         return Classifier(
