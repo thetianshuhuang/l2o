@@ -91,7 +91,7 @@ class LossMixin:
             Scalar meta loss value
         """
 
-        # # Compute init_obj as mean over minibatches if dataset is available
+        # Compute init_obj as mean over minibatches if dataset is available
         if data is None:
             init_obj = problem.objective(None)
         else:
@@ -99,6 +99,14 @@ class LossMixin:
             for i in tf.range(unroll):
                 init_obj += problem.objective([dim[i] for dim in data])
             init_obj /= tf.cast(unroll, tf.float32)
+
+        # Optional "reasonable limits" on objective over optimization period
+        # If obj_train_max_multiplier is defined > 0, meta-loss calculation
+        # will terminate if the loss explodes
+        if self.obj_train_max_multiplier > 0:
+            max_obj = (
+                (self.obj_train_max_multiplier - 1) * tf.abs(init_obj)
+                + init_obj)
 
         loss = 0.
 
@@ -119,8 +127,8 @@ class LossMixin:
             grad = self._add_noise(grad, noise_stddev=noise_stddev)
 
             # cond3: objective is a reasonable multiplier of the original
-            # if self.obj_train_max_multiplier > 0 and current_obj > max_obj:
-            #     break
+            if self.obj_train_max_multiplier > 0 and current_obj > max_obj:
+                break
 
             # Apply gradients
             # this calls self._compute_update via self._apply_dense
@@ -172,14 +180,8 @@ class LossMixin:
 
         loss = 0.
 
-        # Split batches between unrolls if needed
-        if data is not None:
-            batches = list(zip(
-                *[tf.split(dim, num_or_size_splits=unroll) for dim in data]))
-
         for i in tf.range(unroll):
-            weight = weights[i]
-            batch = None if data is None else batches[i]
+            batch = None if data is None else [dim[i] for dim in data]
 
             # Compute gradient on same batch
             with tf.GradientTape() as tape:
@@ -209,6 +211,6 @@ class LossMixin:
                     student_cpy.trainable_variables,
                     teacher_cpy.trainable_variables)
             ]
-            loss += weight * tf.add_n(losses)
+            loss += weights[i] * tf.add_n(losses)
 
         return loss

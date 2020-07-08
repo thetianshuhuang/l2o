@@ -59,7 +59,8 @@ class Classifier(Problem):
     def get_dataset(self, unroll):
         if self.shuffle_buffer is not None:
             self.dataset = self.dataset.shuffle(self.shuffle_buffer)
-        return self.dataset.batch(self.batch_size * unroll)
+        return self.dataset.batch(
+            self.batch_size * unroll, drop_remainder=True)
 
 
 def _make_tdfs(network, dataset="mnist", **kwargs):
