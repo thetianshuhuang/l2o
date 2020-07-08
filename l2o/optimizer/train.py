@@ -87,17 +87,20 @@ def _train_inner(itr):
             else:
                 sub_batches = None
 
+            # with tf.GradientTape(watch_accessed_variables=False) as tape:
+            #     tape.watch(itr.learner.trainable_variables)
+            #     if itr.teacher is None:
+            #         loss = itr.learner.meta_loss(
+            #             itr.problem, itr.weights, tf.constant(itr.unroll),
+            #             data=sub_batches, noise_stddev=itr.noise_stddev)
+            #     else:
+            #         loss = itr.learner.imitation_loss(
+            #             itr.problem, problem_cpy, itr.teacher, itr.weights,
+            #             tf.constant(itr.unroll), data=sub_batches,
+            #             noise_stddev=itr.noise_stddev)
+
             with tf.GradientTape() as tape:
-                tape.watch(itr.learner.trainable_variables)
-                if itr.teacher is None:
-                    loss = itr.learner.meta_loss(
-                        itr.problem, itr.weights, tf.constant(itr.unroll),
-                        data=sub_batches, noise_stddev=itr.noise_stddev)
-                else:
-                    loss = itr.learner.imitation_loss(
-                        itr.problem, problem_cpy, itr.teacher, itr.weights,
-                        tf.constant(itr.unroll), data=sub_batches,
-                        noise_stddev=itr.noise_stddev)
+                loss = itr.learner.meta_loss_min(itr.problem)
 
             grads = tape.gradient(loss, itr.learner.trainable_variables)
             itr.optimizer.apply_gradients(

@@ -54,6 +54,28 @@ class LossMixin:
         else:
             return grads
 
+    def meta_loss_min(self, problem):
+
+        loss = 0.
+
+        for i in tf.range(10):
+
+            # Compute gradient
+            with tf.GradientTape() as tape:
+                current_obj = problem.objective(None)
+            grad = tape.gradient(current_obj, problem.trainable_variables)
+
+            # Apply gradients
+            # this calls self._compute_update via self._apply_dense
+            self.apply_gradients(zip(grad, problem.trainable_variables))
+
+            # Add to loss
+            loss += current_obj
+
+        # @tf.function should compile this down as per tensorflow 2 best
+        # practices
+        return loss
+
     @tf.function
     def meta_loss(self, problem, weights, unroll, data=None, noise_stddev=0.0):
         """Meta training loss
