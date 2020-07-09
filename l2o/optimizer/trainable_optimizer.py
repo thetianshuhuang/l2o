@@ -64,12 +64,7 @@ class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
             List of variables to be optimized on; passed by parent.
         """
         for var in var_list:
-            init_states = self._initialize_state(var)
-            # for name, initial in init_states.items():
-            # add_slot does nothing if the given var/name are already
-            # present. This forces reinitialization.
-            # self.add_slot(var, name).assign(initial)
-            self.assign_state(var, init_states)
+            self.assign_state(var, self._initialize_state(var))
 
     def _initialize_state(self, var):
         """Initialize any states required for this variable.
@@ -116,13 +111,10 @@ class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
             Tensorflow operation that assigns new values to the variable and
             defines dependencies (used for control flow)
         """
-        # state = {
-        # key: self.get_slot(var, key) for key in self.get_slot_names()}
-        new_var, new_state = self._compute_update(
-            var, grad, self.get_state(var))
+        new_var, state = self._compute_update(var, grad, self.get_state(var))
 
-        self.assign_state(var, new_state)
-        return var.assign_sub(new_var)
+        self.assign_state(var, state)
+        return var.assign(new_var)
 
     def _resource_update_sparse(self, grad, var):
         raise NotImplementedError()

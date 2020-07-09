@@ -1,10 +1,10 @@
 from .coordinatewise import CoordinateWiseOptimizer
 from .hierarchical import HierarchicalOptimizer
-from .train import train
+from .train import MetaOptimizerMgr
 
 
 __all__ = [
     "CoordinateWiseOptimizer",
     "HierarchicalOptimizer",
-    "train",
+    "MetaOptimizerMgr",
 ]

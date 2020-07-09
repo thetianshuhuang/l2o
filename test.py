@@ -5,10 +5,10 @@ import tensorflow as tf
 quad = [l2o.problems.ProblemSpec(
     l2o.problems.Quadratic, [20], {}
 )]
-mlp = [l2o.problems.ProblemSpec(
-    l2o.problems.mlp_classifier, [],
-    {"layers": [128, ], "dataset": "mnist", "activation": "relu"}
-)]
+# mlp = [l2o.problems.ProblemSpec(
+#     l2o.problems.mlp_classifier, [],
+#     {"layers": [128, ], "dataset": "mnist", "activation": "relu"}
+# )]
 
 
 def create():
@@ -24,11 +24,12 @@ def load():
         l2o.networks.DMOptimizer(), weights_file="dmoptimizer")
 
 
-def train(problems, repeat=1):
+def train(problems, repeat=1, epochs=1):
 
     opt = load()
-    l2o.optimizer.train(
-        opt, problems, tf.keras.optimizers.Adam(), epochs=repeat)
+    mgr = l2o.optimizer.MetaOptimizerMgr(
+        tf.keras.optimizers.Adam(), opt, noise_stddev=0.0, unroll=20)
+    mgr.train(problems, repeat=repeat, epochs=epochs)
     opt.save("dmoptimizer")
 
 
