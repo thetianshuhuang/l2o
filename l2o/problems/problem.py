@@ -30,8 +30,8 @@ class Problem:
 
         Returns
         -------
-        tf.Tensor[]
-            A list of tensors representing the parameters for this problem.
+        tf.Tensor()
+            A tuple of tensors representing the parameters for this problem.
         """
         raise NotImplementedError()
 

@@ -35,7 +35,7 @@ def train(problems, repeat=1, epochs=1):
 
 def test_quadratic(opt):
     problem = l2o.problems.Quadratic(20, test=True)
-    start = problem.objective_test(None)
+    start = problem.test_objective(None)
     for _ in range(100):
         opt.minimize(
             lambda: problem.test_objective(None), problem.trainable_variables)

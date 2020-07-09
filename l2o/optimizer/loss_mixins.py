@@ -102,8 +102,8 @@ class LossMixin:
             grads = self._add_noise(grads, noise_stddev=noise_stddev)
 
             # Apply gradients
-            params, states = list(zip(*[
-                self._compute_update(*z) for z in zip(params, grads, states)]))
+            for i, z in enumerate(zip(params, grads, states)):
+                params[i], states[i] = self._compute_update(*z)
 
             # Add to loss
             loss += self._scale_objective(current_obj, init_obj, weights[i])
