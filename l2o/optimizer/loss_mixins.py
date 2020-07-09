@@ -55,9 +55,15 @@ class LossMixin:
             return grads
 
     @tf.function
-    def _meta_loss(
-            self, problem, weights, unroll, params, states, data,
-            noise_stddev):
+    def meta_loss(
+            self, problem, weights, unroll,
+            params=None, states=None, data=None, noise_stddev=0.0):
+
+        # Fetch parameters, state if not starting from previous state
+        if params is None:
+            params = problem.get_parameters()
+        if states is None:
+            states = [self._initialize_state(p) for p in params]
 
         # Compute initial objective value
         if data is None:
@@ -106,16 +112,3 @@ class LossMixin:
                 break
 
         return loss, params, states
-
-    def meta_loss(
-            self, problem, weights, unroll,
-            params=None, states=None, data=None, noise_stddev=0.0):
-
-        # Fetch parameters, state if not starting from previous state
-        if params is None:
-            params = problem.get_parameters()
-        if states is None:
-            states = [self._initialize_state(p) for p in params]
-
-        return self._meta_loss(
-            problem, weights, unroll, params, states, data, noise_stddev)
