@@ -54,6 +54,7 @@ class LossMixin:
         else:
             return grads
 
+    @tf.function
     def meta_loss(
             self, problem, weights, unroll,
             params=None, states=None, data=None, noise_stddev=0.0):
@@ -93,16 +94,16 @@ class LossMixin:
             with tf.GradientTape() as tape:
                 tape.watch(params)
                 current_obj = problem.objective(params, batch)
-            grad = tape.gradient(current_obj, params)
+            grads = tape.gradient(current_obj, params)
             # cond3: objective is a reasonable multiplier of the original
             if self.obj_train_max_multiplier > 0 and current_obj > max_obj:
                 break
             # Optionally add artificial noise
-            grad = self._add_noise(grad, noise_stddev=noise_stddev)
+            grads = self._add_noise(grads, noise_stddev=noise_stddev)
 
             # Apply gradients
-            for i, (var, grad, state) in enumerate(zip(params, grad, states)):
-                params[i], states[i] = self._compute_update(var, grad, states)
+            params, states = list(zip(*[
+                self._compute_update(*z) for z in zip(params, grads, states)]))
 
             # Add to loss
             loss += self._scale_objective(current_obj, init_obj, weights[i])

@@ -34,12 +34,12 @@ def train(problems, repeat=1, epochs=1):
 
 
 def test_quadratic(opt):
-    problem = l2o.problems.Quadratic(20)
-    start = problem.objective(None)
+    problem = l2o.problems.Quadratic(20, test=True)
+    start = problem.objective_test(None)
     for _ in range(100):
         opt.minimize(
-            lambda: problem.objective(None), problem.trainable_variables)
-    print("{} -> {}".format(start, problem.objective(None)))
+            lambda: problem.test_objective(None), problem.trainable_variables)
+    print("{} -> {}".format(start, problem.test_objective(None)))
 
 
 def test_classify(opt):

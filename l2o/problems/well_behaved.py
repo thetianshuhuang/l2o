@@ -19,9 +19,13 @@ class Quadratic(Problem):
     y : tf.Tensor
         y vector, [ndim]. If None, a random vector is generated with elements
         from a standard normal.
+    test : bool
+        If True, then the parameters are held internally as variables to be
+        used during testing. If False, then the problem will not generate its
+        own parameters.
     """
 
-    def __init__(self, ndim, W=None, y=None, **kwargs):
+    def __init__(self, ndim, W=None, y=None, test=False, **kwargs):
 
         # New or use given
         self.W = tf.random.normal([ndim, ndim]) if W is None else W
@@ -29,6 +33,10 @@ class Quadratic(Problem):
 
         # save ndim for clone_problem
         self.ndim = ndim
+
+        if test:
+            self.params = tf.Variable(tf.zeros([self.ndim, 1], tf.float32))
+            self.trainable_variables = [self.params]
 
     def size(self, unroll):
         return 1
@@ -38,3 +46,6 @@ class Quadratic(Problem):
 
     def objective(self, params, _):
         return tf.nn.l2_loss(tf.matmul(self.W, params[0]) - self.y)
+
+    def test_objective(self, _):
+        return tf.nn.l2_loss(tf.matmul(self.W, self.params) - self.y)
