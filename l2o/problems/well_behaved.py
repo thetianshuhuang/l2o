@@ -34,7 +34,7 @@ class Quadratic(Problem):
         return 1
 
     def get_parameters(self):
-        return tf.zeros([self.ndim, 1], tf.float32)
+        return [tf.zeros([self.ndim, 1], tf.float32)]
 
     def objective(self, params, _):
-        return tf.nn.l2_loss(tf.matmul(self.W, params) - self.y)
+        return tf.nn.l2_loss(tf.matmul(self.W, params[0]) - self.y)

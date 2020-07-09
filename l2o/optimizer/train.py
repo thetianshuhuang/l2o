@@ -25,15 +25,15 @@ class MetaOptimizerMgr:
 
     def _step(self, problem, weights, params=None, states=None, data=None):
 
-        params = self.learner.trainable_variables
+        trainable = self.learner.trainable_variables
         with tf.GradientTape(watch_accessed_variables=False) as tape:
-            tape.watch(params)
+            tape.watch(trainable)
             loss, params, states = self.learner.meta_loss(
                 problem, weights, self.unroll,
                 params=params, states=states,
                 data=data, noise_stddev=self.noise_stddev)
-        grads = tape.gradient(loss, params)
-        self.optimizer.apply_gradients(zip(grads, params))
+        grads = tape.gradient(loss, trainable)
+        self.optimizer.apply_gradients(zip(grads, trainable))
 
         return loss, params, states
 
@@ -44,7 +44,7 @@ class MetaOptimizerMgr:
 
             problem = spec.build()
             weights = self.unroll_weights(self.unroll)
-            loss, _, _ = self._step(self, problem, weights)
+            loss, _, _ = self._step(problem, weights)
 
             pbar.add(1, values=[("loss", loss)])
 
