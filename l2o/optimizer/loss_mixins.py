@@ -55,15 +55,9 @@ class LossMixin:
             return grads
 
     @tf.function
-    def _meta_loss(
-            self, problem, weights, unroll,
-            params=None, states=None, data=None, noise_stddev=0.0):
-
-        # Fetch parameters, state if not starting from previous state
-        if params is None:
-            params = problem.get_parameters()
-        if states is None:
-            states = [self._initialize_state(p) for p in params]
+    def meta_loss(
+            self, problem, weights, unroll, params, states,
+            data=None, is_batched=False, noise_stddev=0.0):
 
         # Compute initial objective value
         if data is None:
@@ -88,7 +82,7 @@ class LossMixin:
         # cond1: less than ``unroll`` iterations.
         for i in tf.range(unroll):
             # Unbatch
-            batch = None if data is None else [dim[i] for dim in data]
+            batch = [dim[i] for dim in data] if is_batched else data
 
             # Compute gradient
             with tf.GradientTape() as tape:
@@ -106,68 +100,9 @@ class LossMixin:
                 self._compute_update(z) for z in zip(params, grads, states)]))
 
             # Add to loss
-            loss += self._scale_objective(current_obj, init_obj, weights[i])
+            loss += current_obj
             # cond2: objective is still finite
             if not tf.math.is_finite(loss):
                 break
-
-        return loss, params, states
-
-    @tf.function
-    def meta_loss(
-            self, problem, weights, unroll,
-            params=None, states=None, data=None, noise_stddev=0.0):
-
-        # Fetch parameters, state if not starting from previous state
-        if params is None:
-            params = problem.get_parameters()
-        if states is None:
-            states = [self._initialize_state(p) for p in params]
-
-        # Compute initial objective value
-        # if data is None:
-        #     init_obj = problem.objective(params, None)
-        # else:
-        #     init_obj = 0
-        #     for i in tf.range(unroll):
-        #         init_obj += problem.objective(params, [dim[i] for dim in data])
-        #     init_obj /= tf.cast(unroll, tf.float32)
-
-        # # Optional "reasonable limits" on objective over optimization period
-        # # If obj_train_max_multiplier is defined > 0, meta-loss calculation
-        # # will terminate if the loss explodes
-        # if self.obj_train_max_multiplier > 0:
-        #     max_obj = (
-        #         (self.obj_train_max_multiplier - 1) * tf.abs(init_obj)
-        #         + init_obj)
-
-        # Loss accumulator
-        loss = 0.
-
-        # cond1: less than ``unroll`` iterations.
-        for i in tf.range(unroll):
-            # Unbatch
-            batch = None if data is None else [dim[i] for dim in data]
-
-            # Compute gradient
-            with tf.GradientTape() as tape:
-                tape.watch(params)
-                current_obj = problem.objective(params, batch)
-            grads = tape.gradient(current_obj, params)
-            # cond3: objective is a reasonable multiplier of the original
-            # if self.obj_train_max_multiplier > 0 and current_obj > max_obj:
-            #     break
-            # Optionally add artificial noise
-            # grads = self._add_noise(grads, noise_stddev=noise_stddev)
-
-            # Apply gradients
-            params, states = list(zip(*[
-                self._compute_update(z) for z in zip(params, grads, states)]))
-
-            # Add to loss
-            loss += current_obj
-            # cond2: objective is still finite
-            # if not tf.math.is_finite(loss):
-            #     break
 
         return loss, params, states

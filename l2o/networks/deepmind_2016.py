@@ -36,12 +36,12 @@ class DMOptimizer(tf.keras.Model):
         ----------
         inputs : tf.Tensor
             Inputs; should be gradients
-        states : tf.Tensor
+        states : dict
             Current hidden states; encoded by .get_initial_state
 
         Returns
         -------
-        (tf.Tensor, tf.Tensor)
+        (tf.Tensor, dict)
             [0] : Output; gradient delta
             [1] : New state
         """
@@ -50,12 +50,13 @@ class DMOptimizer(tf.keras.Model):
 
         x = tf.reshape(inputs, [-1, 1])
 
+        states_new = {}
         for i, layer in enumerate(self.recurrent):
             hidden_name = "lstm_{}".format(i)
-            x, states[hidden_name] = layer(x, states[hidden_name])
+            x, states_new[hidden_name] = layer(x, states[hidden_name])
         x = self.postprocess(x)
 
-        return tf.reshape(x, input_shape), states
+        return tf.reshape(x, input_shape), states_new
 
     def get_initial_state(self, var):
         """Get initial model state as a dictionary
