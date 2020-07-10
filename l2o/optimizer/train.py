@@ -36,15 +36,15 @@ class MetaOptimizerMgr:
         return cf, params, states
 
     def _step(
-            self, concrete_loss,
-            problem, weights, params, states, is_batched, data=None):
+            self, concrete_loss, problem, weights,
+            params=None, states=None, is_batched=False, data=None):
 
         trainable = self.learner.trainable_variables
         with tf.GradientTape(watch_accessed_variables=False) as tape:
             tape.watch(trainable)
             loss, params, states = concrete_loss(
-                problem, weights, self.unroll, params, states,
-                data=data, is_batched=is_batched,
+                problem, weights, self.unroll,
+                params=params, states=states, data=data, is_batched=is_batched,
                 noise_stddev=self.noise_stddev)
         grads = tape.gradient(loss, trainable)
         self.optimizer.apply_gradients(zip(grads, trainable))
@@ -64,10 +64,13 @@ class MetaOptimizerMgr:
             internal = problem.get_internal()
 
             if concrete_loss is None:
-                concrete_loss = self._prepare_cf(
-                    problem, weights, data=internal, is_batched=False)
+                concrete_loss = self.learner.meta_loss.get_concrete_function(
+                    problem, weights, self.unroll,
+                    params=None, states=None, data=internal,
+                    is_batched=False, noise_stddev=self.noise_stddev)
 
-            loss, _, _ = self._step(problem, weights)
+            loss, _, _ = self._step(
+                concrete_loss, problem, weights, data=internal)
 
             pbar.add(1, values=[("loss", loss)])
 

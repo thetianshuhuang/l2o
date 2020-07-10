@@ -56,17 +56,22 @@ class LossMixin:
 
     @tf.function
     def meta_loss(
-            self, problem, weights, unroll, params, states,
+            self, problem, weights, unroll, params=None, states=None,
             data=None, is_batched=False, noise_stddev=0.0):
 
+        if params is None:
+            params = problem.get_parameters()
+        if states is None:
+            states = [self._initialize_state(p) for p in params]
+
         # Compute initial objective value
-        if data is None:
-            init_obj = problem.objective(params, None)
-        else:
+        if is_batched:
             init_obj = 0
             for i in tf.range(unroll):
                 init_obj += problem.objective(params, [dim[i] for dim in data])
             init_obj /= tf.cast(unroll, tf.float32)
+        else:
+            init_obj = problem.objective(params, data)
 
         # Optional "reasonable limits" on objective over optimization period
         # If obj_train_max_multiplier is defined > 0, meta-loss calculation
@@ -96,8 +101,9 @@ class LossMixin:
             grads = self._add_noise(grads, noise_stddev=noise_stddev)
 
             # Apply gradients
-            params, states = list(zip(*[
-                self._compute_update(z) for z in zip(params, grads, states)]))
+            params, states = list(map(list, zip(*[
+                self._compute_update(*z) for z in zip(params, grads, states)
+            ])))
 
             # Add to loss
             loss += current_obj
