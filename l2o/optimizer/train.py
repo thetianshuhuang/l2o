@@ -23,34 +23,6 @@ class MetaOptimizerMgr:
         self.unroll = unroll
         self.unroll_weights = unroll_weights
 
-    def _prepare_cf(
-            self, problem, weights, data=None, is_batched=False):
-
-        params = problem.get_parameters()
-        states = [self.learner._initialize_state(p) for p in params]
-
-        cf = self.learner.meta_loss.get_concrete_function(
-            problem, weights, self.unroll, params, states,
-            data=data, is_batched=is_batched, noise_stddev=self.noise_stddev)
-
-        return cf, params, states
-
-    def _step(
-            self, concrete_loss, problem, weights,
-            params=None, states=None, is_batched=False, data=None):
-
-        trainable = self.learner.trainable_variables
-        with tf.GradientTape(watch_accessed_variables=False) as tape:
-            tape.watch(trainable)
-            loss, params, states = concrete_loss(
-                problem, weights, self.unroll,
-                params=params, states=states, data=data, is_batched=is_batched,
-                noise_stddev=self.noise_stddev)
-        grads = tape.gradient(loss, trainable)
-        self.optimizer.apply_gradients(zip(grads, trainable))
-
-        return loss, params, states
-
     def _train_meta_full(self, spec, repeat=1):
 
         pbar = tf.keras.utils.Progbar(repeat, unit_name='step')
@@ -61,16 +33,20 @@ class MetaOptimizerMgr:
         for _ in range(repeat):
 
             weights = self.unroll_weights(self.unroll)
-            internal = problem.get_internal()
+            data = problem.get_internal()
 
             if concrete_loss is None:
                 concrete_loss = self.learner.meta_loss.get_concrete_function(
-                    problem, weights, self.unroll,
-                    params=None, states=None, data=internal,
-                    is_batched=False, noise_stddev=self.noise_stddev)
+                    weights, data, params=None, states=None,
+                    unroll=self.unroll, problem=problem, is_batched=False,
+                    noise_stddev=self.noise_stddev)
 
-            loss, _, _ = self._step(
-                concrete_loss, problem, weights, data=internal)
+            trainable = self.learner.trainable_variables
+            with tf.GradientTape(watch_accessed_variables=False) as tape:
+                tape.watch(trainable)
+                loss, _, _ = concrete_loss(weights, data)
+            grads = tape.gradient(loss, trainable)
+            self.optimizer.apply_gradients(zip(grads, trainable))
 
             pbar.add(1, values=[("loss", loss)])
 

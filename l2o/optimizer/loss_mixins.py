@@ -56,8 +56,53 @@ class LossMixin:
 
     @tf.function
     def meta_loss(
-            self, problem, weights, unroll, params=None, states=None,
-            data=None, is_batched=False, noise_stddev=0.0):
+            self, weights, data, params=None, states=None,
+            unroll=20, problem=None, is_batched=False, noise_stddev=0.0):
+        """Get meta-training loss.
+
+        By decorating as a @tf.function, the for loop is wrapped into a
+        tf.while_loop. See `https://www.tensorflow.org/guide/function`.
+
+        The following rules must be followed:
+         -  No modifying ``states``. The new state must be a copy of the object
+            on each loop.
+         -  No variable creation. Variable creation is only allowed in eager
+            mode.
+         -  No ``tf.Variable``s may be assigned, since this stops gradients.
+            This precludes the use of tf.keras.Model in training problems, as
+            well as usage of the ``_create_slots`` system.
+
+        Parameters
+        ----------
+        weights : tf.Tensor
+            Tensor specifying loss weights for each unroll iteration. For
+            example, [1 ... 1] indicates total loss, while [1/d ... 1/d]
+            indicates mean loss and [0 ... 0 1] final loss.
+        data : object
+            Nested structure containing data tensors.
+
+        Keyword Args
+        ------------
+        params : tf.Tensor[] (optional)
+            List of problem parameters. If None, is generated each time.
+        states : object (optional)
+            Nested structure containing state tensors.
+        unroll : int (bound)
+            Number of unroll iterations
+        problem : problems.Problem (bound)
+            Training problem
+        is_batched : bool (bound)
+            Batch training or full batch training?
+        noise_stddev : float (bound)
+            Normal noise to add to gradients.
+
+        Returns
+        -------
+        (tf.Tensor, tf.Tensor[], object)
+            [0] Meta loss
+            [1] Final parameters
+            [2] Final state
+        """
 
         if params is None:
             params = problem.get_parameters()
@@ -106,7 +151,7 @@ class LossMixin:
             ])))
 
             # Add to loss
-            loss += current_obj
+            loss += self._scale_objective(current_obj, init_obj, weights[i])
             # cond2: objective is still finite
             if not tf.math.is_finite(loss):
                 break

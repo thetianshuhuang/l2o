@@ -35,13 +35,14 @@ class Quadratic(Problem):
         return [tf.zeros([self.ndim, 1], tf.float32)]
 
     def get_internal(self):
-        return (
-            tf.random.normal([self.ndim, self.ndim]),
-            tf.random.normal([self.ndim, 1]))
+        return {
+            'W': tf.random.normal([self.ndim, self.ndim]),
+            'y': tf.random.normal([self.ndim, 1])
+        }
 
     def objective(self, params, internal):
-        W, y = internal
-        return tf.nn.l2_loss(tf.matmul(W, params[0]) - y)
+        return tf.nn.l2_loss(
+            tf.matmul(internal['W'], params[0]) - internal['y'])
 
     def test_objective(self, _):
         return tf.nn.l2_loss(tf.matmul(self.W, self.params) - self.y)
