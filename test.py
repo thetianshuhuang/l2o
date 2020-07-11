@@ -48,21 +48,26 @@ def test_quadratic(opt):
 
 def test_classify(opt, conv=True):
 
-    dataset, info = l2o.problems.load_images("50")
+    dataset, info = l2o.problems.load_images("mnist")
 
     if conv:
         model = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(32, 5, activation=tf.nn.relu),
-            tf.keras.layers.Dense(128, activation=tf.nn.relu),
+            tf.keras.layers.Conv2D(
+                32, 5, activation=tf.nn.relu,
+                input_shape=info.features['image'].shape),
+            tf.keras.layers.Conv2D(
+                32, 3, strides=(2, 2), activation=tf.nn.relu),
             tf.keras.layers.Dense(10, activation="softmax")
         ])
     else:
         model = tf.keras.Sequential([
             tf.keras.layers.Flatten(input_shape=info.features['image'].shape),
             tf.keras.layers.Dense(128, activation=tf.nn.relu),
-            tf.keras.layers.Dense(128, activation=tf.nn.relu),
+            tf.keras.layers.Dense(64, activation=tf.nn.relu),
             tf.keras.layers.Dense(10, activation="softmax")
         ])
+
+    print(model.summary())
 
     model.compile(
         opt,

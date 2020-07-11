@@ -1,4 +1,4 @@
-
+import tensorflow as tf
 from . trainable_optimizer import TrainableOptimizer
 
 
@@ -33,7 +33,7 @@ class CoordinateWiseOptimizer(TrainableOptimizer):
         # Alias trainable_variables
         # First we have to run a dummy computation to trick the network
         # into generating trainable_variables because keras is a bit jank
-        self.network(0., self.network.get_initial_state(0.))
+        self.network(0., 0., self.network.get_initial_state(0.))
         self.trainable_variables = network.trainable_variables
 
     def _initialize_state(self, var):
