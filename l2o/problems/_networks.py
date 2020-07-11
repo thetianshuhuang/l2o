@@ -1,4 +1,5 @@
 import math
+import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
@@ -11,8 +12,9 @@ class Classifier(Problem):
 
     Parameters
     ----------
-    model : tf.keras.Model
-        Core model (i.e. classifier or regression)
+    model : object
+        Core model (i.e. classifier or regression). Must have
+        ``get_parameters`` and ``call`` methods.
     loss : callable (tf.Tensor, tf.Tensor -> tf.Tensor)
         Computes loss from model output and ground truth. Dataset should have
         input as the first array and output as the second.
@@ -32,24 +34,21 @@ class Classifier(Problem):
     """
 
     def __init__(
-            self, model, loss, dataset,
+            self, model, loss, dataset, persistent=False,
             shuffle_buffer=None, batch_size=32, size=None, **kwargs):
 
-        # Optimizer params
         self.model = model
         self.loss = loss
-        self.trainable_variables = model.trainable_variables
         self.dataset = dataset
 
         self.shuffle_buffer = shuffle_buffer
         self.batch_size = batch_size
         self._size = size
 
+        super().__init__(persistent=persistent)
+
     def size(self, unroll):
         return math.floor(self._size / (unroll * self.batch_size))
-
-    def get_parameters(self):
-        return self.trainable_variables
 
     def get_dataset(self, unroll):
         if self.shuffle_buffer is not None:
@@ -57,12 +56,71 @@ class Classifier(Problem):
         return self.dataset.batch(
             self.batch_size * unroll, drop_remainder=True)
 
+    def get_parameters(self):
+        return self.model.get_parameters()
+
     def objective(self, params, data):
         x, y = data
-        return self.loss(y, self.model(x))
+        return self.loss(y, self.model.call(params, x))
 
 
-def _make_tdfs(network, dataset="mnist", **kwargs):
+class MLPClassifier:
+
+    def __init__(
+            self, in_size, out_size, layers=[128, ],
+            preprocess=None,
+            activation=tf.nn.relu,
+            kernel_init=tf.keras.initializers.GlorotUniform,
+            bias_init=tf.keras.initializers.Zeros):
+
+        self.preprocess = preprocess
+        self.kernel_init = kernel_init()
+        self.bias_init = bias_init()
+        self.activation = activation
+
+        self.layer_shapes = []
+        for i, layer in enumerate(layers):
+            _in = in_size if i == 0 else layers[i - 1]
+            self.layer_shapes.append({
+                "kernel": [_in, layer],
+                "bias": [layer]
+            })
+        self.layer_shapes.append({
+            "kernel": [layers[-1], out_size],
+            "bias": [out_size]
+        })
+
+        self.layer_indices = np.cumsum([len(s) for s in self.layer_shapes])
+
+    def get_parameters(self):
+        parameters = []
+        for i, shapes in enumerate(self.layer_shapes):
+            parameters.append(
+                self.kernel_init(shape=shapes["kernel"], dtype=tf.float32))
+            parameters.append(
+                self.bias_init(shape=shapes["bias"], dtype=tf.float32))
+        return parameters
+
+    def call(self, params, data):
+
+        x = data if self.preprocess is None else self.preprocess(data)
+
+        prev = 0
+        for idx, layer in enumerate(self.layer_indices):
+            kernel, bias = params[prev:layer]
+            prev = layer
+
+            x = tf.matmul(kernel, x) + bias
+
+            if idx == len(self.layer_indices) - 1:
+                x = tf.nn.softmax(x)
+            else:
+                x = self.activation(x)
+
+        return x
+
+
+def _make_tfds(network, dataset="mnist", **kwargs):
     """Helper function to create training problem using tensorflow_datasets"""
 
     dataset, info = tfds.load(
@@ -88,7 +146,7 @@ def _make_tdfs(network, dataset="mnist", **kwargs):
 
 
 def mlp_classifier(
-        dataset="mnist", layers=[128, ], activation="relu", **kwargs):
+        dataset="mnist", layers=[128, ], activation=tf.nn.relu, **kwargs):
     """Create MLP classifier training problem.
 
     Keyword Args
@@ -118,54 +176,13 @@ def mlp_classifier(
         Dataset does not have a fixed input dimension.
     """
 
-    def _network(input_shape, labels):
-        return tf.keras.Sequential(
-            [tf.keras.layers.Flatten(input_shape=input_shape)]
-            + [tf.keras.layers.Dense(d, activation=activation) for d in layers]
-            + [tf.keras.layers.Dense(labels, activation="softmax")]
-        )
-
-    return _make_tdfs(_network, dataset=dataset, **kwargs)
-
-
-def conv_classifier(
-        dataset="mnist", layers=[(16, 3), ], activation="relu", **kwargs):
-    """Create Convolutional classifier training problem. All layers are
-    convolutional, except for the last layer which is fully connected.
-
-    Keyword Args
-    ------------
-    dataset : str
-        Dataset from tdfs catalog. Must have fixed input dimension and
-        output labels.
-    layers : int[][2]
-        Array of (num_filters, kernel_size) for convolutional layers.
-    activation : str
-        Keras activation type
-    **kwargs : dict
-        Passed on to Classifier()
-
-    Returns
-    -------
-    problem.Problem
-        Created problem
-
-    Raises
-    ------
-    KeyError
-        Selected dataset does not have an image or label.
-    AttributeError
-        Image does not specify shape or label does not specify num_classes.
-    TypeError
-        Dataset does not have a fixed input dimension.
-    """
+    def _preprocess(img):
+        shape = img.shape.as_list()
+        return tf.cast(tf.reshape(img, shape[:-1] + []), tf.float32) / 255.
 
     def _network(input_shape, labels):
-        return tf.keras.Sequential(
-            [tf.keras.layers.InputLayer(input_shape=input_shape)]
-            + [tf.keras.layers.Conv2D(
-                n, kernel_size=k, activation=activation) for n, k in layers]
-            + [tf.keras.layers.Flatten()]
-            + [tf.keras.layers.Dense(labels, activation="softmax")])
+        return MLPClassifier(
+            np.prod(input_shape), labels,
+            preprocess=_preprocess, layers=layers, activation=activation)
 
-    return _make_tdfs(_network, dataset=dataset, **kwargs)
+    return _make_tfds(_network, dataset=dataset, **kwargs)
