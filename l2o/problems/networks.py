@@ -34,7 +34,7 @@ class Classifier(Problem):
     """
 
     def __init__(
-            self, model, dataset, loss, persistent=False,
+            self, model, loss, dataset, persistent=False,
             shuffle_buffer=None, batch_size=32, size=None, **kwargs):
 
         self.model = model
@@ -68,10 +68,12 @@ class MLPClassifier:
 
     def __init__(
             self, in_size, out_size, layers=[128, ],
+            preprocess=None,
             activation=tf.nn.relu,
             kernel_init=tf.keras.initializers.GlorotUniform,
             bias_init=tf.keras.initializers.Zeros):
 
+        self.preprocess = preprocess
         self.kernel_init = kernel_init()
         self.bias_init = bias_init()
         self.activation = activation
@@ -91,20 +93,21 @@ class MLPClassifier:
         self.layer_indices = np.cumsum([len(s) for s in self.layer_shapes])
 
     def get_parameters(self):
-        self.parameters = []
+        parameters = []
         for i, shapes in enumerate(self.layer_shapes):
-            self.parameters.append(
+            parameters.append(
                 self.kernel_init(shape=shapes["kernel"], dtype=tf.float32))
-            self.parameters.append(
-                self.kernel_init(shape=shapes["bias"], dtype=tf.float32))
+            parameters.append(
+                self.bias_init(shape=shapes["bias"], dtype=tf.float32))
+        return parameters
 
     def call(self, params, data):
 
-        x = tf.reshape(data, [-1])
+        x = data if self.preprocess is None else self.preprocess(data)
 
         prev = 0
         for idx, layer in enumerate(self.layer_indices):
-            kernel, bias = params[prev, layer]
+            kernel, bias = params[prev:layer]
             prev = layer
 
             x = tf.matmul(kernel, x) + bias
@@ -125,7 +128,7 @@ def _make_tfds(network, dataset="mnist", **kwargs):
         with_info=True, as_supervised=True)
 
     try:
-        input_shape = info.features['image'].shape
+        input_shape = np.prod(info.features['image'].shape)
         labels = info.features['label'].num_classes
     except KeyError:
         raise TypeError("Dataset must have 'image' and 'label' features.")
@@ -173,8 +176,12 @@ def mlp_classifier(
         Dataset does not have a fixed input dimension.
     """
 
+    def _preprocess(img):
+        return tf.cast(tf.reshape(img, [-1]), tf.float32) / 255.
+
     def _network(input_shape, labels):
         return MLPClassifier(
-            input_shape, labels, layers=layers, activation=activation)
+            input_shape, labels,
+            preprocess=_preprocess, layers=layers, activation=activation)
 
     return _make_tfds(_network, dataset=dataset, **kwargs)
