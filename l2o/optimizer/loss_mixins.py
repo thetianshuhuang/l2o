@@ -104,8 +104,6 @@ class LossMixin:
             [2] Final state
         """
 
-        assert(problem is not None, "must bind problem.Problem as `problem`")
-
         if params is None:
             params = problem.get_parameters()
         if states is None:

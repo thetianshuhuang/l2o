@@ -8,9 +8,12 @@ quad = [l2o.problems.ProblemSpec(
 )]
 mlp = [l2o.problems.ProblemSpec(
     l2o.problems.mlp_classifier, [],
-    {"layers": [128, ], "dataset": "mnist", "activation": "relu"}
+    {"layers": [128, ], "dataset": "mnist", "activation": tf.nn.relu}
 )]
-
+conv = [l2o.problems.ProblemSpec(
+    l2o.problems.conv_classifier, [],
+    {"layers": [(5, 32, 2), ], "dataset": "mnist", "activation": tf.nn.relu}
+)]
 
 def create():
 
@@ -51,6 +54,7 @@ def test_classify(opt):
 
     model = tf.keras.Sequential([
         tf.keras.layers.Flatten(input_shape=info.features['image'].shape),
+        tf.keras.layers.Dense(128, activation=tf.nn.relu),
         tf.keras.layers.Dense(128, activation=tf.nn.relu),
         tf.keras.layers.Dense(10, activation="softmax")
     ])

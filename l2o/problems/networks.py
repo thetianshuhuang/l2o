@@ -1,11 +1,10 @@
 import math
-import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
 
 from .problem import Problem
-from .stateless_keras import Dense, Sequential, ImagePreprocess
+from .stateless_keras import Dense, Sequential, Conv2D, ImagePreprocess
 
 
 class Classifier(Problem):
@@ -129,6 +128,53 @@ def mlp_classifier(
         return Sequential(
             [ImagePreprocess(255.)]
             + [Dense(u, activation=activation) for u in layers]
-            + [Dense(labels, activation=tf.nn.softmax)])
+            + [Dense(labels, activation=tf.nn.softmax)], input_shape)
 
     return _make_tfds(_network, dataset=dataset, **kwargs)
+
+
+def conv_classifier(
+        dataset="mnist",
+        layers=[(5, 32, 2), ], activation=tf.nn.relu, **kwargs):
+    """Create Convolutional classifier training problem.
+
+    Keyword Args
+    ------------
+    dataset : str
+        Dataset from tdfs catalog. Must have fixed input dimension and
+        output labels.
+    layers : int[][3]
+        List of (kernel size, num_filters, stride) for convolutional layers
+    activation : str
+        Keras activation type
+    **kwargs : dict
+        Passed on to Classifier()
+
+    Returns
+    -------
+    problem.Problem
+        Created problem
+
+    Raises
+    ------
+    KeyError
+        Selected dataset does not have an image or label.
+    AttributeError
+        Image does not specify shape or label does not specify num_classes.
+    TypeError
+        Dataset does not have a fixed input dimension.
+    """
+
+    def _preprocess(img):
+        shape = img.shape.as_list()
+        return tf.cast(tf.reshape(img, shape[:-1] + []), tf.float32) / 255.
+
+    def _network(input_shape, labels):
+        return Sequential(
+            [ImagePreprocess(255.)]
+            + [Conv2D(f, k, stride=s, activation=activation)
+               for f, k, s in layers]
+            + [Dense(labels, activation=tf.nn.softmax)], input_shape)
+
+    return _make_tfds(_network, dataset=dataset, **kwargs)
+
