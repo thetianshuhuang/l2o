@@ -77,11 +77,15 @@ class MLPClassifier:
 
         self.layer_shapes = []
         for i, layer in enumerate(layers):
-            out = self.out_size if i + 1 == len(layers) else layers[i + 1]
+            _in = in_size if i == 0 else layers[i - 1]
             self.layer_shapes.append({
-                "kernel": [layer, out],
-                "bias": [out]
+                "kernel": [_in, layer],
+                "bias": [layer]
             })
+        self.layer_shapes.append({
+            "kernel": [layers[-1], out_size],
+            "bias": [out_size]
+        })
 
         self.layer_indices = np.cumsum([len(s) for s in self.layer_shapes])
 
@@ -95,7 +99,7 @@ class MLPClassifier:
 
     def call(self, params, data):
 
-        x = data
+        x = tf.reshape(data, [-1])
 
         prev = 0
         for idx, layer in enumerate(self.layer_indices):

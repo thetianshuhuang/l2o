@@ -173,8 +173,8 @@ class MetaOptimizerMgr:
             spec.print(itr)
 
             if hasattr(spec, "get_dataset"):
-                self._train_meta_batch(spec, teacher=teacher, epochs=epochs)
+                self._train_batch(spec, teacher=teacher, epochs=epochs)
             else:
-                self._train_meta_full(spec, teacher=teacher, repeat=repeat)
+                self._train_full(spec, teacher=teacher, repeat=repeat)
 
         return time.time() - start
