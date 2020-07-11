@@ -42,7 +42,7 @@ class CoordinateWiseOptimizer(TrainableOptimizer):
 
     def _compute_update(self, param, grad, state):
         """Compute updates from child network."""
-        dparam, new_state = self.network(grad, state)
+        dparam, new_state = self.network(param, grad, state)
         return param - dparam, new_state
 
     def save(self, filepath, **kwargs):

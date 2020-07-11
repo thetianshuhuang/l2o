@@ -4,7 +4,7 @@ import tensorflow_datasets as tfds
 
 
 from .problem import Problem
-from .stateless_keras import Dense, Sequential, Conv2D, ImagePreprocess
+from .stateless_keras import Dense, Sequential, Conv2D
 
 
 class Classifier(Problem):

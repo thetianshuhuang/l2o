@@ -29,13 +29,19 @@ class DMOptimizer(tf.keras.Model):
         self.recurrent = [LSTMCell(hsize, **defaults) for hsize in layers]
         self.postprocess = Dense(1, input_shape=(layers[-1],))
 
-    def call(self, inputs, states):
+    def call(self, param, inputs, states):
         """Network call override (handled by tf.keras.Model)
+
+        NOTE: ``inputs`` may have undefined dimensions due to gradients not
+        yet being connected to the graph yet. The dimension of ``param`` should
+        be used instead.
 
         Parameters
         ----------
+        param : tf.Variable
+            Corresponding input variable.
         inputs : tf.Tensor
-            Inputs; should be gradients
+            Inputs; should be gradients.
         states : dict
             Current hidden states; encoded by .get_initial_state
 
@@ -46,7 +52,7 @@ class DMOptimizer(tf.keras.Model):
             [1] : New state
         """
 
-        input_shape = inputs.shape
+        input_shape = param.shape
 
         x = tf.reshape(inputs, [-1, 1])
 
