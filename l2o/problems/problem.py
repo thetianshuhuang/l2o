@@ -1,25 +1,25 @@
+import tensorflow as tf
 
 
 class Problem:
     """Training problem."""
 
-    # def get_dataset(self, unroll):
-    #     """Prepare dataset.
+    def __init__(self, persistent=False):
 
-    #     Parameters
-    #     ----------
-    #     unroll : int
-    #         Number of unroll iterations. Batch should have size
-    #         ``unroll * batch_size``.
+        if persistent:
+            self.trainable_variables = [
+                tf.Variable(v) for v in self.get_parameters()]
+            self.reset()
 
-    #     Returns
-    #     -------
-    #     tf.data.Dataset | [None]
-    #         Dataset batched and shuffled as desired. Returns ``[None]`` if
-    #         no dataset is associated with this problem or this problem is a
-    #         full batch problem.
-    #     """
-    #     return [None]
+    def reset(self, values=None):
+        if hasattr(self, "get_internal"):
+            self.internal = self.get_internal()
+
+        if values is None:
+            values = self.get_parameters()
+
+        for v, new in zip(self.trainable_variables, values):
+            v.assign(new)
 
     def size(self, unroll):
         """Get number of batches for this unroll duration."""
@@ -30,8 +30,8 @@ class Problem:
 
         Returns
         -------
-        tf.Tensor()
-            A tuple of tensors representing the parameters for this problem.
+        tf.Tensor[]
+            A list of tensors representing the parameters for this problem.
         """
         raise NotImplementedError()
 
@@ -76,7 +76,7 @@ class ProblemSpec:
         self.args = args
         self.kwargs = kwargs
 
-    def build(self):
+    def build(self, *args, **kwargs):
         """Initialize this problem
 
         Returns
@@ -84,7 +84,7 @@ class ProblemSpec:
         problem.Problem
             Class referenced by ``callable``
         """
-        return self.callable(*self.args, **self.kwargs)
+        return self.callable(*self.args, *args, **self.kwargs, **kwargs)
 
     def print(self, itr):
         print("--------- Problem #{} ---------".format(itr))

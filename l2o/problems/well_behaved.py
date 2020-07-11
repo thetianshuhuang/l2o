@@ -13,20 +13,18 @@ class Quadratic(Problem):
 
     Keyword Args
     ------------
-    test : bool
+    persistent : bool
         If True, then the parameters are held internally as variables to be
-        used during testing. If False, then the problem will not generate its
-        own parameters.
+        used so that ``tf.keras.optimizers.Optimizer`` can act on them.
+        If False, then the problem will not generate its own parameters.
     """
 
-    def __init__(self, ndim, test=False, **kwargs):
+    def __init__(self, ndim, persistent=False, **kwargs):
 
         # save ndim
         self.ndim = ndim
 
-        if test:
-            self.params = tf.Variable(tf.zeros([self.ndim, 1], tf.float32))
-            self.trainable_variables = [self.params]
+        super().__init__(persistent=persistent)
 
     def size(self, unroll):
         return 1

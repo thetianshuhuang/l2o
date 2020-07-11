@@ -104,6 +104,8 @@ class LossMixin:
             [2] Final state
         """
 
+        assert(problem is not None, "must bind problem.Problem as `problem`")
+
         if params is None:
             params = problem.get_parameters()
         if states is None:
@@ -155,5 +157,92 @@ class LossMixin:
             # cond2: objective is still finite
             if not tf.math.is_finite(loss):
                 break
+
+        return loss, params, states
+
+    @tf.function
+    def imitation_loss(
+            self, weights, data, params=None, states=None,
+            unroll=20, problem=None, is_batched=False, teacher=None):
+        """Get imitation learning loss.
+
+        The problem must be built in persistent mode for the teacher to use,
+        and the caller is responsible for resetting the problem when necessary.
+
+        See ``meta_loss`` for tensorflow quirks / rules.
+
+        Parameters
+        ----------
+        weights : tf.Tensor
+            Tensor specifying loss weights for each unroll iteration. For
+            example, [1 ... 1] indicates total loss, while [1/d ... 1/d]
+            indicates mean loss and [0 ... 0 1] final loss.
+        data : object
+            Nested structure containing data tensors.
+
+        Keyword Args
+        ------------
+        params : tf.Tensor[] (optional)
+            List of problem parameters. If None, is generated each time.
+        states : object (optional)
+            Nested structure containing state tensors.
+        unroll : int (bound)
+            Number of unroll iterations
+        problem : problems.Problem (bound)
+            Training problem
+        is_batched : bool (bound)
+            Batch training or full batch training?
+        teacher : tf.keras.optimizers.Optimizer (bound)
+            Optimizer to train against.
+
+        Returns
+        -------
+        (tf.Tensor, tf.Tensor[], object)
+            [0] Meta loss
+            [1] Final parameters
+            [2] Final state
+        """
+
+        assert(
+            teacher is not None,
+            "teacher must be `tf.keras.optimizers.Optimizer`")
+        assert(
+            hasattr(problem, 'trainable_variables'),
+            "problem must be built with `persistent=True`")
+
+        if params is None:
+            params = problem.get_parameters()
+        if states is None:
+            states = [self._initialize_state(p) for p in params]
+
+        # Loss accumulator
+        loss = 0.
+
+        # cond1: less than ``unroll`` iterations.
+        for i in tf.range(unroll):
+            # Unbatch
+            batch = [dim[i] for dim in data] if is_batched else data
+
+            # Compute gradient
+            with tf.GradientTape() as tape:
+                tape.watch(params)
+                current_obj = problem.objective(params, batch)
+            grads = tape.gradient(current_obj, params)
+
+            # Apply gradients
+            params, states = list(map(list, zip(*[
+                self._compute_update(*z) for z in zip(params, grads, states)
+            ])))
+
+            # Run teacher
+            _vars = problem.trainable_variables
+            teacher.minimize(
+                lambda: problem.objective(_vars, problem.internal), _vars)
+
+            # Loss is l2 between parameters
+            loss += weights[i] * tf.add_n([
+                tf.nn.l2_loss(student - teacher)
+                for student, teacher in zip(params, _vars)
+            ])
 
         return loss, params, states

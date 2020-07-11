@@ -5,10 +5,10 @@ import tensorflow as tf
 quad = [l2o.problems.ProblemSpec(
     l2o.problems.Quadratic, [20], {}
 )]
-# mlp = [l2o.problems.ProblemSpec(
-#     l2o.problems.mlp_classifier, [],
-#     {"layers": [128, ], "dataset": "mnist", "activation": "relu"}
-# )]
+mlp = [l2o.problems.ProblemSpec(
+    l2o.problems.mlp_classifier, [],
+    {"layers": [128, ], "dataset": "mnist", "activation": "relu"}
+)]
 
 
 def create():
@@ -34,7 +34,7 @@ def train(problems, repeat=1, epochs=1):
 
 
 def test_quadratic(opt):
-    problem = l2o.problems.Quadratic(20, test=True)
+    problem = l2o.problems.Quadratic(20, persistent=True)
     start = problem.test_objective(None)
     for _ in range(100):
         opt.minimize(
