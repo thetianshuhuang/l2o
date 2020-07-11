@@ -113,7 +113,7 @@ class LossMixin:
 
         # Compute initial objective value
         if is_batched:
-            init_obj = 0
+            init_obj = 0.
             for i in tf.range(unroll):
                 init_obj += problem.objective(params, [dim[i] for dim in data])
             init_obj /= tf.cast(unroll, tf.float32)
