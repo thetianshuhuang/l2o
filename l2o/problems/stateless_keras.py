@@ -102,10 +102,10 @@ class Dense:
     def __init__(
             self, units, activation=tf.nn.relu,
             kernel_initializer=tf.keras.initializers.GlorotUniform,
-            bias_inititializer=tf.keras.initializers.Zeros):
+            bias_initializer=tf.keras.initializers.Zeros):
 
         self.kernel_initializer = kernel_initializer()
-        self.bias_inititializer = bias_inititializer()
+        self.bias_initializer = bias_initializer()
 
         self.units = units
         self.activation = activation
@@ -119,7 +119,7 @@ class Dense:
     def get_parameters(self):
         return [
             self.kernel_initializer([self.input_shape, self.units]),
-            self.bias_inititializer([self.units])
+            self.bias_initializer([self.units])
         ]
 
     def call(self, params, x):
@@ -137,10 +137,10 @@ class Conv2D(Layer):
     def __init__(
             self, filters, kernel_size, stride=1, activation=tf.nn.relu,
             kernel_initializer=tf.keras.initializers.GlorotUniform,
-            bias_inititializer=tf.keras.initializers.Zeros):
+            bias_initializer=tf.keras.initializers.Zeros):
 
         self.kernel_initializer = kernel_initializer()
-        self.bias_inititializer = bias_inititializer()
+        self.bias_initializer = bias_initializer()
 
         self.filters = filters
         self.kernel_size = kernel_size
