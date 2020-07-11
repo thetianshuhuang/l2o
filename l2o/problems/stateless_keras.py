@@ -64,23 +64,6 @@ class Layer:
         raise NotImplementedError()
 
 
-class ImagePreprocess(Layer):
-    """Image preprocessing by converting to float and normalizing to [0,1].
-
-    Parameters
-    ----------
-    scale : float
-        Image max value, usually 255.
-    """
-
-    def __init__(self, scale=255.):
-
-        self.scale = float(scale)
-
-    def call(self, params, x):
-        return tf.cast(x, tf.float32) / self.scale
-
-
 class Dense:
     """Dense layer y = sigma(Wx + b)
 
@@ -150,10 +133,10 @@ class Conv2D(Layer):
     def build(self, input_shape, in_idx):
         self.in_idx = in_idx
         self.out_idx = in_idx + 2
-        self.input_dim = 1 if len(input_shape) < 4 else input_shape[3]
+        self.input_dim = input_shape[2]
         self.output_dim = [
-            math.ceil(input_shape[1] / self.stride),
-            math.ceil(input_shape[2] / self.stride), self.filters]
+            math.ceil(input_shape[0] / self.stride),
+            math.ceil(input_shape[1] / self.stride), self.filters]
         return self.output_dim, self.out_idx
 
     def get_parameters(self):

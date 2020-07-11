@@ -64,12 +64,22 @@ class Classifier(Problem):
         return self.loss(y, self.model.call(params, x))
 
 
-def _make_tfds(network, dataset="mnist", **kwargs):
-    """Helper function to create training problem using tensorflow_datasets"""
+def load_images(dataset):
 
     dataset, info = tfds.load(
         dataset, split="train", shuffle_files=True,
         with_info=True, as_supervised=True)
+
+    def _cast(x, y):
+        return tf.cast(x, tf.float32), y
+
+    return dataset.map(_cast), info
+
+
+def _make_tfds(network, dataset="mnist", **kwargs):
+    """Helper function to create training problem using tensorflow_datasets"""
+
+    dataset, info = load_images(dataset)
 
     try:
         input_shape = info.features['image'].shape
@@ -126,8 +136,7 @@ def mlp_classifier(
 
     def _network(input_shape, labels):
         return Sequential(
-            [ImagePreprocess(255.)]
-            + [Dense(u, activation=activation) for u in layers]
+            [Dense(u, activation=activation) for u in layers]
             + [Dense(labels, activation=tf.nn.softmax)], input_shape)
 
     return _make_tfds(_network, dataset=dataset, **kwargs)
@@ -171,10 +180,8 @@ def conv_classifier(
 
     def _network(input_shape, labels):
         return Sequential(
-            [ImagePreprocess(255.)]
-            + [Conv2D(f, k, stride=s, activation=activation)
-               for f, k, s in layers]
+            [Conv2D(f, k, stride=s, activation=activation)
+             for f, k, s in layers]
             + [Dense(labels, activation=tf.nn.softmax)], input_shape)
 
     return _make_tfds(_network, dataset=dataset, **kwargs)
-

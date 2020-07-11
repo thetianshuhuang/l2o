@@ -48,9 +48,7 @@ def test_quadratic(opt):
 
 def test_classify(opt):
 
-    dataset, info = tfds.load(
-        "mnist", split="train", shuffle_files=True, with_info=True,
-        as_supervised=True)
+    dataset, info = l2o.problems.load_images("mnist")
 
     model = tf.keras.Sequential([
         tf.keras.layers.Flatten(input_shape=info.features['image'].shape),
