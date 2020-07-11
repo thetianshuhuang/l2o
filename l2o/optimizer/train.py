@@ -51,13 +51,14 @@ class MetaOptimizerMgr:
             return self.learner.imitation_loss.get_concrete_function(
                 weights, data, teacher=teacher, **kwargs)
 
-    def _train_full(self, spec, teacher=None, repeat=1):
+    def _train_full(self, problem, teacher=None, repeat=1):
         """Full batch training.
 
         Parameters
         ----------
-        spec : problem.ProblemSpec
-            Problem specification to build. Contains callable & args.
+        problem : problem.Problem
+            Problem to train on. Presence of ``.get_dataset()`` or
+            ``.get_internal()`` indicates full or minibatch.
 
         Keyword Args
         ------------
@@ -69,7 +70,6 @@ class MetaOptimizerMgr:
         """
 
         pbar = tf.keras.utils.Progbar(repeat, unit_name='step')
-        problem = spec.build(persistent=teacher is not None)
         concrete_loss = None
 
         for _ in range(repeat):
@@ -93,13 +93,14 @@ class MetaOptimizerMgr:
 
             pbar.add(1, values=[("loss", loss)])
 
-    def _train_batch(self, spec, teacher=None, epochs=1):
+    def _train_batch(self, problem, teacher=None, epochs=1):
         """Minibatch training.
 
         Parameters
         ----------
-        spec : problem.ProblemSpec
-            Problem specification to build. Contains callable & args.
+        problem : problem.Problem
+            Problem to train on. Presence of ``.get_dataset()`` or
+            ``.get_internal()`` indicates full or minibatch.
 
         Keyword Args
         ------------
@@ -109,7 +110,6 @@ class MetaOptimizerMgr:
             Number of epochs to run for.
         """
 
-        problem = spec.build(persistent=teacher is not None)
         concrete_loss = None
 
         params = problem.get_parameters()
@@ -171,10 +171,11 @@ class MetaOptimizerMgr:
         start = time.time()
         for itr, spec in enumerate(problems):
             spec.print(itr)
+            problem = spec.build(persistent=teacher is not None)
 
-            if hasattr(spec, "get_dataset"):
-                self._train_batch(spec, teacher=teacher, epochs=epochs)
+            if hasattr(problem, "get_dataset"):
+                self._train_batch(problem, teacher=teacher, epochs=epochs)
             else:
-                self._train_full(spec, teacher=teacher, repeat=repeat)
+                self._train_full(problem, teacher=teacher, repeat=repeat)
 
         return time.time() - start

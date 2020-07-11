@@ -37,6 +37,7 @@ class Classifier(Problem):
             self, model, dataset, loss, persistent=False,
             shuffle_buffer=None, batch_size=32, size=None, **kwargs):
 
+        self.model = model
         self.loss = loss
         self.dataset = dataset
 

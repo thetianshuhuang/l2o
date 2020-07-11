@@ -44,5 +44,5 @@ class Quadratic(Problem):
 
     def test_objective(self, _):
         return tf.nn.l2_loss(
-            tf.matmul(self.internal['W'] - self.trainable_variables)
+            tf.matmul(self.internal['W'], self.trainable_variables)
             - self.internal['y'])
