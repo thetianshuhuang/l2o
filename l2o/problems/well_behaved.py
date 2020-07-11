@@ -43,4 +43,5 @@ class Quadratic(Problem):
             tf.matmul(internal['W'], params[0]) - internal['y'])
 
     def test_objective(self, _):
-        return tf.nn.l2_loss(tf.matmul(self.W, self.params) - self.y)
+        return tf.nn.l2_loss(
+            tf.matmul(self.internal['W'] - self.params) - self.internal['y'])

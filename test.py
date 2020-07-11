@@ -1,5 +1,6 @@
 import l2o
 import tensorflow as tf
+import tensorflow_datasets as tfds
 
 
 quad = [l2o.problems.ProblemSpec(
@@ -43,14 +44,23 @@ def test_quadratic(opt):
 
 
 def test_classify(opt):
-    problem = l2o.problems.mlp_classifier(
-        layers=[128, ], dataset="kmnist", activation="relu")
-    problem.model.compile(
+
+    dataset, info = tfds.load(
+        "mnist", split="train", shuffle_files=True, with_info=True,
+        as_supervised=True)
+
+    model = tf.keras.Sequential([
+        tf.keras.layers.Flatten(input_shape=info.features['image'].shape),
+        tf.keras.layers.Dense(128, activation=tf.nn.relu),
+        tf.keras.layers.Dense(10, activation="softmax")
+    ])
+
+    model.compile(
         opt,
         tf.keras.losses.SparseCategoricalCrossentropy())
-    problem.model.fit(problem.dataset.batch(32), epochs=5)
+    model.fit(dataset.batch(32), epochs=5)
 
-    problem.model.compile(
+    model.compile(
         tf.keras.optimizers.Adam(),
         tf.keras.losses.SparseCategoricalCrossentropy())
-    problem.model.fit(problem.dataset.batch(32), epochs=5)
+    model.fit(dataset.batch(32), epochs=5)

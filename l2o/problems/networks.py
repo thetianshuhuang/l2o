@@ -77,7 +77,7 @@ class MLPClassifier:
 
         self.layer_shapes = []
         for i, layer in enumerate(layers):
-            out = self.out_size if i == len(layers) else layers[i + 1]
+            out = self.out_size if i + 1 == len(layers) else layers[i + 1]
             self.layer_shapes.append({
                 "kernel": [layer, out],
                 "bias": [out]
@@ -98,11 +98,16 @@ class MLPClassifier:
         x = data
 
         prev = 0
-        for layer in self.layer_indices:
+        for idx, layer in enumerate(self.layer_indices):
             kernel, bias = params[prev, layer]
             prev = layer
 
-            x = self.activation(tf.matmul(kernel, x) + bias)
+            x = tf.matmul(kernel, x) + bias
+
+            if idx == len(self.layer_indices) - 1:
+                x = tf.nn.softmax(x)
+            else:
+                x = self.activation(x)
 
         return x
 
