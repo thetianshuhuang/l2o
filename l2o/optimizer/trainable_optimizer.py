@@ -2,6 +2,7 @@ import tensorflow as tf
 
 from .loss_mixins import LossMixin
 from .tf_utils import _var_key
+from .utils import wrap_variables, nested_assign
 
 
 class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
@@ -48,11 +49,32 @@ class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
 
         self._state_dict = {}
 
-    def assign_state(self, var, value):
+    def add_state(self, var, value):
+        """Add state corresponding to a given variable for optimization.
 
+        Parameters
+        ----------
+        var : tf.Variable
+            Variable that the state corresponds to
+        value : object
+            Nested structure of tensors to initialize state with
+        """
+        value = wrap_variables(value, trainable=False)
         self._state_dict[_var_key(var)] = value
 
     def get_state(self, var):
+        """Get current state nested structure variables.
+
+        Parameters
+        ----------
+        var : tf.Variable
+            Variable to look up
+
+        Returns
+        -------
+        object
+            Nested structure of variables corresponding to ``var``.
+        """
         return self._state_dict[_var_key(var)]
 
     def _create_slots(self, var_list):
@@ -64,7 +86,7 @@ class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
             List of variables to be optimized on; passed by parent.
         """
         for var in var_list:
-            self.assign_state(var, self._initialize_state(var))
+            self.add_state(var, self._initialize_state(var))
 
     def _initialize_state(self, var):
         """Initialize any states required for this variable.
@@ -111,9 +133,10 @@ class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
             Tensorflow operation that assigns new values to the variable and
             defines dependencies (used for control flow)
         """
-        new_var, state = self._compute_update(var, grad, self.get_state(var))
+        state = self.get_state(var)
+        new_var, new_state = self._compute_update(var, grad, state)
 
-        self.assign_state(var, state)
+        nested_assign(state, new_state)
         return var.assign(new_var)
 
     def _resource_update_sparse(self, grad, var):
