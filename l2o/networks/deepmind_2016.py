@@ -51,8 +51,6 @@ class DMOptimizer(tf.keras.Model):
             [1] : New state
         """
 
-        input_shape = param.shape
-
         x = tf.reshape(inputs, [-1, 1])
 
         states_new = {}
@@ -61,7 +59,7 @@ class DMOptimizer(tf.keras.Model):
             x, states_new[hidden_name] = layer(x, states[hidden_name])
         x = self.delta(x)
 
-        return tf.reshape(x, input_shape), states_new
+        return tf.reshape(x, param.shape), states_new
 
     def get_initial_state(self, var):
         """Get initial model state as a dictionary
