@@ -63,7 +63,7 @@ def validate_quadratic():
     return differences
 
 
-def get_model(conv=True):
+def get_model(info, conv=True):
     if conv:
         return tf.keras.Sequential([
             tf.keras.layers.Conv2D(
@@ -90,14 +90,14 @@ def test_classify(opt=None, conv=True):
 
     dataset, info = l2o.problems.load_images("mnist")
 
-    model = get_model(conv=conv)
+    model = get_model(info, conv=conv)
     print(model.summary())
     model.compile(
         opt,
         tf.keras.losses.SparseCategoricalCrossentropy())
     model.fit(dataset.batch(32), epochs=2)
 
-    model = get_model(conv=conv)
+    model = get_model(info, conv=conv)
     model.compile(
         tf.keras.optimizers.Adam(),
         tf.keras.losses.SparseCategoricalCrossentropy())

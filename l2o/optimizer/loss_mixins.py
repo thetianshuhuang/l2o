@@ -227,8 +227,7 @@ class LossMixin:
 
             # Run teacher
             _vars = problem.trainable_variables
-            teacher.minimize(
-                lambda: problem.objective(_vars, problem.internal), _vars)
+            teacher.minimize(lambda: problem.objective(_vars, batch), _vars)
 
             # Loss is l2 between parameters
             loss += weights[i] * tf.add_n([

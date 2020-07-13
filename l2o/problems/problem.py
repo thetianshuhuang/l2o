@@ -22,7 +22,8 @@ class Problem:
         if persistent:
             self.trainable_variables = [
                 tf.Variable(v) for v in self.get_parameters()]
-            self.reset()
+            if hasattr(self, "get_internal"):
+                self.internal = self.get_internal()
 
     def reset(self, values=None):
         """Reset problem.

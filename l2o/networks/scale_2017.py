@@ -8,7 +8,8 @@ from .moments import rms_scaling
 class ScaleBasicOptimizer(tf.keras.Model):
 
     def __init__(
-            self, layers, init_lr=(1., 1.), name="ScaleBasicOptimizer"):
+            self, layers=(20, 20), init_lr=(1., 1.),
+            name="ScaleBasicOptimizer"):
         """RNN that operates on each coordinate independently, as specified by
         the scale paper.
 
@@ -20,7 +21,7 @@ class ScaleBasicOptimizer(tf.keras.Model):
 
         self.init_lr = init_lr
 
-        self.layers = [LSTMCell(hsize) for hsize in layers]
+        self.recurrent = [LSTMCell(hsize) for hsize in layers]
 
         self.delta = Dense(1, input_shape=(layers[-1],), activation="sigmoid")
         self.decay = Dense(1, input_shape=(layers[-1],))
@@ -32,7 +33,7 @@ class ScaleBasicOptimizer(tf.keras.Model):
             inputs, states["decay"], states["rms"])
 
         x = tf.reshape(grad, [-1, 1])
-        for i, layer in enumerate(self.layers):
+        for i, layer in enumerate(self.recurrent):
             hidden_name = "rnn_{}".format(i)
             x, states[hidden_name] = layer(x, states[hidden_name])
 

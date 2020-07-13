@@ -26,7 +26,7 @@ class DMOptimizer(tf.keras.Model):
         defaults.update(kwargs)
 
         self.recurrent = [LSTMCell(hsize, **defaults) for hsize in layers]
-        self.postprocess = Dense(1, input_shape=(layers[-1],))
+        self.delta = Dense(1, input_shape=(layers[-1]), activation="sigmoid")
 
     def call(self, param, inputs, states):
         """Network call override (handled by tf.keras.Model)
@@ -59,7 +59,7 @@ class DMOptimizer(tf.keras.Model):
         for i, layer in enumerate(self.recurrent):
             hidden_name = "lstm_{}".format(i)
             x, states_new[hidden_name] = layer(x, states[hidden_name])
-        x = self.postprocess(x)
+        x = self.delta(x)
 
         return tf.reshape(x, input_shape), states_new
 

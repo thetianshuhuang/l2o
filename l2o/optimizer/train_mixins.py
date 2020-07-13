@@ -156,7 +156,7 @@ class TrainingMixin:
             for batch in dataset:
 
                 if meta.teacher is not None:
-                    meta.teacher.reset(values=params)
+                    meta.problem.reset(values=params)
 
                 # Data dimensions are ``[unroll, batch] + [data]``
                 batch_stacked = [
