@@ -160,7 +160,7 @@ class TrainingMixin:
 
                 # Data dimensions are ``[unroll, batch] + [data]``
                 batch_stacked = [
-                    tf.stack(tf.split(dim, num_or_size_splits=self.unroll))
+                    tf.stack(tf.split(dim, num_or_size_splits=unroll))
                     for dim in batch]
 
                 if concrete_loss is None:

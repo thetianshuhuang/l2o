@@ -63,15 +63,9 @@ def validate_quadratic():
     return differences
 
 
-def test_classify(opt=None, conv=True):
-
-    if opt is None:
-        opt = load()
-
-    dataset, info = l2o.problems.load_images("mnist")
-
+def get_model(conv=True):
     if conv:
-        model = tf.keras.Sequential([
+        return tf.keras.Sequential([
             tf.keras.layers.Conv2D(
                 32, 5, activation=tf.nn.relu,
                 input_shape=info.features['image'].shape),
@@ -81,20 +75,29 @@ def test_classify(opt=None, conv=True):
             tf.keras.layers.Dense(10, activation="softmax")
         ])
     else:
-        model = tf.keras.Sequential([
+        return tf.keras.Sequential([
             tf.keras.layers.Flatten(input_shape=info.features['image'].shape),
             tf.keras.layers.Dense(128, activation=tf.nn.relu),
             tf.keras.layers.Dense(64, activation=tf.nn.relu),
             tf.keras.layers.Dense(10, activation="softmax")
         ])
 
-    print(model.summary())
 
+def test_classify(opt=None, conv=True):
+
+    if opt is None:
+        opt = load()
+
+    dataset, info = l2o.problems.load_images("mnist")
+
+    model = get_model(conv=conv)
+    print(model.summary())
     model.compile(
         opt,
         tf.keras.losses.SparseCategoricalCrossentropy())
     model.fit(dataset.batch(32), epochs=2)
 
+    model = get_model(conv=conv)
     model.compile(
         tf.keras.optimizers.Adam(),
         tf.keras.losses.SparseCategoricalCrossentropy())

@@ -201,13 +201,6 @@ class LossMixin:
             [2] Final state
         """
 
-        assert(
-            teacher is not None,
-            "teacher must be `tf.keras.optimizers.Optimizer`")
-        assert(
-            hasattr(problem, 'trainable_variables'),
-            "problem must be built with `persistent=True`")
-
         if params is None:
             params = problem.get_parameters()
         if states is None:
