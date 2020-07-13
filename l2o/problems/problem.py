@@ -2,9 +2,22 @@ import tensorflow as tf
 
 
 class Problem:
-    """Training problem."""
+    """Training problem.
 
-    def __init__(self, persistent=False):
+    Keyword Args
+    ------------
+    persistent : bool
+        If True, then the parameters are held internally as variables to be
+        used so that ``tf.keras.optimizers.Optimizer`` can act on them.
+        If False, then the problem will not generate its own parameters.
+    noise_stddev : float
+        Normally distributed noise to add to gradients during training to
+        simulate minibatch noise
+    """
+
+    def __init__(self, persistent=False, noise_stddev=0.0):
+
+        self.noise_stddev = noise_stddev
 
         if persistent:
             self.trainable_variables = [
@@ -12,6 +25,14 @@ class Problem:
             self.reset()
 
     def reset(self, values=None):
+        """Reset problem.
+
+        Keyword Args
+        ------------
+        values : tf.Tensor
+            New value to reset parameters to. If None, parameters are reset
+            using the ``get_parameters()`` method.
+        """
         if hasattr(self, "get_internal"):
             self.internal = self.get_internal()
 
@@ -22,7 +43,18 @@ class Problem:
             v.assign(new)
 
     def size(self, unroll):
-        """Get number of batches for this unroll duration."""
+        """Get number of batches for this unroll duration.
+
+        Parameters
+        ----------
+        unroll : int
+            Unroll duration
+
+        Returns
+        -------
+        int
+            Number of batches. Use for progress bar size.
+        """
         return None
 
     def get_parameters(self):

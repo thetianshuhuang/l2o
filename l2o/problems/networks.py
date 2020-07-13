@@ -35,7 +35,7 @@ class Classifier(Problem):
 
     def __init__(
             self, model, loss, dataset, persistent=False,
-            shuffle_buffer=None, batch_size=32, size=None, **kwargs):
+            shuffle_buffer=None, batch_size=32, size=None):
 
         self.model = model
         self.loss = loss

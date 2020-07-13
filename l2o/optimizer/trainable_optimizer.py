@@ -1,16 +1,17 @@
 import tensorflow as tf
 
 from .loss_mixins import LossMixin
+from .train_mixins import TrainingMixin
 from .tf_utils import _var_key
 from .utils import wrap_variables, nested_assign
 
 
-class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
+class TrainableOptimizer(
+        LossMixin, TrainingMixin, tf.keras.optimizers.Optimizer):
 
     def __init__(
             self, name,
             use_log_objective=True, obj_train_max_multiplier=-1,
-            # use_second_derivatives=True,
             use_numerator_epsilon=True, epsilon=1e-6, **kwargs):
         """Initializes the optimizer with the given name and settings.
 
@@ -28,10 +29,6 @@ class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
             The maximum multiplier for the increase in the objective before
             meta-training is stopped. If <= 0, meta-training is not stopped
             early.
-        use_second_derivatives : bool (NOT IMPLEMENTED)
-            Whether this optimizer uses second derivatives in meta-training.
-            This should be set to False if some second derivatives in the
-            meta-training problem set are not defined in tensorflow.
         use_numerator_epsilon : bool
             Whether to use epsilon in the numerator when scaling the
             problem objective during meta-training.
@@ -59,8 +56,9 @@ class TrainableOptimizer(LossMixin, tf.keras.optimizers.Optimizer):
         value : object
             Nested structure of tensors to initialize state with
         """
-        value = wrap_variables(value, trainable=False)
-        self._state_dict[_var_key(var)] = value
+        if _var_key(var) not in self._state_dict:
+            value = wrap_variables(value, trainable=False)
+            self._state_dict[_var_key(var)] = value
 
     def get_state(self, var):
         """Get current state nested structure variables.

@@ -15,8 +15,7 @@ class DMOptimizer(tf.keras.Model):
         Passed onto tf.keras.Model
     """
 
-    def __init__(
-            self, layers=(20, 20), name="DMOptimizer", **kwargs):
+    def __init__(self, layers=(20, 20), name="DMOptimizer", **kwargs):
 
         super(DMOptimizer, self).__init__(name=name)
 

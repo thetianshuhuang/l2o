@@ -50,7 +50,7 @@ def nested_assign(x, y):
         x.assign(y)
     if isinstance(x, list) or isinstance(x, tuple):
         for _x, _y in zip(x, y):
-            _x.assign(_y)
+            nested_assign(_x, _y)
     if isinstance(x, dict):
         for k in x:
-            x[k].assign(y[k])
+            nested_assign(x[k], y[k])

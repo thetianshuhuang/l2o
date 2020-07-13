@@ -17,14 +17,17 @@ class Quadratic(Problem):
         If True, then the parameters are held internally as variables to be
         used so that ``tf.keras.optimizers.Optimizer`` can act on them.
         If False, then the problem will not generate its own parameters.
+    noise_stddev : float
+        Normally distributed noise to add to gradients during training to
+        simulate minibatch noise
     """
 
-    def __init__(self, ndim, persistent=False, **kwargs):
+    def __init__(self, ndim, persistent=False, noise_stddev=0.0):
 
         # save ndim
         self.ndim = ndim
 
-        super().__init__(persistent=persistent)
+        super().__init__(persistent=persistent, noise_stddev=noise_stddev)
 
     def size(self, unroll):
         return 1
