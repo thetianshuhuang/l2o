@@ -24,8 +24,9 @@ class ScaleBasicOptimizer(tf.keras.Model):
         self.recurrent = [LSTMCell(hsize) for hsize in layers]
 
         self.delta = Dense(1, input_shape=(layers[-1],), activation="sigmoid")
-        self.decay = Dense(1, input_shape=(layers[-1],))
-        self.learning_rate_change = Dense(1, input_shape=(layers[-1],))
+        self.decay = Dense(1, input_shape=(layers[-1],), activation="sigmoid")
+        self.learning_rate_change = Dense(
+            1, input_shape=(layers[-1],), activation="sigmoid")
 
     def call(self, param, inputs, states):
 
@@ -65,9 +66,9 @@ class ScaleBasicOptimizer(tf.keras.Model):
 
         # State for analytical computations
         analytical_state = {
-            "rms": tf.ones(tf.shape(var)),
+            "rms": tf.zeros(tf.shape(var)),
             "learning_rate": init_lr,
-            "decay": tf.ones(tf.shape(var))
+            "decay": tf.zeros(tf.shape(var))
         }
 
         return dict(**rnn_state, **analytical_state)
