@@ -17,14 +17,14 @@ conv = [l2o.problems.ProblemSpec(
 
 
 def create():
-    net = l2o.networks.DMOptimizer()
+    net = l2o.networks.ScaleBasicOptimizer()
     opt = l2o.optimizer.CoordinateWiseOptimizer(net)
     opt.save("dmoptimizer")
 
 
 def load():
     return l2o.optimizer.CoordinateWiseOptimizer(
-        l2o.networks.DMOptimizer(), weights_file="dmoptimizer")
+        l2o.networks.ScaleBasicOptimizer(), weights_file="dmoptimizer")
 
 
 def train_meta(problems, repeat=1, epochs=1):
