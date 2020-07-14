@@ -3,6 +3,43 @@ import tensorflow as tf
 
 class LossMixin:
 
+    def _get_state(self, problem, params=None, states=None, global_state=None):
+        """Helper function to initialize or use existing states.
+
+        Each argument is generated as appropriate if None.
+
+        Parameters
+        ----------
+        problem : problems.Problem
+            Current problem
+
+        Keyword Args
+        ------------
+        params : tf.Tensor[]
+            List of problem parameters.
+        states : object
+            Nested structure containing state tensors.
+        global_state : object
+            Nested structure containing global state information.
+
+        Returns
+        -------
+        (tf.Tensor[], object, object)
+            [0] params or generated params
+            [1] states or generated states
+            [2] global_state or generated global_state or None (if no
+                ``get_initial_state_global`` method)
+        """
+        if params is None:
+            params = problem.get_parameters()
+        if states is None:
+            states = [self._initialize_state(p) for p in params]
+        if global_state is None:
+            if hasattr(self.network, "get_initial_state_global"):
+                global_state = self.network.get_initial_state_global()
+
+        return params, states, global_state
+
     def _scale_objective(self, objective, initial_obj, weight):
         """Normalizes the objective based on the initial objective value.
         This function is not a @tf.function since it should be wrapped by
@@ -56,7 +93,7 @@ class LossMixin:
 
     @tf.function
     def meta_loss(
-            self, weights, data, params=None, states=None,
+            self, weights, data, params=None, states=None, global_state=None,
             unroll=20, problem=None, is_batched=False, noise_stddev=0.0):
         """Get meta-training loss.
 
@@ -87,6 +124,8 @@ class LossMixin:
             List of problem parameters. If None, is generated each time.
         states : object (optional)
             Nested structure containing state tensors.
+        global_state : object (optional)
+            Nested structure containing global state information.
         unroll : int (bound)
             Number of unroll iterations
         problem : problems.Problem (bound)
@@ -104,10 +143,8 @@ class LossMixin:
             [2] Final state
         """
 
-        if params is None:
-            params = problem.get_parameters()
-        if states is None:
-            states = [self._initialize_state(p) for p in params]
+        params, states, global_state = self._get_state(
+            problem, params=params, states=states, global_state=global_state)
 
         # Compute initial objective value
         if is_batched:
@@ -149,6 +186,8 @@ class LossMixin:
             params, states = list(map(list, zip(*[
                 self._compute_update(*z) for z in zip(params, grads, states)
             ])))
+            if global_state is not None:
+                self.network.call_global(states, global_state)
 
             # Add to loss
             loss += self._scale_objective(current_obj, init_obj, weights[i])
@@ -156,11 +195,11 @@ class LossMixin:
             if not tf.math.is_finite(loss):
                 break
 
-        return loss, params, states
+        return loss, params, states, global_state
 
     @tf.function
     def imitation_loss(
-            self, weights, data, params=None, states=None,
+            self, weights, data, params=None, states=None, global_state=None,
             unroll=20, problem=None, is_batched=False, teacher=None):
         """Get imitation learning loss.
 
@@ -184,6 +223,8 @@ class LossMixin:
             List of problem parameters. If None, is generated each time.
         states : object (optional)
             Nested structure containing state tensors.
+        global_state : object (optional)
+            Nested structure containing global state information.
         unroll : int (bound)
             Number of unroll iterations
         problem : problems.Problem (bound)
@@ -201,10 +242,8 @@ class LossMixin:
             [2] Final state
         """
 
-        if params is None:
-            params = problem.get_parameters()
-        if states is None:
-            states = [self._initialize_state(p) for p in params]
+        params, states, global_state = self._get_state(
+            problem, params=params, states=states, global_state=global_state)
 
         # Loss accumulator
         loss = 0.
@@ -224,6 +263,8 @@ class LossMixin:
             params, states = list(map(list, zip(*[
                 self._compute_update(*z) for z in zip(params, grads, states)
             ])))
+            if global_state is not None:
+                self.network.call_global(states, global_state)
 
             # Run teacher
             _vars = problem.trainable_variables
@@ -235,4 +276,4 @@ class LossMixin:
                 for student, teacher in zip(params, _vars)
             ])
 
-        return loss, params, states
+        return loss, params, states, global_state

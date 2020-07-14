@@ -6,40 +6,55 @@ from .moments import rms_scaling
 
 
 class ScaleBasicOptimizer(tf.keras.Model):
+    """RNN that operates on each coordinate independently, as specified by
+    the scale paper.
+
+    Keyword Args
+    ------------
+    layers : int[]
+        Sizes of LSTM layers.
+    init_lr : float | float[2]
+        Learning rate initialization parameters. If ``float``, all parameter
+        learning rates are initialized as a constant. If ``tuple``, the
+        learning rates are initialized from a
+        ``Normal(init_lr[0], init_lr[1])``.
+    name : str
+        Name of optimizer network.
+    **kwargs : dict
+        Passed onto tf.keras.layers.LSTMCell
+    """
 
     def __init__(
             self, layers=(20, 20), init_lr=(1., 1.),
-            name="ScaleBasicOptimizer"):
-        """RNN that operates on each coordinate independently, as specified by
-        the scale paper.
+            name="ScaleBasicOptimizer", **kwargs):
 
-        Parameters
-        ----------
-        """
-
-        super(ScaleBasicOptimizer, self).__init__(name=name)
+        super().__init__(name=name)
 
         self.init_lr = init_lr
 
-        self.recurrent = [LSTMCell(hsize) for hsize in layers]
+        self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
 
-        self.delta = Dense(1, input_shape=(layers[-1],), activation="sigmoid")
+        self.delta = Dense(1, input_shape=(layers[-1],))
         self.decay = Dense(1, input_shape=(layers[-1],), activation="sigmoid")
         self.learning_rate_change = Dense(
             1, input_shape=(layers[-1],), activation="sigmoid")
 
     def call(self, param, inputs, states):
 
+        # Scaling
         grad, states["rms"] = rms_scaling(
             inputs, states["decay"], states["rms"])
 
+        # Recurrent
         x = tf.reshape(grad, [-1, 1])
         for i, layer in enumerate(self.recurrent):
             hidden_name = "rnn_{}".format(i)
             x, states[hidden_name] = layer(x, states[hidden_name])
 
-        states["decay"] = self.decay(x)
-        states["learning_rate"] *= 2. * self.learning_rate_change(x)
+        # Update scaling hyperparameters
+        states["decay"] = tf.reshape(self.decay(x), param.shape)
+        states["learning_rate"] *= tf.reshape(
+            2. * self.learning_rate_change(x), param.shape)
         update = tf.reshape(
             states["learning_rate"] * self.delta(x), param.shape)
 

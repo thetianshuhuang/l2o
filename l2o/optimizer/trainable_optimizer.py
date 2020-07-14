@@ -123,7 +123,7 @@ class TrainableOptimizer(
             Variable containing weights that grad is computed for. Should have
             the same shape as grad.
         apply_state : dict
-            Ignored for now.
+            Ignored.
 
         Returns
         -------

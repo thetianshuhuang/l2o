@@ -12,12 +12,12 @@ class DMOptimizer(tf.keras.Model):
     name : str
         Name of optimizer network.
     **kwargs : dict
-        Passed onto tf.keras.Model
+        Passed onto tf.keras.layers.LSTMCell
     """
 
     def __init__(self, layers=(20, 20), name="DMOptimizer", **kwargs):
 
-        super(DMOptimizer, self).__init__(name=name)
+        super().__init__(name=name)
 
         defaults = {
             "kernel_initializer": "truncated_normal",
@@ -26,31 +26,9 @@ class DMOptimizer(tf.keras.Model):
         defaults.update(kwargs)
 
         self.recurrent = [LSTMCell(hsize, **defaults) for hsize in layers]
-        self.delta = Dense(1, input_shape=(layers[-1]), activation="sigmoid")
+        self.delta = Dense(1, input_shape=(layers[-1]))
 
     def call(self, param, inputs, states):
-        """Network call override (handled by tf.keras.Model)
-
-        NOTE: ``inputs`` may have undefined dimensions due to gradients not
-        yet being connected to the graph yet. The dimension of ``param`` should
-        be used instead.
-
-        Parameters
-        ----------
-        param : tf.Variable
-            Corresponding input variable.
-        inputs : tf.Tensor
-            Inputs; should be gradients.
-        states : dict
-            Current hidden states; encoded by .get_initial_state
-
-        Returns
-        -------
-        (tf.Tensor, dict)
-            [0] : Output; gradient delta
-            [1] : New state
-        """
-
         x = tf.reshape(inputs, [-1, 1])
 
         states_new = {}
@@ -62,19 +40,6 @@ class DMOptimizer(tf.keras.Model):
         return tf.reshape(x, param.shape), states_new
 
     def get_initial_state(self, var):
-        """Get initial model state as a dictionary
-
-        Parameters
-        ----------
-        var : tf.Variable
-            Variable to create initial states for
-
-        Returns
-        -------
-        dict (str -> tf.Tensor)
-            Hidden state information serialized by string keys.
-        """
-
         batch_size = tf.size(var)
         return {
             "lstm_{}".format(i): layer.get_initial_state(
