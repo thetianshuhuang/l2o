@@ -37,6 +37,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
         self.timescales = timescales
         self.init_lr = init_lr
+        self.epsilon = epsilon
 
         # Parameter, Tensor, & Global RNNs (may have different size)
         self.param_rnn = GRUCell(param_units, **kwargs)
@@ -115,7 +116,8 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         """
         # New learning rate
         # Eq 7, 8
-        eta = self.delta_nu(states["param"]) + states["eta_bar"]
+        d_eta = tf.reshape(self.delta_nu(states["param"]), tf.shape(param))
+        eta = d_eta + states["eta_bar"]
         states["eta_bar"] = (
             self.gamma * states["eta_bar"] + (1 - self.gamma) * eta)
 
@@ -125,12 +127,10 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
         # Direction
         # Eq 5
-        # [var size, 1] -> [*var shape]
-        d_theta = self.d_theta(states["param"])
-        delta_theta = tf.reshape(
+        d_theta = tf.reshape(self.d_theta(states["param"]), tf.shape(param))
+        delta_theta = (
             tf.exp(eta) * d_theta * tf.cast(tf.size(param), tf.float32)
-            / (tf.norm(d_theta, ord=2) + self.epsilon),
-            tf.shape(param))
+            / (tf.norm(d_theta, ord=2) + self.epsilon))
 
         return delta_theta, eta_rel
 
