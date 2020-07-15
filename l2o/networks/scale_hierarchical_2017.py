@@ -20,6 +20,8 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         IID exp(unif(log(init_lr))).
     timescales : int
         Number of timescales to compute momentum for.
+    epsilon : float
+        Denominator epsilon for normalization operation in case input is 0.
     name : str
         Name of optimizer network
     **kwargs : dict
@@ -28,7 +30,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
     def __init__(
             self, param_units=10, tensor_units=5, global_units=5,
-            init_lr=(1e-6, 1e-2), timescales=1,
+            init_lr=(1e-6, 1e-2), timescales=1, epsilon=1e-6,
             name="ScaleHierarchicalOptimizer", **kwargs):
 
         super().__init__(name=name)
@@ -127,7 +129,8 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         d_theta = self.d_theta(states["param"])
         delta_theta = tf.reshape(
             tf.exp(eta) * d_theta * tf.cast(tf.size(param), tf.float32)
-            / tf.norm(d_theta, ord=2), tf.shape(param))
+            / (tf.norm(d_theta, ord=2) + self.epsilon),
+            tf.shape(param))
 
         return delta_theta, eta_rel
 

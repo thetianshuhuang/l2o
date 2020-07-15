@@ -31,13 +31,11 @@ def rms_momentum(grad, m, v, beta_1=0.9, beta_2=0.9):
 
     # At initialization (i.e. m = v = 0), initialize m and v with current grad.
     if (tf.math.count_nonzero(m) == 0) and (tf.math.count_nonzero(v) == 0):
-        m = grad
-        v = tf.square(grad)
+        return grad, tf.square(grad)
     else:
-        m = beta_1 * m + (1. - beta_1) * grad
-        v = beta_2 * v + (1. - beta_2) * tf.square(grad)
-
-    return m, v
+        return (
+            beta_1 * m + (1. - beta_1) * grad,
+            beta_2 * v + (1. - beta_2) * tf.square(grad))
 
 
 def rms_scaling(grad, decay, ms, epsilon=1e-16):
