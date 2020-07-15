@@ -70,7 +70,7 @@ class TrainingMixin:
 
     def _step(
             self, optimizer, concrete_loss, weights, data,
-            params=None, states=None):
+            params=None, states=None, global_state=None):
         """Helper function to run for a single step."""
 
         # Specify trainable_variables specifically for efficiency
@@ -78,14 +78,15 @@ class TrainingMixin:
             tape.watch(self.trainable_variables)
             # Other arugments of ``concrete_loss`` are bound and do not
             # need to be passed.
-            loss, params, states = concrete_loss(
-                weights, data, params=params, states=states)
+            loss, params, states, global_state = concrete_loss(
+                weights, data,
+                params=params, states=states, global_state=global_state)
         # Standard apply_gradient paradigam
         # Used instead of ``optimizer.minimize`` to expose the current loss
         grads = tape.gradient(loss, self.trainable_variables)
         optimizer.apply_gradients(zip(grads, self.trainable_variables))
 
-        return loss, params, states
+        return loss, params, states, global_state
 
     def _train_full(self, meta, repeat=1):
         """Full batch training.
@@ -119,6 +120,7 @@ class TrainingMixin:
             if concrete_loss is None:
                 concrete_loss = self._make_cf(meta, weights, data, unroll)
 
+            # Ignore all param & state arguments
             loss, _, _, _ = self._step(
                 meta.optimizer, concrete_loss, weights, data)
 

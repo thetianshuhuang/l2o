@@ -63,7 +63,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         """
         # [1, units] -> [num tensors, 1, units] -> [1, units]
         inputs = tf.reduce_mean(tf.stack(
-            state["tensor"] for state in states), 0)
+            [state["tensor"] for state in states]), 0)
         global_state, _ = self.global_rnn(inputs, global_state)
         return global_state
 
@@ -174,7 +174,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
         return {
             "scaling": [
-                [tf.zeros(tf.shape(var)), tf.zeros(tf.shape(var))]
+                (tf.zeros(tf.shape(var)), tf.zeros(tf.shape(var)))
                 for s in range(self.timescales)],
             "param": self.param_rnn.get_initial_state(
                 batch_size=batch_size, dtype=tf.float32),
