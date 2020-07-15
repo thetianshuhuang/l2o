@@ -10,7 +10,7 @@ class RNNPropOptimizer(tf.keras.Model):
 
     def __init__(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.9, alpha=0.1,
-            name="RNNPropOptimizer", **kwargs):
+            epsilon=1e-10, name="RNNPropOptimizer", **kwargs):
         """RNNProp algorithm as described by Better Generalization.
 
         Keyword Args
@@ -23,6 +23,8 @@ class RNNPropOptimizer(tf.keras.Model):
             Variance decay constant (table 1)
         alpha : float
             Learning rate multiplier (eq 7)
+        epsilon : float
+            Denominator epsilon for normalization operation in case input is 0.
         name : str
             Name of optimizer network.
         **kwargs : dict
@@ -53,20 +55,21 @@ class RNNPropOptimizer(tf.keras.Model):
         v_hat = states["v"] / (1. - self.beta_2)
 
         # Eq. 5, 6
-        m_tilde = m_hat / tf.sqrt(v_hat)
-        g_tilde = inputs / tf.sqrt(v_hat)
+        m_tilde = m_hat / tf.sqrt(v_hat + self.epsilon)
+        g_tilde = inputs / tf.sqrt(v_hat + self.epsilon)
 
         # Recurrent
-        x = tf.concat(
+        x = tf.concat([
             tf.reshape(m_tilde, [-1, 1]),
-            tf.reshape(g_tilde, [-1, 1]), 1)
+            tf.reshape(g_tilde, [-1, 1])
+        ], 1)
         for i, layer in enumerate(self.recurrent):
             hidden_name = "rnn_{}".format(i)
             x, states[hidden_name] = layer(x, states[hidden_name])
         # Delta
         update = self.alpha * self.delta(x)
 
-        return update. states
+        return update, states
 
     def get_initial_state(self, var):
 
@@ -81,7 +84,7 @@ class RNNPropOptimizer(tf.keras.Model):
         # State for analytical computations
         analytical_state = {
             "m": tf.zeros(tf.shape(var)),
-            "m": tf.zeros(tf.shape(var))
+            "v": tf.zeros(tf.shape(var))
         }
 
         return dict(**rnn_state, **analytical_state)

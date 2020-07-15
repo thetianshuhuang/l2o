@@ -34,7 +34,7 @@ def rms_momentum(grad, m, v, beta_1=0.9, beta_2=0.9):
     #     m = grad
     #     v = tf.square(grad)
     # else:
-    m = beta_1 * m + (1. - beta_1) * grad,
+    m = beta_1 * m + (1. - beta_1) * grad
     v = beta_2 * v + (1. - beta_2) * tf.square(grad)
 
     return m, v
