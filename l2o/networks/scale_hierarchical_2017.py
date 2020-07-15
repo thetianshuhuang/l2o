@@ -104,17 +104,13 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
         Helper function for relative log gradient magnitudes
         """
-        lambdas = [lambda_ for g_bar, lambda_ in states["scaling"]]
-        mean_lambda = tf.reduce_mean(
-            tf.math.log(tf.stack(lambdas) + self.epsilon), axis=0)
-        _gamma = [
-            tf.math.log(lambda_ + self.epsilon) - mean_lambda
-            for lambda_ in lambdas
-        ]
+        log_lambdas = tf.math.log(
+            tf.stack([lambda_ for g_bar, lambda_ in states["scaling"]])
+            + self.epsilon)
+        _gamma = log_lambdas - tf.reduce_mean(log_lambdas, axis=0)
 
         # gamma_t: [timescales, *var shape] -> [var size, timescales]
-        return tf.transpose(
-            tf.reshape(tf.stack(_gamma), [self.timescales, -1]))
+        return tf.transpose(tf.reshape(_gamma, [self.timescales, -1]))
 
     def _parameterized_change(self, param, states):
         """Equation 5, 7, 8
