@@ -98,8 +98,8 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         Helper function for relative log gradient magnitudes
         """
         lambdas = [lambda_ for g_bar, lambda_ in states["scaling"]]
-        mean_log_magnitude = tf.reduce_mean(tf.log(tf.stack(lambdas)), axis=0)
-        _gamma = [tf.log(lambda_) - mean_log_magnitude for lambda_ in lambdas]
+        mean_lambda = tf.reduce_mean(tf.math.log(tf.stack(lambdas)), axis=0)
+        _gamma = [tf.log(lambda_) - mean_lambda for lambda_ in lambdas]
 
         # gamma_t: [timescales, *var shape] -> [var size, timescales]
         return tf.transpose(
@@ -126,7 +126,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         # [var size, 1] -> [*var shape]
         d_theta = self.d_theta(states["param"])
         delta_theta = tf.reshape(
-            tf.exp(eta) * d_theta * tf.size(param)
+            tf.exp(eta) * d_theta * tf.cast(tf.size(param), tf.float32)
             / tf.norm(d_theta, ord=2), tf.shape(param))
 
         return delta_theta, eta_rel
@@ -177,10 +177,10 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
                 batch_size=batch_size, dtype=tf.float32),
             "tensor": self.tensor_rnn.get_initial_state(
                 batch_size=1, dtype=tf.float32),
-            "eta_bar": tf.exp(tf.random.uniform(tf.log(
+            "eta_bar": tf.exp(tf.random.uniform(
                 shape=tf.shape(var),
-                minval=tf.log(self.init_lr[0]),
-                maxval=tf.log(self.init_lr[1])))),
+                minval=tf.math.log(self.init_lr[0]),
+                maxval=tf.math.log(self.init_lr[1]))),
         }
 
     def get_initial_state_global(self):
