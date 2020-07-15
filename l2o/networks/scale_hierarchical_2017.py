@@ -90,7 +90,10 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
                 beta_1=beta_g ** (0.5 ** s), beta_2=beta_lambda ** (0.5**s))
 
         # Scaled momentum
-        _m = [g_bar / tf.sqrt(lambda_) for g_bar, lambda_ in states["scaling"]]
+        _m = [
+            g_bar / (tf.sqrt(lambda_) + self.epsilon)
+            for g_bar, lambda_ in states["scaling"]
+        ]
 
         # m_t: [timescales, *var shape] -> [var size, timescales]
         return tf.transpose(tf.reshape(tf.stack(_m), [self.timescales, -1]))
