@@ -35,6 +35,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
         super().__init__(name=name)
 
+        assert(init_lr[0] > 0 and init_lr[1] > 0 and epsilon > 0)
         self.timescales = timescales
         self.init_lr = init_lr
         self.epsilon = epsilon
@@ -104,8 +105,12 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         Helper function for relative log gradient magnitudes
         """
         lambdas = [lambda_ for g_bar, lambda_ in states["scaling"]]
-        mean_lambda = tf.reduce_mean(tf.math.log(tf.stack(lambdas)), axis=0)
-        _gamma = [tf.math.log(lambda_) - mean_lambda for lambda_ in lambdas]
+        mean_lambda = tf.reduce_mean(
+            tf.math.log(tf.stack(lambdas) + self.epsilon), axis=0)
+        _gamma = [
+            tf.math.log(lambda_ + self.epsilon) - mean_lambda
+            for lambda_ in lambdas
+        ]
 
         # gamma_t: [timescales, *var shape] -> [var size, timescales]
         return tf.transpose(
