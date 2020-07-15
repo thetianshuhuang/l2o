@@ -4,6 +4,11 @@ from tensorflow.keras.layers import GRUCell, Dense
 from .moments import rms_momentum
 
 
+def l2_norm_no_nan(x):
+
+    return 
+
+
 class ScaleHierarchicalOptimizer(tf.keras.Model):
     """Scale network; inherits tf.keras.Model
 
@@ -131,10 +136,12 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
         # Direction
         # Eq 5
+        # NOTE: tf.norm(d_theta, ord=2) has a NaN gradient when d_theta is 0,
+        # so the norm is manually computed instead.
         d_theta = tf.reshape(self.d_theta(states["param"]), tf.shape(param))
         delta_theta = (
             tf.exp(eta) * d_theta * tf.cast(tf.size(param), tf.float32)
-            / (tf.norm(d_theta, ord=2) + self.epsilon))
+            / (tf.reduce_sum(tf.square(d_theta)) + self.epsilon))
 
         return delta_theta, eta_rel
 
