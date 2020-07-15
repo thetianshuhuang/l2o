@@ -41,6 +41,7 @@ class RNNPropOptimizer(tf.keras.Model):
         self.beta_1 = beta_1
         self.beta_2 = beta_2
         self.alpha = alpha
+        self.epsilon = epsilon
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
         self.delta = Dense(1, input_shape=(layers[-1],), activation="tanh")
@@ -67,7 +68,7 @@ class RNNPropOptimizer(tf.keras.Model):
             hidden_name = "rnn_{}".format(i)
             x, states[hidden_name] = layer(x, states[hidden_name])
         # Delta
-        update = self.alpha * self.delta(x)
+        update = tf.reshape(self.alpha * self.delta(x), tf.shape(param))
 
         return update, states
 

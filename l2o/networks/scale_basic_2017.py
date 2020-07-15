@@ -52,11 +52,11 @@ class ScaleBasicOptimizer(tf.keras.Model):
             x, states[hidden_name] = layer(x, states[hidden_name])
 
         # Update scaling hyperparameters
-        states["decay"] = tf.reshape(self.decay(x), param.shape)
+        states["decay"] = tf.reshape(self.decay(x), tf.shape(param))
         states["learning_rate"] *= tf.reshape(
-            2. * self.learning_rate_change(x), param.shape)
+            2. * self.learning_rate_change(x), tf.shape(param))
         update = tf.reshape(
-            states["learning_rate"] * self.delta(x), param.shape)
+            states["learning_rate"] * self.delta(x), tf.shape(param))
 
         return update, states
 
