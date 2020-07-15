@@ -99,7 +99,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         """
         lambdas = [lambda_ for g_bar, lambda_ in states["scaling"]]
         mean_lambda = tf.reduce_mean(tf.math.log(tf.stack(lambdas)), axis=0)
-        _gamma = [tf.log(lambda_) - mean_lambda for lambda_ in lambdas]
+        _gamma = [tf.math.log(lambda_) - mean_lambda for lambda_ in lambdas]
 
         # gamma_t: [timescales, *var shape] -> [var size, timescales]
         return tf.transpose(
@@ -131,7 +131,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
         return delta_theta, eta_rel
 
-    def call(self, param, grads, states):
+    def call(self, param, grads, states, global_state):
         """Equation 10, 11, 13, and prerequisites
 
         Main call function for all except global RNN
@@ -153,14 +153,17 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
             # h_tensor: [1, hidden size] -> [var size, hidden size]
             tf.tile(states["tensor"], [tf.size(param), 1]),
             # h_global: [1, hidden size] -> [var size, hidden size]
-            tf.tile(states["__global__"], [tf.size(param), 1]),
+            tf.tile(global_state, [tf.size(param), 1]),
         ], 1)
 
         # RNN Update
         # Eq 10
         states["param"], _ = self.param_rnn(param_inputs, states["param"])
         # Eq 11
-        tensor_inputs = tf.math.reduce_mean(states["param"], 0, keepdims=True)
+        tensor_inputs = tf.concat([
+            tf.math.reduce_mean(states["param"], 0, keepdims=True),
+            global_state
+        ], 1)
         states["tensor"], _ = self.tensor_rnn(tensor_inputs, states["tensor"])
 
         return delta_theta, states
