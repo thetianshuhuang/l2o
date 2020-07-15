@@ -97,7 +97,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
         # Scaled momentum
         _m = [
-            g_bar / (tf.sqrt(lambda_) + self.epsilon)
+            g_bar / tf.sqrt(lambda_ + self.epsilon)
             for g_bar, lambda_ in states["scaling"]
         ]
 
