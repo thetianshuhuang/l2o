@@ -17,14 +17,14 @@ conv = [l2o.problems.ProblemSpec(
 
 
 def create():
-    opt = l2o.optimizer.HierarchicalOptimizer(
-        l2o.networks.ScaleHierarchicalOptimizer())
+    opt = l2o.optimizer.CoordinateWiseOptimizer(
+        l2o.networks.RNNPropOptimizer())
     opt.save("testopt")
 
 
 def load():
-    return l2o.optimizer.HierarchicalOptimizer(
-        l2o.networks.ScaleHierarchicalOptimizer(), weights_file="testopt")
+    return l2o.optimizer.CoordinateWiseOptimizer(
+        l2o.networks.RNNPropOptimizer(), weights_file="testopt")
 
 
 def train_meta(problems, repeat=1, epochs=1):
