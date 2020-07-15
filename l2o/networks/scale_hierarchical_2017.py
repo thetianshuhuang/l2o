@@ -4,11 +4,6 @@ from tensorflow.keras.layers import GRUCell, Dense
 from .moments import rms_momentum
 
 
-def l2_norm_no_nan(x):
-
-    return 
-
-
 class ScaleHierarchicalOptimizer(tf.keras.Model):
     """Scale network; inherits tf.keras.Model
 
@@ -35,7 +30,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
     def __init__(
             self, param_units=10, tensor_units=5, global_units=5,
-            init_lr=(1e-6, 1e-2), timescales=1, epsilon=1e-6,
+            init_lr=(1e-6, 1e-2), timescales=1, epsilon=1e-10,
             name="ScaleHierarchicalOptimizer", **kwargs):
 
         super().__init__(name=name)
@@ -141,7 +136,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         d_theta = tf.reshape(self.d_theta(states["param"]), tf.shape(param))
         delta_theta = (
             tf.exp(eta) * d_theta * tf.cast(tf.size(param), tf.float32)
-            / (tf.reduce_sum(tf.square(d_theta)) + self.epsilon))
+            / tf.sqrt(tf.reduce_sum(tf.square(d_theta)) + self.epsilon))
 
         return delta_theta, eta_rel
 
