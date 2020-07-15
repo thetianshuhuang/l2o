@@ -1,3 +1,5 @@
+import itertools
+
 from .trainable_optimizer import TrainableOptimizer
 from .utils import wrap_variables, nested_assign
 
@@ -35,6 +37,10 @@ class HierarchicalOptimizer(TrainableOptimizer):
     def apply_gradients(self, grads_and_vars, *args, **kwargs):
         """Overrides apply_gradients in order to call global update."""
 
+        # Make copy since grads_and_vars is a zip iterable which is
+        # not reusable once super().apply_gradients() sucks it up
+        grads_and_vars, grads_and_vars_cpy = itertools.tee(grads_and_vars)
+
         # Eq 10, 11, 13, and prerequisites
         # Calls _compute_update
         super().apply_gradients(grads_and_vars, *args, **kwargs)
@@ -42,7 +48,7 @@ class HierarchicalOptimizer(TrainableOptimizer):
         nested_assign(
             self._global_state,
             self.network.call_global(
-                [self.get_state(var) for grad, var in grads_and_vars],
+                [self.get_state(var) for grad, var in grads_and_vars_cpy],
                 self._global_state))
 
     def save(self, filepath, **kwargs):

@@ -88,7 +88,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         for s, (g_bar, lambda_) in enumerate(states["scaling"]):
             states["scaling"][s] = rms_momentum(
                 grads, g_bar, lambda_,
-                beta_1=beta_g ** (0.5 ** s), beta_2=beta_lambda ** (0.5**s))
+                beta_1=beta_g**(0.5**s), beta_2=beta_lambda**(0.5**s))
 
         # Scaled momentum
         _m = [
