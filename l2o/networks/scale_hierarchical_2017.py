@@ -44,7 +44,8 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         # Parameter change
         self.d_theta = Dense(1, input_shape=(param_units,))
         # Learning rate change
-        self.delta_nu = Dense(1, input_shape=(param_units,))
+        self.delta_nu = Dense(
+            1, input_shape=(param_units,), activation="sigmoid")
         # Momentum decay rate
         self.beta_g = Dense(
             1, input_shape=(param_units,), activation="sigmoid")
@@ -60,15 +61,16 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
         Global RNN. Inputs are prepared (except for final mean) in ``call``.
         """
-        inputs = tf.reshape(tf.reduce_mean(tf.stack(
-            state["global_inputs"] for state in states), 0), [1, -1])
+        # [1, units] -> [num tensors, 1, units] -> [1, units]
+        inputs = tf.reduce_mean(tf.stack(
+            state["tensor"] for state in states), 0)
         global_state, _ = self.global_rnn(inputs, global_state)
         return global_state
 
     def _new_momentum_variance(self, grads, states):
-        """Equation 1, 2, 13
+        """Equation 1, 2, 3, 13
 
-        New momentum and variance
+        Helper function for scaled momentum update
         """
         # Base decay
         # Eq 13
@@ -84,11 +86,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
                 grads, g_bar, lambda_,
                 beta_1=beta_g ** (0.5 ** s), beta_2=beta_lambda ** (0.5**s))
 
-    def _scaled_momentum(self, states):
-        """Equation 3
-
-        Helper function for scaled gradient momentum
-        """
+        # Scaled momentum
         _m = [g_bar / tf.sqrt(lambda_) for g_bar, lambda_ in states["scaling"]]
 
         # m_t: [timescales, *var shape] -> [var size, timescales]
@@ -115,28 +113,23 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         """
         # New learning rate
         # Eq 7, 8
-        states["nu"] = self.delta_nu(states["param"]) + states["nu_bar"]
-        states["nu_bar"] = (
-            self.gamma * states["nu_bar"] + (1 - self.gamma) * states["nu"])
+        eta = self.delta_nu(states["param"]) + states["eta_bar"]
+        states["eta_bar"] = (
+            self.gamma * states["eta_bar"] + (1 - self.gamma) * eta)
+
+        # Relative log learning rate
+        # Eq Unnamed, end of sec 3.2.4
+        eta_rel = tf.reshape(eta - tf.math.reduce_mean(eta), [-1, 1])
 
         # Direction
         # Eq 5
         # [var size, 1] -> [*var shape]
         d_theta = self.d_theta(states["param"])
-        return tf.reshape(
-            tf.exp(states["learning_rate"]) * d_theta * tf.size(param)
+        delta_theta = tf.reshape(
+            tf.exp(eta) * d_theta * tf.size(param)
             / tf.norm(d_theta, ord=2), tf.shape(param))
 
-    def _relative_learning_rate(self, states):
-        """Equation (Unnamed), end of sec. 3.2.4
-
-        Helper function for relative log learning rate
-        """
-        # nu_rel: [*var shape] -> [var size, 1]
-        return tf.reshape(
-            (states["learning_rate"]
-             - tf.math.reduce_mean(states["learning_rate"])),
-            [-1, 1])
+        return delta_theta, eta_rel
 
     def call(self, param, grads, states):
         """Equation 10, 11, 13, and prerequisites
@@ -144,66 +137,37 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         Main call function for all except global RNN
         """
 
-        # Eq 13 & prerequisites
-        self._new_momentum_variance(grads, states)
-        delta_theta = self._parameterized_change(param, states)
-
-        # Compile x_t^(n)
-        m = self._scaled_momentum(states)
+        # Prerequisites
+        # Eq 1, 2, 3, 13
+        m = self._new_momentum_variance(grads, states)
+        # Eq 5, 7, 8
+        delta_theta, eta_rel = self._parameterized_change(param, states)
+        # Eq 4
         gamma = self._relative_log_gradient_magnitude(states)
-        nu_rel = self._relative_learning_rate(states)
 
         # Param RNN
-        # Eq 10
         # inputs = [var size, features]
         param_inputs = tf.concat([
             # x^n:
-            m, gamma, nu_rel,
+            m, gamma, eta_rel,
             # h_tensor: [1, hidden size] -> [var size, hidden size]
             tf.tile(states["tensor"], [tf.size(param), 1]),
             # h_global: [1, hidden size] -> [var size, hidden size]
             tf.tile(states["__global__"], [tf.size(param), 1]),
         ], 1)
 
+        # RNN Update
+        # Eq 10
         states["param"], _ = self.param_rnn(param_inputs, states["param"])
-
-        # Compile E_tensor[x, h_param]
-        # x^n: [var size, features] -> [features]
-        m_tensor = tf.math.reduce_mean(m, 0)
-        gamma_tensor = tf.math.reduce_mean(gamma, 0)
-        nu_tensor = tf.math.reduce_mean(nu_rel, 0)
-        # h_param: [var size, hidden size] -> [hidden_size]
-        h_param_tensor = tf.math.reduce_mean(states["param"], 0)
-
-        # Tensor RNN
         # Eq 11
-        # inputs = [1, features]
-        tensor_inputs = tf.reshape(tf.concat([
-            m_tensor, gamma_tensor, nu_tensor, h_param_tensor,
-            tf.reshape(states["__global__"], [-1])
-        ], 0), [1, -1])
-
+        tensor_inputs = tf.math.reduce_mean(states["param"], 0, keepdims=True)
         states["tensor"], _ = self.tensor_rnn(tensor_inputs, states["tensor"])
-
-        # Global RNN
-        # Eq 12 (prepare only)
-        states["global_inputs"] = tf.concat([
-            m_tensor, gamma_tensor, nu_tensor, h_param_tensor,
-            tf.reshape(states["tensor"], [-1])
-        ], 0)
 
         return delta_theta, states
 
     def get_initial_state(self, var):
 
         batch_size = tf.size(var)
-
-        def _init_lr():
-            """Quick helper function to init LR and LR EMA"""
-            return tf.exp(tf.random.uniform(tf.log(
-                shape=tf.shape(var),
-                minval=tf.log(self.init_lr[0]),
-                maxval=tf.log(self.init_lr[1]))))
 
         return {
             "scaling": [
@@ -213,12 +177,10 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
                 batch_size=batch_size, dtype=tf.float32),
             "tensor": self.tensor.get_initial_state(
                 batch_size=1, dtype=tf.float32),
-            "nu": _init_lr(),
-            "nu_bar": _init_lr(),
-            # m + gamma + nu + h_param + h_tensor
-            "global_inputs": tf.zeros([
-                self.timescales + self.timescales + 1
-                + self.param_rnn.units + self.tensor_rnn.units])
+            "eta_bar": tf.exp(tf.random.uniform(tf.log(
+                shape=tf.shape(var),
+                minval=tf.log(self.init_lr[0]),
+                maxval=tf.log(self.init_lr[1])))),
         }
 
     def get_initial_state_global(self):

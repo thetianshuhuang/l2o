@@ -1,4 +1,5 @@
 from .trainable_optimizer import TrainableOptimizer
+from .utils import wrap_variables, nested_assign
 
 
 class HierarchicalOptimizer(TrainableOptimizer):
@@ -13,7 +14,7 @@ class HierarchicalOptimizer(TrainableOptimizer):
             network.load_weights(weights_file)
 
         init_global = self.network.get_initial_state_global()
-        self._state_dict["__global__"] = init_global()
+        self._state_dict["__global__"] = wrap_variables(init_global())
 
         # Alias trainable_variables
         # First we have to run a dummy computation to trick the network into
@@ -30,14 +31,18 @@ class HierarchicalOptimizer(TrainableOptimizer):
         return param - dparam, new_state
 
     def apply_gradients(self, grads_and_vars, *args, **kwargs):
+        """Overrides apply_gradients in order to call global update."""
 
         # Eq 10, 11, 13, and prerequisites
         # Calls _compute_update
         super().apply_gradients(grads_and_vars, *args, **kwargs)
         # Eq 12
-        self.network.call_global(
-            [self.get_state(var) for grad, var in grads_and_vars],
-            self._state_dict)
+        global_state = self._state_dict["__global__"]
+        nested_assign(
+            global_state,
+            self.network.call_global(
+                [self.get_state(var) for grad, var in grads_and_vars],
+                global_state))
 
     def save(self, filepath, **kwargs):
 

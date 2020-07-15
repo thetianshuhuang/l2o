@@ -17,21 +17,21 @@ conv = [l2o.problems.ProblemSpec(
 
 
 def create():
-    net = l2o.networks.ScaleBasicOptimizer()
-    opt = l2o.optimizer.CoordinateWiseOptimizer(net)
-    opt.save("dmoptimizer")
+    opt = l2o.optimizer.HierarchicalOptimizer(
+        l2o.networks.ScaleHierarchicalOptimizer())
+    opt.save("testopt")
 
 
 def load():
-    return l2o.optimizer.CoordinateWiseOptimizer(
-        l2o.networks.ScaleBasicOptimizer(), weights_file="dmoptimizer")
+    return l2o.optimizer.HierarchicalOptimizer(
+        l2o.networks.ScaleHierarchicalOptimizer(), weights_file="testopt")
 
 
 def train_meta(problems, repeat=1, epochs=1):
     opt = load()
     opt.train(
         problems, tf.keras.optimizers.Adam(), repeat=repeat, epochs=epochs)
-    opt.save("dmoptimizer")
+    opt.save("testopt")
 
 
 def train_imitation(problems, repeat=1, epochs=1):
@@ -39,7 +39,7 @@ def train_imitation(problems, repeat=1, epochs=1):
     opt.train(
         problems, tf.keras.optimizers.Adam(), repeat=repeat, epochs=epochs,
         teacher=tf.keras.optimizers.Adam())
-    opt.save("dmoptimizer")
+    opt.save("testopt")
 
 
 def test_quadratic(opt=None):
