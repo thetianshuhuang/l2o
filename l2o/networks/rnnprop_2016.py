@@ -80,8 +80,8 @@ class RNNPropOptimizer(tf.keras.Model):
 
         # State for analytical computations
         analytical_state = {
-            "m_hat": tf.zeros(tf.shape(var)),
-            "v_hat": tf.zeros(tf.shape(var))
+            "m": tf.zeros(tf.shape(var)),
+            "m": tf.zeros(tf.shape(var))
         }
 
         return dict(**rnn_state, **analytical_state)

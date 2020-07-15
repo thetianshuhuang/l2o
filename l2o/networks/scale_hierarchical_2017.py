@@ -173,9 +173,9 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
             "scaling": [
                 [tf.zeros(tf.shape(var)), tf.zeros(tf.shape(var))]
                 for s in range(self.timescales)],
-            "param": self.param.get_initial_state(
+            "param": self.param_rnn.get_initial_state(
                 batch_size=batch_size, dtype=tf.float32),
-            "tensor": self.tensor.get_initial_state(
+            "tensor": self.tensor_rnn.get_initial_state(
                 batch_size=1, dtype=tf.float32),
             "eta_bar": tf.exp(tf.random.uniform(tf.log(
                 shape=tf.shape(var),

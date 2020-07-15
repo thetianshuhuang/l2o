@@ -13,7 +13,7 @@ class HierarchicalOptimizer(TrainableOptimizer):
         if weights_file is not None:
             network.load_weights(weights_file)
 
-        init_global = self.network.get_initial_state_global()
+        init_global = self.network.get_initial_state_global
         self._state_dict["__global__"] = wrap_variables(init_global())
 
         # Alias trainable_variables
@@ -24,7 +24,7 @@ class HierarchicalOptimizer(TrainableOptimizer):
         self.trainable_variables = network.trainable_variables
 
     def _initialize_state(self, var):
-        return self.param_rnn.get_initial_state(var)
+        return self.network.get_initial_state(var)
 
     def _compute_update(self, param, grad, state):
         dparam, new_state = self.network.call(param, grad, state)
