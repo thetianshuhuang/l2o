@@ -26,7 +26,7 @@ class DMOptimizer(tf.keras.Model):
         defaults.update(kwargs)
 
         self.recurrent = [LSTMCell(hsize, **defaults) for hsize in layers]
-        self.delta = Dense(1, input_shape=(layers[-1]))
+        self.delta = Dense(1, input_shape=(layers[-1],))
 
     def call(self, param, inputs, states):
         x = tf.reshape(inputs, [-1, 1])
