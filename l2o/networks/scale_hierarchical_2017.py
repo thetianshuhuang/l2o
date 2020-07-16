@@ -48,8 +48,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         # Parameter change
         self.d_theta = Dense(1, input_shape=(param_units,))
         # Learning rate change
-        self.delta_nu = Dense(
-            1, input_shape=(param_units,), activation="sigmoid")
+        self.delta_nu = Dense(1, input_shape=(param_units,))
         # Momentum decay rate
         self.beta_g = Dense(
             1, input_shape=(param_units,), activation="sigmoid")
@@ -58,6 +57,7 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
             1, input_shape=(param_units,), activation="sigmoid")
 
         # Gamma parameter
+        # Stored as a logit - the actual gamma used will be sigmoid(gamma)
         self.gamma = tf.Variable(tf.zeros(()), trainable=True, name="gamma")
 
     def call_global(self, states, global_state):
@@ -122,8 +122,8 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         # Eq 7, 8
         d_eta = tf.reshape(self.delta_nu(states["param"]), tf.shape(param))
         eta = d_eta + states["eta_bar"]
-        states["eta_bar"] = (
-            self.gamma * states["eta_bar"] + (1 - self.gamma) * eta)
+        _gamma = tf.nn.sigmoid(self.gamma)
+        states["eta_bar"] = (_gamma * states["eta_bar"] + (1 - _gamma) * eta)
 
         # Relative log learning rate
         # Eq Unnamed, end of sec 3.2.4
