@@ -48,6 +48,8 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         # Parameter change
         self.d_theta = Dense(1, input_shape=(param_units,))
         # Learning rate change
+        # Zero initializer is required; otherwise, the learning rate
+        # explodes to 0 and infinity.
         self.delta_nu = Dense(
             1, kernel_initializer="zeros", input_shape=(param_units,))
         # Momentum decay rate

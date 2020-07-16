@@ -43,13 +43,15 @@ class HierarchicalOptimizer(TrainableOptimizer):
 
         # Eq 10, 11, 13, and prerequisites
         # Calls _compute_update
-        super().apply_gradients(grads_and_vars, *args, **kwargs)
+        res = super().apply_gradients(grads_and_vars, *args, **kwargs)
         # Eq 12
         nested_assign(
             self._global_state,
             self.network.call_global(
                 [self.get_state(var) for grad, var in grads_and_vars_cpy],
                 self._global_state))
+
+        return res
 
     def save(self, filepath, **kwargs):
 

@@ -89,16 +89,20 @@ def test_classify(opt=None, conv=True):
         opt = load()
 
     dataset, info = l2o.problems.load_images("mnist")
+    loss = tf.keras.losses.SparseCategoricalCrossentropy()
+
+    model = get_model()
+    for x, y in dataset.batch(32):
+        with tf.GradientTape() as t:
+            _loss = loss(y, model(x))
+        grads = t.gradient(_loss, model.trainable_variables)
+        opt.apply_gradients(zip(grads, model.trainable_variables))
 
     model = get_model(info, conv=conv)
     print(model.summary())
-    model.compile(
-        opt,
-        tf.keras.losses.SparseCategoricalCrossentropy())
+    model.compile(opt, loss)
     model.fit(dataset.batch(32), epochs=2)
 
     model = get_model(info, conv=conv)
-    model.compile(
-        tf.keras.optimizers.Adam(),
-        tf.keras.losses.SparseCategoricalCrossentropy())
+    model.compile(tf.keras.optimizers.Adam(), loss)
     model.fit(dataset.batch(32), epochs=2)
