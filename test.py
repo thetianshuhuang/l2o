@@ -3,6 +3,13 @@ import tensorflow as tf
 import numpy as np
 
 
+# architecture = l2o.optimizer.HierarchicalOptimizer
+architecture = l2o.optimizer.CoordinateWiseOptimizer
+# network = l2o.networks.ScaleHierarchicalOptimizer
+# network = l2o.networks.RNNPropOptimizer
+network = l2o.networks.DMOptimizer
+
+
 quad = [l2o.problems.ProblemSpec(
     l2o.problems.Quadratic, [20], {}
 )]
@@ -17,14 +24,11 @@ conv = [l2o.problems.ProblemSpec(
 
 
 def create():
-    opt = l2o.optimizer.HierarchicalOptimizer(
-        l2o.networks.ScaleHierarchicalOptimizer())
-    opt.save("testopt")
+    architecture(network()).save()
 
 
 def load():
-    return l2o.optimizer.HierarchicalOptimizer(
-        l2o.networks.ScaleHierarchicalOptimizer(), weights_file="testopt")
+    return architecture(network(), weights_file="testopt")
 
 
 def train_meta(problems, repeat=1, epochs=1):
@@ -90,13 +94,6 @@ def test_classify(opt=None, conv=True):
 
     dataset, info = l2o.problems.load_images("mnist")
     loss = tf.keras.losses.SparseCategoricalCrossentropy()
-
-    model = get_model()
-    for x, y in dataset.batch(32):
-        with tf.GradientTape() as t:
-            _loss = loss(y, model(x))
-        grads = t.gradient(_loss, model.trainable_variables)
-        opt.apply_gradients(zip(grads, model.trainable_variables))
 
     model = get_model(info, conv=conv)
     print(model.summary())
