@@ -47,13 +47,14 @@ class RNNPropOptimizer(tf.keras.Model):
         self.delta = Dense(1, input_shape=(layers[-1],), activation="tanh")
 
     def call(self, param, inputs, states):
+        states_new = {}
 
         # From table 1
-        states["m"], states["v"] = rms_momentum(
+        states_new["m"], states_new["v"] = rms_momentum(
             inputs, states["m"], states["v"],
             beta_1=self.beta_1, beta_2=self.beta_2)
-        m_hat = states["m"] / (1. - self.beta_1)
-        v_hat = states["v"] / (1. - self.beta_2)
+        m_hat = states_new["m"] / (1. - self.beta_1)
+        v_hat = states_new["v"] / (1. - self.beta_2)
 
         # Eq. 5, 6
         m_tilde = m_hat / tf.sqrt(v_hat + self.epsilon)
@@ -66,11 +67,11 @@ class RNNPropOptimizer(tf.keras.Model):
         ], 1)
         for i, layer in enumerate(self.recurrent):
             hidden_name = "rnn_{}".format(i)
-            x, states[hidden_name] = layer(x, states[hidden_name])
+            x, states_new[hidden_name] = layer(x, states[hidden_name])
         # Delta
         update = tf.reshape(self.alpha * self.delta(x), tf.shape(param))
 
-        return update, states
+        return update, states_new
 
     def get_initial_state(self, var):
 

@@ -71,10 +71,10 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         # [1, units] -> [num tensors, 1, units] -> [1, units]
         inputs = tf.reduce_mean(tf.stack(
             [state["tensor"] for state in states]), 0)
-        global_state, _ = self.global_rnn(inputs, global_state)
-        return global_state
+        global_state_new, _ = self.global_rnn(inputs, global_state)
+        return global_state_new
 
-    def _new_momentum_variance(self, grads, states):
+    def _new_momentum_variance(self, grads, states, states_new):
         """Equation 1, 2, 3, 13
 
         Helper function for scaled momentum update
@@ -89,33 +89,33 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         # New momentum, variance
         # Eq 1, 2
         for s, (g_bar, lambda_) in enumerate(states["scaling"]):
-            states["scaling"][s] = rms_momentum(
+            states_new["scaling"][s] = rms_momentum(
                 grads, g_bar, lambda_,
                 beta_1=beta_g**(0.5**s), beta_2=beta_lambda**(0.5**s))
 
         # Scaled momentum
         _m = [
             g_bar / tf.sqrt(lambda_ + self.epsilon)
-            for g_bar, lambda_ in states["scaling"]
+            for g_bar, lambda_ in states_new["scaling"]
         ]
 
         # m_t: [timescales, *var shape] -> [var size, timescales]
         return tf.transpose(tf.reshape(tf.stack(_m), [self.timescales, -1]))
 
-    def _relative_log_gradient_magnitude(self, states):
+    def _relative_log_gradient_magnitude(self, states, states_new):
         """Equation 4
 
         Helper function for relative log gradient magnitudes
         """
         log_lambdas = tf.math.log(
-            tf.stack([lambda_ for g_bar, lambda_ in states["scaling"]])
+            tf.stack([lambda_ for g_bar, lambda_ in states_new["scaling"]])
             + self.epsilon)
         _gamma = log_lambdas - tf.reduce_mean(log_lambdas, axis=0)
 
         # gamma_t: [timescales, *var shape] -> [var size, timescales]
         return tf.transpose(tf.reshape(_gamma, [self.timescales, -1]))
 
-    def _parameterized_change(self, param, states):
+    def _parameterized_change(self, param, states, states_new):
         """Equation 5, 7, 8
 
         Helper function for parameter change explicitly parameterized into
@@ -125,8 +125,8 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         # Eq 7, 8
         d_eta = tf.reshape(self.delta_nu(states["param"]), tf.shape(param))
         eta = d_eta + states["eta_bar"]
-        _gamma = tf.nn.sigmoid(self.gamma)
-        states["eta_bar"] = (_gamma * states["eta_bar"] + (1 - _gamma) * eta)
+        sg = tf.nn.sigmoid(self.gamma)
+        states_new["eta_bar"] = (sg * states["eta_bar"] + (1 - sg) * eta)
 
         # Relative log learning rate
         # Eq Unnamed, end of sec 3.2.4
@@ -148,18 +148,20 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
         Main call function for all except global RNN
         """
+        states_new = {}
 
         # Prerequisites
         # Eq 1, 2, 3, 13
-        m = self._new_momentum_variance(grads, states)
+        m = self._new_momentum_variance(grads, states, states_new)
         # Eq 5, 7, 8
-        delta_theta, eta_rel = self._parameterized_change(param, states)
+        delta_theta, eta_rel = self._parameterized_change(
+            param, states, states_new)
         # Eq 4
-        gamma = self._relative_log_gradient_magnitude(states)
+        gamma = self._relative_log_gradient_magnitude(states, states_new)
 
         # Param RNN
         # inputs = [var size, features]
-        param_inputs = tf.concat([
+        param_in = tf.concat([
             # x^n:
             m, gamma, eta_rel,
             # h_tensor: [1, hidden size] -> [var size, hidden size]
@@ -170,15 +172,15 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
         # RNN Update
         # Eq 10
-        states["param"], _ = self.param_rnn(param_inputs, states["param"])
+        states_new["param"], _ = self.param_rnn(param_in, states["param"])
         # Eq 11
-        tensor_inputs = tf.concat([
-            tf.math.reduce_mean(states["param"], 0, keepdims=True),
+        tensor_in = tf.concat([
+            tf.math.reduce_mean(states_new["param"], 0, keepdims=True),
             global_state
         ], 1)
-        states["tensor"], _ = self.tensor_rnn(tensor_inputs, states["tensor"])
+        states_new["tensor"], _ = self.tensor_rnn(tensor_in, states["tensor"])
 
-        return delta_theta, states
+        return delta_theta, states_new
 
     def get_initial_state(self, var):
 

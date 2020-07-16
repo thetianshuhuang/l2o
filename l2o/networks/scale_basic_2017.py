@@ -40,23 +40,24 @@ class ScaleBasicOptimizer(tf.keras.Model):
             1, input_shape=(layers[-1],), activation="sigmoid")
 
     def call(self, param, inputs, states):
+        states_new = {}
 
         # Scaling
-        grad, states["rms"] = rms_scaling(
+        grad, states_new["rms"] = rms_scaling(
             inputs, states["decay"], states["rms"])
 
         # Recurrent
         x = tf.reshape(grad, [-1, 1])
         for i, layer in enumerate(self.recurrent):
             hidden_name = "rnn_{}".format(i)
-            x, states[hidden_name] = layer(x, states[hidden_name])
+            x, states_new[hidden_name] = layer(x, states[hidden_name])
 
         # Update scaling hyperparameters
-        states["decay"] = tf.reshape(self.decay(x), tf.shape(param))
-        states["learning_rate"] *= tf.reshape(
+        states_new["decay"] = tf.reshape(self.decay(x), tf.shape(param))
+        states_new["learning_rate"] *= tf.reshape(
             2. * self.learning_rate_change(x), tf.shape(param))
         update = tf.reshape(
-            states["learning_rate"] * self.delta(x), tf.shape(param))
+            states_new["learning_rate"] * self.delta(x), tf.shape(param))
 
         return update, states
 
