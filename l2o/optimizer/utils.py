@@ -28,7 +28,7 @@ def wrap_variables(x, trainable=False):
     if isinstance(x, list):
         return [wrap_variables(y) for y in x]
     if isinstance(x, tuple):
-        return (wrap_variables(y) for y in x)
+        return tuple(wrap_variables(y) for y in x)
     if isinstance(x, dict):
         return {k: wrap_variables(v) for k, v in x.items()}
 

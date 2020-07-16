@@ -88,10 +88,12 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
         # New momentum, variance
         # Eq 1, 2
-        for s, (g_bar, lambda_) in enumerate(states["scaling"]):
-            states_new["scaling"][s] = rms_momentum(
+        states_new["scaling"] = [
+            rms_momentum(
                 grads, g_bar, lambda_,
                 beta_1=beta_g**(0.5**s), beta_2=beta_lambda**(0.5**s))
+            for s, (g_bar, lambda_) in enumerate(states["scaling"])
+        ]
 
         # Scaled momentum
         _m = [
@@ -101,19 +103,6 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
 
         # m_t: [timescales, *var shape] -> [var size, timescales]
         return tf.transpose(tf.reshape(tf.stack(_m), [self.timescales, -1]))
-
-    def _relative_log_gradient_magnitude(self, states, states_new):
-        """Equation 4
-
-        Helper function for relative log gradient magnitudes
-        """
-        log_lambdas = tf.math.log(
-            tf.stack([lambda_ for g_bar, lambda_ in states_new["scaling"]])
-            + self.epsilon)
-        _gamma = log_lambdas - tf.reduce_mean(log_lambdas, axis=0)
-
-        # gamma_t: [timescales, *var shape] -> [var size, timescales]
-        return tf.transpose(tf.reshape(_gamma, [self.timescales, -1]))
 
     def _parameterized_change(self, param, states, states_new):
         """Equation 5, 7, 8
@@ -142,6 +131,19 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
             / tf.sqrt(tf.reduce_sum(tf.square(d_theta)) + self.epsilon))
 
         return delta_theta, eta_rel
+
+    def _relative_log_gradient_magnitude(self, states, states_new):
+        """Equation 4
+
+        Helper function for relative log gradient magnitudes
+        """
+        log_lambdas = tf.math.log(
+            tf.stack([lambda_ for g_bar, lambda_ in states_new["scaling"]])
+            + self.epsilon)
+        _gamma = log_lambdas - tf.reduce_mean(log_lambdas, axis=0)
+
+        # gamma_t: [timescales, *var shape] -> [var size, timescales]
+        return tf.transpose(tf.reshape(_gamma, [self.timescales, -1]))
 
     def call(self, param, grads, states, global_state):
         """Equation 10, 11, 13, and prerequisites
