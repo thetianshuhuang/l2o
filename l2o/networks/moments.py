@@ -1,9 +1,10 @@
+"""Exponential moving average 1st and 2nd moment scaling utilities"""
+
 import tensorflow as tf
 
 
 def rms_momentum(grad, m, v, beta_1=0.9, beta_2=0.9):
     """RMS Moving Geometric Average Momentum Scaling (as used by Adam)
-
     Notation is as described by Table 1 in scale.
 
     Parameters

@@ -3,38 +3,36 @@
 import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
 
+from .network import BaseCoordinateWiseNetwork
 from .moments import rms_momentum
 
 
-class RNNPropOptimizer(tf.keras.Model):
+class RNNPropOptimizer(BaseCoordinateWiseNetwork):
+    """RNNProp algorithm as described in
+    "Learning Gradient Descent: Better Generalization and Longer Horizons"
+    (Lv. et. al, 2017)
+
+    Keyword Args
+    ------------
+    layers : int[]
+        Size of LSTM layers.
+    beta_1 : float
+        Momentum decay constant (table 1)
+    beta_2 : float
+        Variance decay constant (table 1)
+    alpha : float
+        Learning rate multiplier (eq 7)
+    epsilon : float
+        Denominator epsilon for normalization operation in case input is 0.
+    name : str
+        Name of optimizer network.
+    **kwargs : dict
+        Passed onto tf.keras.layers.LSTMCell
+    """
 
     def __init__(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.9, alpha=0.1,
             epsilon=1e-10, name="RNNPropOptimizer", **kwargs):
-        """RNNProp algorithm as described by Better Generalization.
-
-        Keyword Args
-        ------------
-        layers : int[]
-            Size of LSTM layers.
-        beta_1 : float
-            Momentum decay constant (table 1)
-        beta_2 : float
-            Variance decay constant (table 1)
-        alpha : float
-            Learning rate multiplier (eq 7)
-        epsilon : float
-            Denominator epsilon for normalization operation in case input is 0.
-        name : str
-            Name of optimizer network.
-        **kwargs : dict
-            Passed onto tf.keras.layers.LSTMCell
-
-        References
-        ----------
-        K. Lv, S. Jiang, J. Li. "Learning Gradient Descent: Better
-        Generalization and Longer Horizons," ICML 34, 2017.
-        """
 
         super().__init__(name=name)
 

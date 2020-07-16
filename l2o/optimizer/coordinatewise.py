@@ -1,8 +1,12 @@
+"""CoordinateWise Optimizer Architecture"""
+
 from . trainable_optimizer import TrainableOptimizer
 
 
 class CoordinateWiseOptimizer(TrainableOptimizer):
-    """Coordinatewise Optimizer as described by DM
+    """Coordinatewise Optimizer as described in
+    "Learing to learn by gradient descent by gradient descent"
+    (Andrychowicz et. al, 2016)
 
     Parameters
     ----------

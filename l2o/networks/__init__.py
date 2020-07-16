@@ -1,6 +1,17 @@
 """Learn to Optimize Networks
 
-Todo: insert refs
+Attributes
+----------
+DMOptimizer
+    "Learing to learn by gradient descent by gradient descent"
+    (Andrychowicz et. al, 2016)
+RNNPropOptimizer
+    "Learning Gradient Descent: Better Generalization and Longer Horizons"
+    (Lv. et. al, 2017)
+ScaleBasicOptimizer
+    "Learned Optimizers that Scale and Generalize" (Wichrowska et. al, 2017)
+ScaleHierarchicalOptimizer
+    "Learned Optimizers that Scale and Generalize" (Wichrowska et. al, 2017)
 """
 
 from .deepmind_2016 import DMOptimizer

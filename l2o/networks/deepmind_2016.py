@@ -1,9 +1,13 @@
+"""Deepmind, 2016 optimizer implementation"""
+
 import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
 
 
 class DMOptimizer(tf.keras.Model):
-    """DMOptimizer network; inherits tf.keras.Model.
+    """DMOptimizer algorithm as described in
+    "Learing to learn by gradient descent by gradient descent"
+    (Andrychowicz et. al, 2016)
 
     Keyword Args
     ------------
@@ -29,9 +33,9 @@ class DMOptimizer(tf.keras.Model):
         self.delta = Dense(1, input_shape=(layers[-1],))
 
     def call(self, param, inputs, states):
-        x = tf.reshape(inputs, [-1, 1])
-
         states_new = {}
+
+        x = tf.reshape(inputs, [-1, 1])
         for i, layer in enumerate(self.recurrent):
             hidden_name = "lstm_{}".format(i)
             x, states_new[hidden_name] = layer(x, states[hidden_name])

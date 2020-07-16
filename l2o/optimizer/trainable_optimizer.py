@@ -8,35 +8,34 @@ from .utils import wrap_variables, nested_assign
 
 class TrainableOptimizer(
         LossMixin, TrainingMixin, tf.keras.optimizers.Optimizer):
+    """Trainable optimizer using keras' optimizer API
+
+    Parameters
+    ----------
+    name : str
+        Optimizer name
+
+    Keyword Args
+    ------------
+    use_log_objective : bool
+        Whether this optimizer uses the logarithm of the objective when
+        computing the loss
+    obj_train_max_multiplier : float
+        The maximum multiplier for the increase in the objective before
+        meta-training is stopped. If <= 0, meta-training is not stopped
+        early.
+    use_numerator_epsilon : bool
+        Whether to use epsilon in the numerator when scaling the
+        problem objective during meta-training.
+    epsilon : float
+        Epsilon value.
+    """
 
     def __init__(
             self, name,
             use_log_objective=True, obj_train_max_multiplier=-1,
             use_numerator_epsilon=True, epsilon=1e-6, **kwargs):
-        """Initializes the optimizer with the given name and settings.
 
-        Parameters
-        ----------
-        name : str
-            Optimizer name
-
-        Keyword Args
-        ------------
-        use_log_objective : bool
-            Whether this optimizer uses the logarithm of the objective when
-            computing the loss
-        obj_train_max_multiplier : float
-            The maximum multiplier for the increase in the objective before
-            meta-training is stopped. If <= 0, meta-training is not stopped
-            early.
-        use_numerator_epsilon : bool
-            Whether to use epsilon in the numerator when scaling the
-            problem objective during meta-training.
-        epsilon : float
-            Epsilon value.
-        """
-
-        # self.use_second_derivatives = use_second_derivatives
         self.use_log_objective = use_log_objective
         self.obj_train_max_multiplier = obj_train_max_multiplier
         self.use_numerator_epsilon = use_numerator_epsilon

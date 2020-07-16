@@ -1,3 +1,5 @@
+"""Coordinatewise Optimizer bundled with Code for the Scale, 2017 paper"""
+
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
@@ -6,8 +8,8 @@ from .moments import rms_scaling
 
 
 class ScaleBasicOptimizer(tf.keras.Model):
-    """RNN that operates on each coordinate independently, as specified by
-    the scale paper.
+    """Coordinatewise version described by code accompanying
+    "Learned Optimizers that Scale and Generalize" (Wichrowska et. al, 2017)
 
     Keyword Args
     ------------

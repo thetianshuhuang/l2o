@@ -1,11 +1,13 @@
 import tensorflow as tf
 from tensorflow.keras.layers import GRUCell, Dense
 
+from .network import BaseHierarchicalNetwork
 from .moments import rms_momentum
 
 
-class ScaleHierarchicalOptimizer(tf.keras.Model):
-    """Scale network; inherits tf.keras.Model
+class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
+    """Hierarchical optimizer described in
+    "Learned Optimizers that Scale and Generalize" (Wichrowska et. al, 2017)
 
     Keyword Args
     ------------
@@ -146,10 +148,6 @@ class ScaleHierarchicalOptimizer(tf.keras.Model):
         return tf.transpose(tf.reshape(_gamma, [self.timescales, -1]))
 
     def call(self, param, grads, states, global_state):
-        """Equation 10, 11, 13, and prerequisites
-
-        Main call function for all except global RNN
-        """
         states_new = {}
 
         # Prerequisites

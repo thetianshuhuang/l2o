@@ -97,7 +97,7 @@ def test_classify(opt=None, conv=True):
 
     model = get_model(info, conv=conv)
     print(model.summary())
-    model.compile(opt, loss, run_eagerly=True)
+    model.compile(opt, loss)
     model.fit(dataset.batch(32), epochs=2)
 
     model = get_model(info, conv=conv)
