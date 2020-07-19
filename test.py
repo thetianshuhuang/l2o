@@ -42,7 +42,7 @@ def train_imitation(problems, repeat=1, epochs=1):
     opt = load()
     opt.train(
         problems, tf.keras.optimizers.Adam(), repeat=repeat, epochs=epochs,
-        teacher=tf.keras.optimizers.Adam())
+        teachers=[tf.keras.optimizers.Adam()])
     opt.save("testopt")
 
 

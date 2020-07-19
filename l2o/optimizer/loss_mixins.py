@@ -58,7 +58,6 @@ class LossMixin:
             Scaled objective according to rules described in initializer
             (use_log_objective, use_numerator_epsilon, epsilon)
         """
-
         if self.use_log_objective:
             if self.use_numerator_epsilon:
                 return weight * (
@@ -82,7 +81,6 @@ class LossMixin:
         noise_stddev : tf.Tensor | float
             Noise stddev; if 0, no noise is added.
         """
-
         if noise_stddev > 0:
             return [
                 g + tf.random.normal(g.shape(), stddev=noise_stddev)
@@ -90,6 +88,31 @@ class LossMixin:
             ]
         else:
             return grads
+
+    def _step(
+            self, learning_state, problem, batch, noise_stddev):
+        """Helper function to run a single optimization step"""
+
+        # Unpack
+        params, states, global_state = learning_state
+
+        # Compute gradient
+        with tf.GradientTape() as tape:
+            tape.watch(params)
+            current_obj = problem.objective(params, batch)
+        grads = tape.gradient(current_obj, params)
+
+        # Optionally add artificial noise
+        grads = self._add_noise(grads, noise_stddev=noise_stddev)
+
+        # Apply gradients
+        params, states = list(map(list, zip(*[
+            self._compute_update(*z) for z in zip(params, grads, states)
+        ])))
+        if global_state is not None:
+            self.network.call_global(states, global_state)
+
+        return current_obj, (params, states, global_state)
 
     @tf.function
     def meta_loss(
@@ -142,8 +165,8 @@ class LossMixin:
             [1] Final parameters
             [2] Final state
         """
-
-        params, states, global_state = self._get_state(
+        # (params, states, global_state) triple
+        learning_state = self._get_state(
             problem, params=params, states=states, global_state=global_state)
 
         # Compute initial objective value
@@ -171,23 +194,12 @@ class LossMixin:
             # Unbatch
             batch = [dim[i] for dim in data] if is_batched else data
 
-            # Compute gradient
-            with tf.GradientTape() as tape:
-                tape.watch(params)
-                current_obj = problem.objective(params, batch)
-            grads = tape.gradient(current_obj, params)
+            # The actual step
+            current_obj, learning_state = self._step(
+                learning_state, problem, batch, noise_stddev)
             # cond3: objective is a reasonable multiplier of the original
             if self.obj_train_max_multiplier > 0 and current_obj > max_obj:
                 break
-            # Optionally add artificial noise
-            grads = self._add_noise(grads, noise_stddev=noise_stddev)
-
-            # Apply gradients
-            params, states = list(map(list, zip(*[
-                self._compute_update(*z) for z in zip(params, grads, states)
-            ])))
-            if global_state is not None:
-                self.network.call_global(states, global_state)
 
             # Add to loss
             loss += self._scale_objective(current_obj, init_obj, weights[i])
@@ -195,12 +207,12 @@ class LossMixin:
             if not tf.math.is_finite(loss):
                 break
 
-        return loss, params, states, global_state
+        return (loss, *learning_state)
 
     @tf.function
     def imitation_loss(
             self, weights, data, params=None, states=None, global_state=None,
-            unroll=20, problem=None, is_batched=False, teacher=None):
+            unroll=20, problem=None, is_batched=False, teachers=None):
         """Get imitation learning loss.
 
         The problem must be built in persistent mode for the teacher to use,
@@ -231,8 +243,8 @@ class LossMixin:
             Training problem
         is_batched : bool (bound)
             Batch training or full batch training?
-        teacher : tf.keras.optimizers.Optimizer (bound)
-            Optimizer to train against.
+        teachers : tf.keras.optimizers.Optimizer[] (bound)
+            List of optimizers to train against.
 
         Returns
         -------
@@ -241,8 +253,8 @@ class LossMixin:
             [1] Final parameters
             [2] Final state
         """
-
-        params, states, global_state = self._get_state(
+        # (params, states, global_state) triple
+        learning_state = self._get_state(
             problem, params=params, states=states, global_state=global_state)
 
         # Loss accumulator
@@ -253,27 +265,18 @@ class LossMixin:
             # Unbatch
             batch = [dim[i] for dim in data] if is_batched else data
 
-            # Compute gradient
-            with tf.GradientTape() as tape:
-                tape.watch(params)
-                current_obj = problem.objective(params, batch)
-            grads = tape.gradient(current_obj, params)
-
-            # Apply gradients
-            params, states = list(map(list, zip(*[
-                self._compute_update(*z) for z in zip(params, grads, states)
-            ])))
-            if global_state is not None:
-                self.network.call_global(states, global_state)
+            # Run learner
+            _, learning_state = self._step(learning_state, problem, batch, 0.0)
 
             # Run teacher
             _vars = problem.trainable_variables
-            teacher.minimize(lambda: problem.objective(_vars, batch), _vars)
+            teachers[0].minimize(
+                lambda: problem.objective(_vars, batch), _vars)
 
             # Loss is l2 between parameters
             loss += weights[i] * tf.add_n([
                 tf.nn.l2_loss(student - teacher)
-                for student, teacher in zip(params, _vars)
+                for student, teacher in zip(learning_state[0], _vars)
             ])
 
-        return loss, params, states, global_state
+        return (loss, *learning_state)

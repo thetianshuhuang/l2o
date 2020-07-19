@@ -25,7 +25,7 @@ class Problem:
             if hasattr(self, "get_internal"):
                 self.internal = self.get_internal()
 
-    def reset(self, values=None):
+    def reset(self, values=None, internal=None):
         """Reset problem.
 
         Keyword Args
@@ -33,15 +33,22 @@ class Problem:
         values : tf.Tensor
             New value to reset parameters to. If None, parameters are reset
             using the ``get_parameters()`` method.
+        internal : tf.Tensor
+            New value of internal parameters. If None, internal hidden state
+            is initialized using the ``get_internal()`` method.
         """
         if hasattr(self, "get_internal"):
-            self.internal = self.get_internal()
+            if internal is None:
+                self.internal = self.get_internal()
+            else:
+                self.internal = internal
 
         if values is None:
             values = self.get_parameters()
 
-        for v, new in zip(self.trainable_variables, values):
-            v.assign(new)
+        if hasattr(self, "trainable_variables"):
+            for v, new in zip(self.trainable_variables, values):
+                v.assign(new)
 
     def size(self, unroll):
         """Get number of batches for this unroll duration.

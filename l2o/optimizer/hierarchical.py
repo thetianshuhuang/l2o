@@ -31,8 +31,10 @@ class HierarchicalOptimizer(TrainableOptimizer):
         if weights_file is not None:
             network.load_weights(weights_file)
 
+        # Global state put into the state dict to make .variables() easier
+        # This way all state information is contained in _state_dict
         init_global = self.network.get_initial_state_global()
-        self._global_state = wrap_variables(init_global)
+        self._state_dict["__global__"] = wrap_variables(init_global)
 
         # Alias trainable_variables
         # First we have to run a dummy computation to trick the network into
@@ -47,7 +49,7 @@ class HierarchicalOptimizer(TrainableOptimizer):
 
     def _compute_update(self, param, grad, state):
         dparam, new_state = self.network.call(
-            param, grad, state, self._global_state)
+            param, grad, state, self._state_dict["__global__"])
         return param - dparam, new_state
 
     def apply_gradients(self, grads_and_vars, *args, **kwargs):
@@ -62,10 +64,10 @@ class HierarchicalOptimizer(TrainableOptimizer):
         res = super().apply_gradients(grads_and_vars, *args, **kwargs)
         # Eq 12
         nested_assign(
-            self._global_state,
+            self._state_dict["__global__"],
             self.network.call_global(
                 [self.get_state(var) for grad, var in grads_and_vars_cpy],
-                self._global_state))
+                self._state_dict["__global__"]))
 
         return res
 

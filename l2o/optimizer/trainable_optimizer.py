@@ -177,3 +177,10 @@ class TrainableOptimizer(
             Destination file
         """
         raise NotImplementedError()
+
+    def variables(self):
+        """Returns variables of this Optimizer based on the order created.
+
+        Override of base method to use _state_dict instead of _weights.
+        """
+        return tf.nest.flatten(self._state_dict)

@@ -3,10 +3,12 @@ import collections
 
 from tensorflow.keras.utils import Progbar
 
+from .utils import reset_optimizer
+
 
 _MetaIteration = collections.namedtuple(
     "MetaIteration",
-    ["problem", "optimizer", "unroll_len", "unroll_weights", "teacher"])
+    ["problem", "optimizer", "unroll_len", "unroll_weights", "teachers"])
 
 
 class MetaIteration(_MetaIteration):
@@ -60,13 +62,13 @@ class TrainingMixin:
         kwargs = dict(
             params=params, states=states, global_state=global_state,
             unroll=unroll, problem=meta.problem, is_batched=is_batched)
-        if meta.teacher is None:
+        if meta.teachers is None:
             return self.meta_loss.get_concrete_function(
                 weights, data,
                 noise_stddev=meta.problem.noise_stddev, **kwargs)
         else:
             return self.imitation_loss.get_concrete_function(
-                weights, data, teacher=meta.teacher, **kwargs)
+                weights, data, teachers=meta.teachers, **kwargs)
 
     def _step(
             self, optimizer, concrete_loss, weights, data,
@@ -112,9 +114,11 @@ class TrainingMixin:
             weights = meta.unroll_weights(unroll)
             data = meta.problem.get_internal()
 
-            # Reset only required when ``persistent=True``
-            if meta.teacher is not None:
-                meta.problem.reset()
+            if meta.teachers is not None:
+                # Reset only required when ``persistent=True``
+                meta.problem.reset(internal=data)
+                # Teacher state (i.e. momentum) needs to be reset
+                reset_optimizer(meta.teachers)
 
             # Only create concrete loss on first iteration
             if concrete_loss is None:
@@ -157,7 +161,7 @@ class TrainingMixin:
 
             for batch in dataset:
 
-                if meta.teacher is not None:
+                if meta.teachers is not None:
                     meta.problem.reset(values=params)
 
                 # Data dimensions are ``[unroll, batch] + [data]``
@@ -179,7 +183,7 @@ class TrainingMixin:
 
     def train(
             self, problems, optimizer, unroll_len=lambda: 20,
-            unroll_weights=weights_mean, teacher=None, epochs=1, repeat=1):
+            unroll_weights=weights_mean, teachers=None, epochs=1, repeat=1):
         """Run meta-training.
 
         Parameters
@@ -199,16 +203,16 @@ class TrainingMixin:
             Number of epochs to run if batched
         repeat : int
             Number of repetitions to run using the same graph if full batched.
-        teacher : tf.keras.optimizers.Optimizer
+        teachers : tf.keras.optimizers.Optimizer[]
             If passed, runs imitation learning instead against ``teacher``.
         """
 
         for itr, spec in enumerate(problems):
             spec.print(itr)
-            problem = spec.build(persistent=teacher is not None)
+            problem = spec.build(persistent=teachers is not None)
 
             meta = MetaIteration(
-                problem, optimizer, unroll_len, unroll_weights, teacher)
+                problem, optimizer, unroll_len, unroll_weights, teachers)
 
             if hasattr(problem, "get_dataset"):
                 self._train_batch(meta, epochs=epochs)
