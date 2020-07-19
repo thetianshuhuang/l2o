@@ -90,11 +90,8 @@ class LossMixin:
             return grads
 
     def _step(
-            self, learning_state, problem, batch, noise_stddev):
+            self, params, states, global_state, problem, batch, noise_stddev):
         """Helper function to run a single optimization step"""
-
-        # Unpack
-        params, states, global_state = learning_state
 
         # Compute gradient
         with tf.GradientTape() as tape:
@@ -112,7 +109,7 @@ class LossMixin:
         if global_state is not None:
             self.network.call_global(states, global_state)
 
-        return current_obj, (params, states, global_state)
+        return current_obj, params, states, global_state
 
     @tf.function
     def meta_loss(
@@ -165,8 +162,7 @@ class LossMixin:
             [1] Final parameters
             [2] Final state
         """
-        # (params, states, global_state) triple
-        learning_state = self._get_state(
+        params, states, global_state = self._get_state(
             problem, params=params, states=states, global_state=global_state)
 
         # Compute initial objective value
@@ -195,8 +191,8 @@ class LossMixin:
             batch = [dim[i] for dim in data] if is_batched else data
 
             # The actual step
-            current_obj, learning_state = self._step(
-                learning_state, problem, batch, noise_stddev)
+            current_obj, params, states, global_state = self._step(
+                params, states, global_state, problem, batch, noise_stddev)
             # cond3: objective is a reasonable multiplier of the original
             if self.obj_train_max_multiplier > 0 and current_obj > max_obj:
                 break
@@ -207,7 +203,7 @@ class LossMixin:
             if not tf.math.is_finite(loss):
                 break
 
-        return (loss, *learning_state)
+        return loss, params, states, global_state
 
     @tf.function
     def imitation_loss(
@@ -254,7 +250,7 @@ class LossMixin:
             [2] Final state
         """
         # (params, states, global_state) triple
-        learning_state = self._get_state(
+        params, states, global_state = self._get_state(
             problem, params=params, states=states, global_state=global_state)
 
         # Loss accumulator
@@ -266,7 +262,8 @@ class LossMixin:
             batch = [dim[i] for dim in data] if is_batched else data
 
             # Run learner
-            _, learning_state = self._step(learning_state, problem, batch, 0.0)
+            _, params, states, global_state = self._step(
+                params, states, global_state, problem, batch, 0.0)
 
             # Run teacher
             _vars = problem.trainable_variables
@@ -276,7 +273,7 @@ class LossMixin:
             # Loss is l2 between parameters
             loss += weights[i] * tf.add_n([
                 tf.nn.l2_loss(student - teacher)
-                for student, teacher in zip(learning_state[0], _vars)
+                for student, teacher in zip(params, _vars)
             ])
 
-        return (loss, *learning_state)
+        return loss, params, states, global_state
