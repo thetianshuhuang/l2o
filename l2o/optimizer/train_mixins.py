@@ -7,8 +7,11 @@ from .utils import reset_optimizer
 
 
 _MetaIteration = collections.namedtuple(
-    "MetaIteration",
-    ["problem", "optimizer", "unroll_len", "unroll_weights", "teachers"])
+    "MetaIteration", [
+        "problem", "optimizer",
+        "unroll_len", "unroll_weights",
+        "teachers", "strategy"
+    ])
 
 
 class MetaIteration(_MetaIteration):
@@ -68,7 +71,8 @@ class TrainingMixin:
                 noise_stddev=meta.problem.noise_stddev, **kwargs)
         else:
             return self.imitation_loss.get_concrete_function(
-                weights, data, teachers=meta.teachers, **kwargs)
+                weights, data, teachers=meta.teachers,
+                strategy=meta.strategy, **kwargs)
 
     def _meta_step(
             self, optimizer, concrete_loss, weights, data,
@@ -131,7 +135,7 @@ class TrainingMixin:
 
             pbar.add(1, values=[("loss", loss)])
 
-    def _trian_batch(self, meta, epochs=1):
+    def _train_batch(self, meta, epochs=1):
         """Standard minibatch training.
 
         Parameters
@@ -232,9 +236,10 @@ class TrainingMixin:
                 pbar.add(1, values=[("loss", loss)])
 
     def train(
-            self, problems, optimizer, unroll_len=lambda: 20,
-            unroll_weights=weights_mean, teachers=[], epochs=1, repeat=1,
-            persistent=False):
+            self, problems, optimizer,
+            unroll_len=lambda: 20, unroll_weights=weights_mean,
+            teachers=[], strategy=tf.math.reduce_mean,
+            epochs=1, repeat=1, persistent=False):
         """Run meta-training.
 
         Parameters
@@ -250,12 +255,16 @@ class TrainingMixin:
             Unroll size or callable that returns unroll size.
         unroll_weights : Callable(int) -> tf.Tensor
             Callable that generates unroll weights from an unroll size.
+        teachers : tf.keras.optimizers.Optimizer[]
+            If passed, runs imitation learning instead against ``teacher``.
+        strategy : Callable (float[] -> float)
+            Imitation learning multi-teacher loss strategy. Suggested:
+              - ``tf.math.reduce_mean``: classic multi-teacher mean loss.
+              - ``tf.math.reduce_max``: minimax loss.
         epochs : int
             Number of epochs to run if batched
         repeat : int
             Number of repetitions to run using the same graph if full batched.
-        teachers : tf.keras.optimizers.Optimizer[]
-            If passed, runs imitation learning instead against ``teacher``.
         persistent : bool
             If True, batch training keeps a persistent optimizer and optimizee
             state across iteration trajectories. If False, the optimizer state
@@ -267,7 +276,8 @@ class TrainingMixin:
             problem = spec.build(persistent=len(teachers))
 
             meta = MetaIteration(
-                problem, optimizer, unroll_len, unroll_weights, teachers)
+                problem, optimizer, unroll_len, unroll_weights, teachers,
+                strategy)
 
             if hasattr(problem, "get_dataset"):
                 if persistent:

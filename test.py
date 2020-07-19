@@ -38,11 +38,13 @@ def train_meta(problems, repeat=1, epochs=1):
     opt.save("testopt")
 
 
-def train_imitation(problems, repeat=1, epochs=1):
+def train_imitation(
+        problems, strategy=tf.math.reduce_mean, repeat=1, epochs=1):
     opt = load()
     opt.train(
         problems, tf.keras.optimizers.Adam(), repeat=repeat, epochs=epochs,
-        teachers=[tf.keras.optimizers.Adam()])
+        teachers=[tf.keras.optimizers.Adam(), tf.keras.optimizers.RMSprop()],
+        strategy=strategy)
     opt.save("testopt")
 
 

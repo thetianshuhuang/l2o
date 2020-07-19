@@ -199,7 +199,8 @@ class LossMixin:
     @tf.function
     def imitation_loss(
             self, weights, data, params=None, states=None, global_state=None,
-            unroll=20, problem=None, is_batched=False, teachers=None):
+            unroll=20, problem=None, is_batched=False, teachers=None,
+            strategy=tf.math.reduce_mean):
         """Get imitation learning loss.
 
         The problem must be built in persistent mode for the teacher to use,
@@ -232,6 +233,10 @@ class LossMixin:
             Batch training or full batch training?
         teachers : tf.keras.optimizers.Optimizer[] (bound)
             List of optimizers to train against.
+        strategy : Callable (float[] -> float)
+            Imitation learning multi-teacher loss strategy. Suggested:
+              - ``tf.math.reduce_mean``: classic multi-teacher mean loss.
+              - ``tf.math.reduce_max``: minimax loss.
 
         Returns
         -------
@@ -271,8 +276,9 @@ class LossMixin:
                 teacher.minimize(
                     lambda: problem.objective(var_set, batch), var_set)
 
-            # Loss is l2 between parameters, mean across teachers
-            loss += tf.math.reduce_mean([
+            # Loss for each teacher is l2 between parameters
+            # Loss for multi-teacher is determined by the ``strategy``
+            loss += strategy([
                 weights[i] * tf.add_n([
                     tf.nn.l2_loss(svar - tvar)
                     for svar, tvar in zip(params, var_set)
