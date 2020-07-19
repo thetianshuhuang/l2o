@@ -118,7 +118,8 @@ class TrainingMixin:
                 # Reset only required when ``persistent=True``
                 meta.problem.reset(internal=data)
                 # Teacher state (i.e. momentum) needs to be reset
-                reset_optimizer(meta.teachers)
+                for t in meta.teachers:
+                    reset_optimizer(t)
 
             # Only create concrete loss on first iteration
             if concrete_loss is None:
@@ -130,8 +131,58 @@ class TrainingMixin:
 
             pbar.add(1, values=[("loss", loss)])
 
-    def _train_batch(self, meta, epochs=1):
-        """Minibatch training.
+    def _trian_batch(self, meta, epochs=1):
+        """Standard minibatch training.
+
+        Parameters
+        ----------
+        meta : MetaIteration
+            Current metaiteration parameters. See docstring.
+
+        Keyword Args
+        ------------
+        epochs : int
+            Number of epochs to run for.
+        """
+        concrete_loss = None
+        params = meta.problem.get_parameters()
+
+        for i in range(epochs):
+
+            unroll = meta.unroll_len()
+            weights = meta.unroll_weights(unroll)
+            dataset = meta.problem.get_dataset(unroll)
+
+            print("Epoch {}".format(i + 1))
+            pbar = Progbar(meta.problem.size(unroll), unit_name='step')
+
+            for batch in dataset:
+
+                if meta.teachers is not None:
+                    meta.problem.reset(values=params)
+                    # Teacher state (i.e. momentum) needs to be reset
+                    for t in meta.teachers:
+                        reset_optimizer(t)
+
+                # Data dimensions are ``[unroll, batch] + [data]``
+                batch_stacked = [
+                    tf.stack(tf.split(dim, num_or_size_splits=unroll))
+                    for dim in batch]
+
+                if concrete_loss is None:
+                    concrete_loss = self._make_cf(
+                        meta, weights, batch_stacked, unroll, params=params,
+                        is_batched=True)
+
+                # Only save params; state and global_state are discarded
+                loss, params, _, _ = self._meta_step(
+                    meta.optimizer, concrete_loss, weights, batch_stacked,
+                    params=params)
+
+                pbar.add(1, values=[("loss", loss)])
+
+    def _train_batch_persistent(self, meta, epochs=1):
+        """Minibatch training with persistent optimizer state across batches.
 
         Parameters
         ----------
@@ -145,8 +196,6 @@ class TrainingMixin:
         """
 
         concrete_loss = None
-
-        # Batch training stores persistent state
         params, states, global_state = self._get_state(
             meta.problem, params=None, states=None, global_state=None)
 
@@ -175,6 +224,7 @@ class TrainingMixin:
                         states=states, global_state=global_state,
                         is_batched=True)
 
+                # Keep everything
                 loss, params, states, global_state = self._meta_step(
                     meta.optimizer, concrete_loss, weights, batch_stacked,
                     params=params, states=states, global_state=global_state)
@@ -183,7 +233,8 @@ class TrainingMixin:
 
     def train(
             self, problems, optimizer, unroll_len=lambda: 20,
-            unroll_weights=weights_mean, teachers=None, epochs=1, repeat=1):
+            unroll_weights=weights_mean, teachers=[], epochs=1, repeat=1,
+            persistent=False):
         """Run meta-training.
 
         Parameters
@@ -205,17 +256,24 @@ class TrainingMixin:
             Number of repetitions to run using the same graph if full batched.
         teachers : tf.keras.optimizers.Optimizer[]
             If passed, runs imitation learning instead against ``teacher``.
+        persistent : bool
+            If True, batch training keeps a persistent optimizer and optimizee
+            state across iteration trajectories. If False, the optimizer state
+            is reset after every iteration.
         """
 
         for itr, spec in enumerate(problems):
             spec.print(itr)
-            problem = spec.build(persistent=teachers is not None)
+            problem = spec.build(persistent=len(teachers))
 
             meta = MetaIteration(
                 problem, optimizer, unroll_len, unroll_weights, teachers)
 
             if hasattr(problem, "get_dataset"):
-                self._train_batch(meta, epochs=epochs)
+                if persistent:
+                    self._train_batch_persistent(meta, epochs=epochs)
+                else:
+                    self._train_batch(meta, epochs=epochs)
             elif hasattr(problem, "get_internal"):
                 self._train_full(meta, repeat=repeat)
             else:

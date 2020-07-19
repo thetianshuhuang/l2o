@@ -6,22 +6,25 @@ class Problem:
 
     Keyword Args
     ------------
-    persistent : bool
-        If True, then the parameters are held internally as variables to be
-        used so that ``tf.keras.optimizers.Optimizer`` can act on them.
-        If False, then the problem will not generate its own parameters.
+    persistent : int
+        If >0, then this indicates the number of copies of the parameters to
+        hold internally so that a number of ``tf.keras.optimizers.Optimizer``
+        can act on them.
+        If <= 0, the problem will not own any parameters.
     noise_stddev : float
         Normally distributed noise to add to gradients during training to
         simulate minibatch noise
     """
 
-    def __init__(self, persistent=False, noise_stddev=0.0):
+    def __init__(self, persistent=0, noise_stddev=0.0):
 
         self.noise_stddev = noise_stddev
 
         if persistent:
             self.trainable_variables = [
-                tf.Variable(v) for v in self.get_parameters()]
+                [tf.Variable(v) for v in self.get_parameters()]
+                for _ in range(persistent)
+            ]
             if hasattr(self, "get_internal"):
                 self.internal = self.get_internal()
 
@@ -47,8 +50,9 @@ class Problem:
             values = self.get_parameters()
 
         if hasattr(self, "trainable_variables"):
-            for v, new in zip(self.trainable_variables, values):
-                v.assign(new)
+            for var_set in self.trainable_variables:
+                for v, new in zip(var_set, values):
+                    v.assign(new)
 
     def size(self, unroll):
         """Get number of batches for this unroll duration.

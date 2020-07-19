@@ -266,15 +266,17 @@ class LossMixin:
             if global_state is not None:
                 self.network.call_global(states, global_state)
 
-            # Run teacher
-            _vars = problem.trainable_variables
-            teachers[0].minimize(
-                lambda: problem.objective(_vars, batch), _vars)
+            # Run teachers
+            for teacher, var_set in zip(teachers, problem.trainable_variables):
+                teacher.minimize(
+                    lambda: problem.objective(var_set, batch), var_set)
 
-            # Loss is l2 between parameters
-            loss += weights[i] * tf.add_n([
-                tf.nn.l2_loss(student - teacher)
-                for student, teacher in zip(params, _vars)
+            # Loss is l2 between parameters, mean across teachers
+            loss += tf.math.reduce_mean([
+                weights[i] * tf.add_n([
+                    tf.nn.l2_loss(svar - tvar)
+                    for svar, tvar in zip(params, var_set)
+                ]) for var_set in problem.trainable_variables
             ])
 
         return loss, params, states, global_state
