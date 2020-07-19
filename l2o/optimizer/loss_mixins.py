@@ -89,7 +89,7 @@ class LossMixin:
         else:
             return grads
 
-    def _step(
+    def _loss_step(
             self, params, states, global_state, problem, batch, noise_stddev):
         """Helper function to run a single optimization step"""
 
@@ -191,7 +191,7 @@ class LossMixin:
             batch = [dim[i] for dim in data] if is_batched else data
 
             # The actual step
-            current_obj, params, states, global_state = self._step(
+            current_obj, params, states, global_state = self._loss_step(
                 params, states, global_state, problem, batch, noise_stddev)
             # cond3: objective is a reasonable multiplier of the original
             if self.obj_train_max_multiplier > 0 and current_obj > max_obj:
@@ -249,7 +249,6 @@ class LossMixin:
             [1] Final parameters
             [2] Final state
         """
-        # (params, states, global_state) triple
         params, states, global_state = self._get_state(
             problem, params=params, states=states, global_state=global_state)
 
@@ -262,7 +261,7 @@ class LossMixin:
             batch = [dim[i] for dim in data] if is_batched else data
 
             # Run learner
-            _, params, states, global_state = self._step(
+            _, params, states, global_state = self._loss_step(
                 params, states, global_state, problem, batch, 0.0)
 
             # Run teacher

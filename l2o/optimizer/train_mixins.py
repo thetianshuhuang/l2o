@@ -70,7 +70,7 @@ class TrainingMixin:
             return self.imitation_loss.get_concrete_function(
                 weights, data, teachers=meta.teachers, **kwargs)
 
-    def _step(
+    def _meta_step(
             self, optimizer, concrete_loss, weights, data,
             params=None, states=None, global_state=None):
         """Helper function to run for a single step."""
@@ -125,7 +125,7 @@ class TrainingMixin:
                 concrete_loss = self._make_cf(meta, weights, data, unroll)
 
             # Ignore all param & state arguments
-            loss, _, _, _ = self._step(
+            loss, _, _, _ = self._meta_step(
                 meta.optimizer, concrete_loss, weights, data)
 
             pbar.add(1, values=[("loss", loss)])
@@ -175,7 +175,7 @@ class TrainingMixin:
                         states=states, global_state=global_state,
                         is_batched=True)
 
-                loss, params, states, global_state = self._step(
+                loss, params, states, global_state = self._meta_step(
                     meta.optimizer, concrete_loss, weights, batch_stacked,
                     params=params, states=states, global_state=global_state)
 
