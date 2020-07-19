@@ -194,7 +194,7 @@ class LossMixin:
             if not tf.math.is_finite(loss):
                 break
 
-        return loss, params, states, global_state
+        return loss / tf.cast(unroll, tf.float32), params, states, global_state
 
     @tf.function
     def imitation_loss(
@@ -278,11 +278,14 @@ class LossMixin:
 
             # Loss for each teacher is l2 between parameters
             # Loss for multi-teacher is determined by the ``strategy``
-            loss += strategy([
-                weights[i] * tf.add_n([
+            d_loss = weights[i] * strategy([
+                tf.add_n([
                     tf.nn.l2_loss(svar - tvar)
                     for svar, tvar in zip(params, var_set)
                 ]) for var_set in problem.trainable_variables
             ])
+            if self.use_log_objective:
+                d_loss = tf.log(d_loss)
+            loss += d_loss
 
-        return loss, params, states, global_state
+        return loss / tf.cast(unroll, tf.float32), params, states, global_state
