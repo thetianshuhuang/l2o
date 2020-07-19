@@ -135,8 +135,8 @@ class TrainingMixin:
 
             pbar.add(1, values=[("loss", loss)])
 
-    def _train_batch(self, meta, epochs=1):
-        """Standard minibatch training.
+    def _train_batch(self, meta, epochs=1, persistent=False):
+        """Minibatch training.
 
         Parameters
         ----------
@@ -147,9 +147,19 @@ class TrainingMixin:
         ------------
         epochs : int
             Number of epochs to run for.
+        persistent : bool
+            If True, batch training keeps a persistent optimizer and optimizee
+            state across iteration trajectories. If False, the optimizer state
+            is reset after every iteration.
         """
         concrete_loss = None
-        params = meta.problem.get_parameters()
+        if persistent:
+            params, states, global_state = self._get_state(
+                meta.problem, params=None, states=None, global_state=None)
+        else:
+            params = meta.problem.get_parameters()
+            states = None
+            global_state = None
 
         for i in range(epochs):
 
@@ -163,75 +173,35 @@ class TrainingMixin:
             for batch in dataset:
 
                 if meta.teachers is not None:
+                    # Sync with student
                     meta.problem.reset(values=params)
                     # Teacher state (i.e. momentum) needs to be reset
-                    for t in meta.teachers:
-                        reset_optimizer(t)
+                    if not persistent:
+                        for t in meta.teachers:
+                            reset_optimizer(t)
 
                 # Data dimensions are ``[unroll, batch] + [data]``
                 batch_stacked = [
                     tf.stack(tf.split(dim, num_or_size_splits=unroll))
                     for dim in batch]
 
-                if concrete_loss is None:
-                    concrete_loss = self._make_cf(
-                        meta, weights, batch_stacked, unroll, params=params,
-                        is_batched=True)
-
-                # Only save params; state and global_state are discarded
-                loss, params, _, _ = self._meta_step(
-                    meta.optimizer, concrete_loss, weights, batch_stacked,
-                    params=params)
-
-                pbar.add(1, values=[("loss", loss)])
-
-    def _train_batch_persistent(self, meta, epochs=1):
-        """Minibatch training with persistent optimizer state across batches.
-
-        Parameters
-        ----------
-        meta : MetaIteration
-            Current metaiteration parameters. See docstring.
-
-        Keyword Args
-        ------------
-        epochs : int
-            Number of epochs to run for.
-        """
-
-        concrete_loss = None
-        params, states, global_state = self._get_state(
-            meta.problem, params=None, states=None, global_state=None)
-
-        for i in range(epochs):
-
-            unroll = meta.unroll_len()
-            weights = meta.unroll_weights(unroll)
-            dataset = meta.problem.get_dataset(unroll)
-
-            print("Epoch {}".format(i + 1))
-            pbar = Progbar(meta.problem.size(unroll), unit_name='step')
-
-            for batch in dataset:
-
-                if meta.teachers is not None:
-                    meta.problem.reset(values=params)
-
-                # Data dimensions are ``[unroll, batch] + [data]``
-                batch_stacked = [
-                    tf.stack(tf.split(dim, num_or_size_splits=unroll))
-                    for dim in batch]
-
+                # Only create concrete loss on first iteration
                 if concrete_loss is None:
                     concrete_loss = self._make_cf(
                         meta, weights, batch_stacked, unroll, params=params,
                         states=states, global_state=global_state,
                         is_batched=True)
 
-                # Keep everything
+                # The actual step
                 loss, params, states, global_state = self._meta_step(
                     meta.optimizer, concrete_loss, weights, batch_stacked,
-                    params=params, states=states, global_state=global_state)
+                    params=params, states=states,
+                    global_state=global_state)
+
+                # not persistent -> discard state, global_state
+                if not persistent:
+                    states = None
+                    global_state = None
 
                 pbar.add(1, values=[("loss", loss)])
 
@@ -261,6 +231,7 @@ class TrainingMixin:
             Imitation learning multi-teacher loss strategy. Suggested:
               - ``tf.math.reduce_mean``: classic multi-teacher mean loss.
               - ``tf.math.reduce_max``: minimax loss.
+            Can also implement a custom multi-teacher strategy.
         epochs : int
             Number of epochs to run if batched
         repeat : int
@@ -280,10 +251,7 @@ class TrainingMixin:
                 strategy)
 
             if hasattr(problem, "get_dataset"):
-                if persistent:
-                    self._train_batch_persistent(meta, epochs=epochs)
-                else:
-                    self._train_batch(meta, epochs=epochs)
+                self._train_batch(meta, epochs=epochs, persistent=persistent)
             elif hasattr(problem, "get_internal"):
                 self._train_full(meta, repeat=repeat)
             else:
