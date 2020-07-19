@@ -44,6 +44,7 @@ def train_imitation(
     opt.train(
         problems, tf.keras.optimizers.Adam(), repeat=repeat, epochs=epochs,
         teachers=[tf.keras.optimizers.Adam(), tf.keras.optimizers.RMSprop()],
+        imitation_optimizer=tf.keras.optimizers.Adam(),
         strategy=strategy, p_teacher=0.5)
     opt.save("testopt")
 

@@ -11,7 +11,7 @@ _MetaIteration = collections.namedtuple(
     "MetaIteration", [
         "problem", "optimizer",
         "unroll_len", "unroll_weights",
-        "teachers", "strategy", "p_teacher"
+        "teachers", "imitation_optimizer", "strategy", "p_teacher"
     ])
 
 
@@ -85,7 +85,7 @@ class TrainingMixin:
         return cf_meta, cf_imitation
 
     def _meta_step(
-            self, p_teacher, optimizer, concrete_loss, weights, data,
+            self, meta, concrete_loss, weights, data,
             params=None, states=None, global_state=None):
         """Helper function to run for a single step."""
 
@@ -97,8 +97,15 @@ class TrainingMixin:
             _loss = cf_meta
         # Randomly select meta or imitation learning
         else:
-            concrete_loss = np.random.choice(
-                [cf_meta, cf_imitation], p=[1. - p_teacher, p_teacher])
+            _loss = np.random.choice(
+                [cf_meta, cf_imitation],
+                p=[1. - meta.p_teacher, meta.p_teacher])
+
+        # Select optimizer
+        if _loss == cf_meta or meta.imitation_optimizer is None:
+            opt = meta.optimizer
+        else:
+            opt = meta.imitation_optimizer
 
         # Specify trainable_variables specifically for efficiency
         with tf.GradientTape(watch_accessed_variables=False) as tape:
@@ -111,7 +118,7 @@ class TrainingMixin:
         # Standard apply_gradient paradigam
         # Used instead of ``optimizer.minimize`` to expose the current loss
         grads = tape.gradient(loss, self.trainable_variables)
-        optimizer.apply_gradients(zip(grads, self.trainable_variables))
+        opt.apply_gradients(zip(grads, self.trainable_variables))
 
         return loss, params, states, global_state
 
@@ -129,8 +136,10 @@ class TrainingMixin:
             Number of times to repeat. reset() is used for computational
             efficiency (the loss graph is not rebuilt between repeats).
         """
-
         pbar = Progbar(repeat, unit_name='step')
+
+        # Note: concrete_loss is a tuple of concrete functions
+        # [0]: meta_loss; [1]: imitation_loss
         concrete_loss = None
 
         for _ in range(repeat):
@@ -151,8 +160,7 @@ class TrainingMixin:
                 concrete_loss = self._make_cf(meta, weights, data, unroll)
 
             # Ignore all param & state arguments
-            loss, _, _, _ = self._meta_step(
-                meta.p_teacher, meta.optimizer, concrete_loss, weights, data)
+            loss, _, _, _ = self._meta_step(meta, concrete_loss, weights, data)
 
             pbar.add(1, values=[("loss", loss)])
 
@@ -215,8 +223,7 @@ class TrainingMixin:
 
                 # The actual step
                 loss, params, states, global_state = self._meta_step(
-                    meta.p_teacher, meta.optimizer, concrete_loss, weights,
-                    batch_stacked,
+                    meta, concrete_loss, weights, batch_stacked,
                     params=params, states=states, global_state=global_state)
 
                 # not persistent -> discard state, global_state
@@ -229,7 +236,8 @@ class TrainingMixin:
     def train(
             self, problems, optimizer,
             unroll_len=lambda: 20, unroll_weights=weights_mean,
-            teachers=[], strategy=tf.math.reduce_mean, p_teacher=0,
+            teachers=[], imitation_optimizer=None,
+            strategy=tf.math.reduce_mean, p_teacher=0,
             epochs=1, repeat=1, persistent=False):
         """Run meta-training.
 
@@ -248,6 +256,11 @@ class TrainingMixin:
             Callable that generates unroll weights from an unroll size.
         teachers : tf.keras.optimizers.Optimizer[]
             If passed, runs imitation learning instead against ``teacher``.
+        imitation_optimizer : tf.keras.optimizers.Optimizer
+            Separate optimizer to use on imitation loss updates if present.
+            This may benefit optimization by keeping separate optimizer
+            states for imitation and meta learning, as those losses may have
+            vastly different gradient magnitudes.
         strategy : Callable (float[] -> float)
             Imitation learning multi-teacher loss strategy. Suggested:
               - ``tf.math.reduce_mean``: classic multi-teacher mean loss.
@@ -272,7 +285,7 @@ class TrainingMixin:
 
             meta = MetaIteration(
                 problem, optimizer, unroll_len, unroll_weights, teachers,
-                strategy, p_teacher)
+                imitation_optimizer, strategy, p_teacher)
 
             if hasattr(problem, "get_dataset"):
                 self._train_batch(meta, epochs=epochs, persistent=persistent)
