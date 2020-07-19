@@ -89,28 +89,6 @@ class LossMixin:
         else:
             return grads
 
-    def _loss_step(
-            self, params, states, global_state, problem, batch, noise_stddev):
-        """Helper function to run a single optimization step"""
-
-        # Compute gradient
-        with tf.GradientTape() as tape:
-            tape.watch(params)
-            current_obj = problem.objective(params, batch)
-        grads = tape.gradient(current_obj, params)
-
-        # Optionally add artificial noise
-        grads = self._add_noise(grads, noise_stddev=noise_stddev)
-
-        # Apply gradients
-        params, states = list(map(list, zip(*[
-            self._compute_update(*z) for z in zip(params, grads, states)
-        ])))
-        if global_state is not None:
-            self.network.call_global(states, global_state)
-
-        return current_obj, params, states, global_state
-
     @tf.function
     def meta_loss(
             self, weights, data, params=None, states=None, global_state=None,
@@ -190,12 +168,25 @@ class LossMixin:
             # Unbatch
             batch = [dim[i] for dim in data] if is_batched else data
 
-            # The actual step
-            current_obj, params, states, global_state = self._loss_step(
-                params, states, global_state, problem, batch, noise_stddev)
+            # Compute gradient
+            with tf.GradientTape() as tape:
+                tape.watch(params)
+                current_obj = problem.objective(params, batch)
+            grads = tape.gradient(current_obj, params)
+
             # cond3: objective is a reasonable multiplier of the original
             if self.obj_train_max_multiplier > 0 and current_obj > max_obj:
                 break
+
+            # Optionally add artificial noise
+            grads = self._add_noise(grads, noise_stddev=noise_stddev)
+
+            # Apply gradients
+            params, states = list(map(list, zip(*[
+                self._compute_update(*z) for z in zip(params, grads, states)
+            ])))
+            if global_state is not None:
+                self.network.call_global(states, global_state)
 
             # Add to loss
             loss += self._scale_objective(current_obj, init_obj, weights[i])
@@ -261,8 +252,19 @@ class LossMixin:
             batch = [dim[i] for dim in data] if is_batched else data
 
             # Run learner
-            _, params, states, global_state = self._loss_step(
-                params, states, global_state, problem, batch, 0.0)
+            # NOTE: this cannot be split into a method since tensorflow
+            # has over-strict loop type checking as of 2.3.0-rc1 that raises
+            # an error during autograph conversion whenever global_state is
+            # None, even though in this case global_state will be constant.
+            with tf.GradientTape() as tape:
+                tape.watch(params)
+                current_obj = problem.objective(params, batch)
+            grads = tape.gradient(current_obj, params)
+            params, states = list(map(list, zip(*[
+                self._compute_update(*z) for z in zip(params, grads, states)
+            ])))
+            if global_state is not None:
+                self.network.call_global(states, global_state)
 
             # Run teacher
             _vars = problem.trainable_variables
