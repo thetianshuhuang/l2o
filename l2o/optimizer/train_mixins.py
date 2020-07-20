@@ -81,8 +81,6 @@ class TrainingMixin:
         else:
             cf_imitation = None
 
-        print(self.network.trainable_variables)
-
         return cf_meta, cf_imitation
 
     def _meta_step(
@@ -152,8 +150,8 @@ class TrainingMixin:
         weights = meta.unroll_weights(unroll)
 
         # Logging
-        loss = np.zeros(repeat, dtype=np.float32)
-        mode = np.zeros(repeat, dtype=np.bool)
+        losses = np.zeros(repeat, dtype=np.float32)
+        modes = np.zeros(repeat, dtype=np.bool)
 
         for i in range(repeat):
 
@@ -176,10 +174,10 @@ class TrainingMixin:
 
             # Logging
             pbar.add(1, values=[("loss", loss)])
-            loss[i] = loss.numpy()
-            mode[i] = mode
+            losses[i] = loss.numpy()
+            modes[i] = mode
 
-        return TrainingResults(loss=[loss], mode=[mode])
+        return TrainingResults(loss=[losses], mode=[modes])
 
     def _train_batch(self, meta, epochs=1, persistent=False):
         """Minibatch training.
@@ -212,8 +210,8 @@ class TrainingMixin:
             global_state = None
 
         # Logging
-        loss = []
-        mode = []
+        losses = []
+        modes = []
 
         for i in range(epochs):
 
@@ -267,10 +265,10 @@ class TrainingMixin:
 
                 # Logging
                 pbar.add(1, values=[("loss", loss)])
-                loss[j] = loss.numpy()
-                mode[j] = mode
+                losses[j] = loss.numpy()
+                modes[j] = mode
 
-        return TrainingResults(loss=loss, mode=mode)
+        return TrainingResults(loss=losses, mode=modes)
 
     def train(
             self, problems, optimizer,
@@ -326,6 +324,9 @@ class TrainingMixin:
             Logged loss and training modes for all problems; arranged in the
             same order as ``problems``.
         """
+        # No imitation optimizer -> use same optimizer for both
+        if imitation_optimizer is None:
+            imitation_optimizer = optimizer
 
         results = []
 

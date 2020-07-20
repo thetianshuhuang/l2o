@@ -1,5 +1,4 @@
-from .coordinatewise import CoordinateWiseOptimizer
-from .hierarchical import HierarchicalOptimizer
+from .architectures import CoordinateWiseOptimizer, HierarchicalOptimizer
 from .trainable_optimizer import TrainableOptimizer
 
 
