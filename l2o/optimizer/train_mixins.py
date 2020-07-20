@@ -7,30 +7,29 @@ from tensorflow.keras.utils import Progbar
 from .utils import reset_optimizer
 
 
-_MetaIteration = collections.namedtuple(
+MetaIteration = collections.namedtuple(
     "MetaIteration", [
         "problem", "optimizer",
         "unroll_len", "unroll_weights",
-        "teachers", "imitation_optimizer", "strategy", "p_teacher"
+        "teachers", "imitation_optimizer", "strategy", "p_teacher",
+        "validation"
     ])
 
 
-class MetaIteration(_MetaIteration):
-    """Meta Iteration args storage class
+_TrainingResults = collections.namedtuple("TrainingResults", ["loss", "mode"])
+
+
+class TrainingResults(_TrainingResults):
+    """Meta Iteration training results
 
     Attributes
     ----------
-    problem : problem.Problem
-        Problem to train on. Presence of ``.get_dataset()`` or
-        ``.get_internal()`` indicates full or minibatch.
-    optimizer : tf.keras.optimizers.Optimizer
-        Optimizer to use for meta optimization
-    unroll_len : Callable -> int
-        Callable that returns unroll size.
-    unroll_weights : Callable(int) -> tf.Tensor
-        Callable that generates unroll weights from an unroll size.
-    teacher : tf.keras.optimizers.Optimizer
-        Optimizer to imitate; trains meta-loss if not passed.
+    loss : np.array(dtype=float32)[]
+        Arrays of loss values; each epoch has its own array. For full batch
+        training, loss has length 1, and all repeats are in the same np.array.
+    mode : np.array(dtype=bool)[]
+        Arrays of bool indicating whether imitation learning (True) or
+        meta learning (False) was used for that iteration.
     """
     pass
 
@@ -82,6 +81,8 @@ class TrainingMixin:
         else:
             cf_imitation = None
 
+        print(self.network.trainable_variables)
+
         return cf_meta, cf_imitation
 
     def _meta_step(
@@ -92,35 +93,36 @@ class TrainingMixin:
         cf_meta, cf_imitation = concrete_loss
         # Only imitation learning or only meta learning
         if cf_meta is None:
-            _loss = cf_imitation
+            is_imitation = True
         elif cf_imitation is None:
-            _loss = cf_meta
+            is_imitation = False
         # Randomly select meta or imitation learning
         else:
-            _loss = np.random.choice(
-                [cf_meta, cf_imitation],
-                p=[1. - meta.p_teacher, meta.p_teacher])
+            is_imitation = np.random.uniform(0, 1) > 0.5
 
-        # Select optimizer
-        if _loss == cf_meta or meta.imitation_optimizer is None:
-            opt = meta.optimizer
-        else:
-            opt = meta.imitation_optimizer
+        opt = meta.imitation_optimizer if is_imitation else meta.optimizer
+        _loss = cf_imitation if is_imitation else cf_meta
 
-        # Specify trainable_variables specifically for efficiency
-        with tf.GradientTape(watch_accessed_variables=False) as tape:
-            tape.watch(self.trainable_variables)
-            # Other arugments of ``concrete_loss`` are bound and do not
-            # need to be passed.
+        if meta.validation:
+            # Validation mode -> only compute loss, no gradients
             loss, params, states, global_state = _loss(
                 weights, data,
                 params=params, states=states, global_state=global_state)
-        # Standard apply_gradient paradigam
-        # Used instead of ``optimizer.minimize`` to expose the current loss
-        grads = tape.gradient(loss, self.trainable_variables)
-        opt.apply_gradients(zip(grads, self.trainable_variables))
+        else:
+            # Specify trainable_variables specifically for efficiency
+            with tf.GradientTape(watch_accessed_variables=False) as tape:
+                tape.watch(self.network.trainable_variables)
+                # Other arugments of ``concrete_loss`` are bound and do not
+                # need to be passed.
+                loss, params, states, global_state = _loss(
+                    weights, data,
+                    params=params, states=states, global_state=global_state)
+            # Standard apply_gradient paradigam
+            # Used instead of ``optimizer.minimize`` to expose the current loss
+            grads = tape.gradient(loss, self.network.trainable_variables)
+            opt.apply_gradients(zip(grads, self.network.trainable_variables))
 
-        return loss, params, states, global_state
+        return loss, is_imitation, params, states, global_state
 
     def _train_full(self, meta, repeat=1):
         """Full batch training.
@@ -135,17 +137,26 @@ class TrainingMixin:
         repeat : int
             Number of times to repeat. reset() is used for computational
             efficiency (the loss graph is not rebuilt between repeats).
+
+        Returns
+        -------
+        TrainingResults
+            Loss and mode logging for this meta-iteration
         """
         pbar = Progbar(repeat, unit_name='step')
 
         # Note: concrete_loss is a tuple of concrete functions
         # [0]: meta_loss; [1]: imitation_loss
         concrete_loss = None
+        unroll = meta.unroll_len()
+        weights = meta.unroll_weights(unroll)
 
-        for _ in range(repeat):
+        # Logging
+        loss = np.zeros(repeat, dtype=np.float32)
+        mode = np.zeros(repeat, dtype=np.bool)
 
-            unroll = meta.unroll_len()
-            weights = meta.unroll_weights(unroll)
+        for i in range(repeat):
+
             data = meta.problem.get_internal()
 
             if meta.teachers is not None:
@@ -160,9 +171,15 @@ class TrainingMixin:
                 concrete_loss = self._make_cf(meta, weights, data, unroll)
 
             # Ignore all param & state arguments
-            loss, _, _, _ = self._meta_step(meta, concrete_loss, weights, data)
+            loss, mode, _, _, _ = self._meta_step(
+                meta, concrete_loss, weights, data)
 
+            # Logging
             pbar.add(1, values=[("loss", loss)])
+            loss[i] = loss.numpy()
+            mode[i] = mode
+
+        return TrainingResults(loss=[loss], mode=[mode])
 
     def _train_batch(self, meta, epochs=1, persistent=False):
         """Minibatch training.
@@ -180,8 +197,12 @@ class TrainingMixin:
             If True, batch training keeps a persistent optimizer and optimizee
             state across iteration trajectories. If False, the optimizer state
             is reset after every iteration.
+
+        Returns
+        -------
+        TrainingResults
+            Loss and mode logging for this meta-iteration
         """
-        concrete_loss = None
         if persistent:
             params, states, global_state = self._get_state(
                 meta.problem, params=None, states=None, global_state=None)
@@ -190,16 +211,29 @@ class TrainingMixin:
             states = None
             global_state = None
 
+        # Logging
+        loss = []
+        mode = []
+
         for i in range(epochs):
 
+            # Get new unroll duration; concrete_loss must be regenerated due
+            # to the change to ``unroll``.
             unroll = meta.unroll_len()
             weights = meta.unroll_weights(unroll)
             dataset = meta.problem.get_dataset(unroll)
+            concrete_loss = None
 
+            # Progress bar
             print("Epoch {}".format(i + 1))
-            pbar = Progbar(meta.problem.size(unroll), unit_name='step')
+            size = meta.problem.size(unroll)
+            pbar = Progbar(size, unit_name='step')
 
-            for batch in dataset:
+            # Logging
+            loss.append(np.zeros(size, dtype=np.float32))
+            mode.append(np.zeros(size, dtype=np.bool))
+
+            for j, batch in enumerate(dataset):
 
                 if meta.teachers is not None:
                     # Sync with student
@@ -222,7 +256,7 @@ class TrainingMixin:
                         is_batched=True)
 
                 # The actual step
-                loss, params, states, global_state = self._meta_step(
+                loss, mode, params, states, global_state = self._meta_step(
                     meta, concrete_loss, weights, batch_stacked,
                     params=params, states=states, global_state=global_state)
 
@@ -231,14 +265,19 @@ class TrainingMixin:
                     states = None
                     global_state = None
 
+                # Logging
                 pbar.add(1, values=[("loss", loss)])
+                loss[j] = loss.numpy()
+                mode[j] = mode
+
+        return TrainingResults(loss=loss, mode=mode)
 
     def train(
             self, problems, optimizer,
             unroll_len=lambda: 20, unroll_weights=weights_mean,
             teachers=[], imitation_optimizer=None,
             strategy=tf.math.reduce_mean, p_teacher=0,
-            epochs=1, repeat=1, persistent=False):
+            epochs=1, repeat=1, persistent=False, validation=False):
         """Run meta-training.
 
         Parameters
@@ -277,7 +316,18 @@ class TrainingMixin:
             If True, batch training keeps a persistent optimizer and optimizee
             state across iteration trajectories. If False, the optimizer state
             is reset after every iteration.
+        validation : bool
+            If True, runs in validation mode (does not perform any parameter
+            updates)
+
+        Returns
+        -------
+        TrainingResults[]
+            Logged loss and training modes for all problems; arranged in the
+            same order as ``problems``.
         """
+
+        results = []
 
         for itr, spec in enumerate(problems):
             spec.print(itr)
@@ -285,13 +335,18 @@ class TrainingMixin:
 
             meta = MetaIteration(
                 problem, optimizer, unroll_len, unroll_weights, teachers,
-                imitation_optimizer, strategy, p_teacher)
+                imitation_optimizer, strategy, p_teacher, validation)
 
             if hasattr(problem, "get_dataset"):
-                self._train_batch(meta, epochs=epochs, persistent=persistent)
+                results.append(
+                    self._train_batch(
+                        meta, epochs=epochs, persistent=persistent))
             elif hasattr(problem, "get_internal"):
-                self._train_full(meta, repeat=repeat)
+                results.append(
+                    self._train_full(meta, repeat=repeat))
             else:
                 raise TypeError(
                     "Problem must be able to either get_dataset() or"
                     + "get_internal().")
+
+        return results

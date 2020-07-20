@@ -285,7 +285,7 @@ class LossMixin:
                 ]) for var_set in problem.trainable_variables
             ])
             if self.use_log_objective:
-                d_loss = tf.log(d_loss)
+                d_loss = tf.math.log(d_loss)
             loss += d_loss
 
         return loss / tf.cast(unroll, tf.float32), params, states, global_state

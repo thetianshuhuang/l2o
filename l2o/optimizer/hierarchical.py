@@ -13,41 +13,31 @@ class HierarchicalOptimizer(TrainableOptimizer):
     Parameters
     ----------
     network : tf.keras.Model
-        Model containing update methods for coordinate, tensor, and global
-        RNNs.
-    weights_file : str | None
-        Optional filepath to load optimizer network weights from.
+        Module to apply to each coordinate.
+
+    Keyword Args
+    ------------
+    name : str
+        Optimizer name
     **kwargs : dict
-        Passed on to TrainableOptimizer.
+        Arguments passed to TrainableOptimizer
     """
 
-    def __init__(
-            self, network,
-            weights_file=None, name="HierarchicalOptimizer", **kwargs):
+    def __init__(self, network, name="HierarchicalOptimizer", **kwargs):
 
-        super().__init__(name, **kwargs)
-
-        self.network = network
-        if weights_file is not None:
-            network.load_weights(weights_file)
+        super().__init__(network, name=name, **kwargs)
 
         # Global state put into the state dict to make .variables() easier
         # This way all state information is contained in _state_dict
         init_global = self.network.get_initial_state_global()
         self._state_dict["__global__"] = wrap_variables(init_global)
 
-        # Alias trainable_variables
-        # First we have to run a dummy computation to trick the network into
-        # generating trainable_variables
-        local_state = self.network.get_initial_state(0.)
-        self.network.call(0., 0., local_state, init_global)
-        self.network.call_global([local_state], init_global)
-        self.trainable_variables = network.trainable_variables
-
     def _initialize_state(self, var):
+        """Fetch initial states from child network."""
         return self.network.get_initial_state(var)
 
     def _compute_update(self, param, grad, state):
+        """Fetch initial states from child network."""
         dparam, new_state = self.network.call(
             param, grad, state, self._state_dict["__global__"])
         return param - dparam, new_state
@@ -70,7 +60,3 @@ class HierarchicalOptimizer(TrainableOptimizer):
                 self._state_dict["__global__"]))
 
         return res
-
-    def save(self, filepath, **kwargs):
-
-        self.network.save_weights(filepath, **kwargs)

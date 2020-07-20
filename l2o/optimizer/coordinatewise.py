@@ -17,27 +17,12 @@ class CoordinateWiseOptimizer(TrainableOptimizer):
     ------------
     name : str
         Optimizer name
-    weights_file : str | None
-        Optional filepath to load optimizer network weights from.
     **kwargs : dict
         Passed on to TrainableOptimizer.
     """
 
-    def __init__(
-            self, network,
-            weights_file=None, name="CoordinateWiseOptimizer", **kwargs):
-
+    def __init__(self, network, name="CoordinateWiseOptimizer", **kwargs):
         super().__init__(name, **kwargs)
-
-        self.network = network
-        if weights_file is not None:
-            network.load_weights(weights_file)
-
-        # Alias trainable_variables
-        # First we have to run a dummy computation to trick the network into
-        # generating trainable_variables
-        self.network(0., 0., self.network.get_initial_state(0.))
-        self.trainable_variables = network.trainable_variables
 
     def _initialize_state(self, var):
         """Fetch initial states from child network."""
@@ -47,7 +32,3 @@ class CoordinateWiseOptimizer(TrainableOptimizer):
         """Compute updates from child network."""
         dparam, new_state = self.network(param, grad, state)
         return param - dparam, new_state
-
-    def save(self, filepath, **kwargs):
-        """Save inernal model using keras model API"""
-        self.network.save_weights(filepath, **kwargs)

@@ -12,11 +12,15 @@ class TrainableOptimizer(
 
     Parameters
     ----------
-    name : str
-        Optimizer name
+    network : tf.keras.Model
+        Model containing the necessary call methods to operate the optimizer.
 
     Keyword Args
     ------------
+    name : str
+        Optimizer name
+    weights_file : str | None
+        Optional filepath to load optimizer network weights from.
     use_log_objective : bool
         Whether this optimizer uses the logarithm of the objective when
         computing the loss
@@ -32,18 +36,23 @@ class TrainableOptimizer(
     """
 
     def __init__(
-            self, name,
+            self, network,
+            name="GenericTrainableOptimizer", weights_file=None,
             use_log_objective=True, obj_train_max_multiplier=-1,
             use_numerator_epsilon=True, epsilon=1e-6, **kwargs):
 
+        # Core
+        super().__init__(name)
+        self.network = network
+        if weights_file is not None:
+            network.load_weights(weights_file)
+        self._state_dict = {}
+
+        # Params
         self.use_log_objective = use_log_objective
         self.obj_train_max_multiplier = obj_train_max_multiplier
         self.use_numerator_epsilon = use_numerator_epsilon
         self.epsilon = epsilon
-
-        super(TrainableOptimizer, self).__init__(name)
-
-        self._state_dict = {}
 
     def add_state(self, var, value):
         """Add state corresponding to a given variable for optimization.
@@ -176,7 +185,7 @@ class TrainableOptimizer(
         filepath : str
             Destination file
         """
-        raise NotImplementedError()
+        self.network.save_weights(filepath, **kwargs)
 
     def variables(self):
         """Returns variables of this Optimizer based on the order created.
