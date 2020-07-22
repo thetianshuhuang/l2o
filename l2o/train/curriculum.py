@@ -144,7 +144,7 @@ class CurriculumLearning:
         validation_loss = self._mean_loss(train_func(
             unroll_len=lambda: self.schedule(self.stage + 1), validation=True))
 
-        print("training_loss: {:.3f} | validation_loss: {:.3f}".format(
+        print("training_loss: {} | validation_loss: {}".format(
             training_loss, validation_loss))
 
         return training_loss, validation_loss
@@ -182,7 +182,7 @@ class CurriculumLearning:
                 "stage_{}".format(self.stage),
                 "period_{}".format(self.period)))
             # Add to summary
-            self.summary.append(
+            self.summary = self.summary.append(
                 {"stage": self.stage, "period": self.period,
                  "training_loss": training_loss,
                  "validation_loss": validation_loss},
