@@ -13,7 +13,7 @@ meta_learning = {
     },
     "curriculum": {
         "schedule": lambda i: 50 * (2**i),
-        "min_periods": 100,
+        "min_periods": 10,
         "epochs_per_period": 10,
         "max_stages": 0,
         "directory": "weights",

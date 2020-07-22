@@ -93,6 +93,14 @@ class CurriculumLearning:
                 self.summary["stage"] == self.stage
             ]["validation_loss"].min()
             self._load_network(self.stage, self.period)
+
+            # Check for stage increment
+            loss_last = self._lookup(self.stage, self.period)["loss"]
+            advance = (
+                (loss_last > self.best_loss)
+                and (self.period >= self.min_periods))
+            if advance:
+                self.stage += 1
             # Increment period to indicate current period
             self.period += 1
 
@@ -106,6 +114,12 @@ class CurriculumLearning:
             self.stage = 0
             self.period = 0
             self.best_loss = np.inf
+
+    def _lookup(self, stage, period):
+        return self.summary[
+            (self.summary["stage"] == stage)
+            & (self.summary["period"] == period)
+        ].iloc[0]
 
     def _load_network(self, stage, period):
         path = os.path.join(
@@ -182,7 +196,7 @@ class CurriculumLearning:
         # First in period and past first period -> load best from previous
         if self.period == 0 and self.stage > 0:
             row_idx = self.summary[
-                self.summary["stage"] == self.stage
+                self.summary["stage"] == (self.stage - 1)
             ]["validation_loss"].idxmin()
             period_idx = self.summary["period"][row_idx]
             self._load_network(self.stage - 1, period_idx)
