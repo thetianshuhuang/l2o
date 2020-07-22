@@ -90,13 +90,15 @@ class CurriculumLearning:
             self.stage = self.summary["stage"].max()
             self.period = self.summary["period"].max() + 1
             self.best_loss = self.summary[
-                (self.summary["stage"] == self.stage)
-                and (self.summary["period"] == self.period)
+                self.summary["stage"] == self.stage
             ]["validation_loss"].min()
         except FileNotFoundError:
             self.summary = pd.DataFrame({
-                "stage": [], "period": [],
-                "training_loss": [], "validation_loss": []})
+                "stage": pd.Series([], dtype='int'),
+                "period": pd.Series([], dtype='int'),
+                "training_loss": pd.Series([], dtype='float'),
+                "validation_loss": pd.Series([], dtype='float')
+            })
             self.stage = 0
             self.period = 0
             self.best_loss = np.inf

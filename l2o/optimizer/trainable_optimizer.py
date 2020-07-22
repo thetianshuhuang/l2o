@@ -40,7 +40,7 @@ class TrainableOptimizer(
     def __init__(
             self, network,
             name="GenericTrainableOptimizer", weights_file=None,
-            scale_objective=False, use_log_objective=True,
+            use_log_objective=True, scale_objective=False,
             obj_train_max_multiplier=-1,
             use_numerator_epsilon=True, epsilon=1e-6):
 
@@ -54,6 +54,7 @@ class TrainableOptimizer(
 
         # Params
         self.use_log_objective = use_log_objective
+        self.scale_objective = scale_objective
         self.obj_train_max_multiplier = obj_train_max_multiplier
         self.use_numerator_epsilon = use_numerator_epsilon
         self.epsilon = epsilon
