@@ -147,7 +147,8 @@ class LossMixin:
         if is_batched:
             init_obj = 0.
             for i in tf.range(unroll):
-                init_obj += problem.objective(params, [dim[i] for dim in data])
+                init_obj += problem.objective(
+                    params, [dim[i] for dim in data])
             init_obj /= tf.cast(unroll, tf.float32)
         else:
             init_obj = problem.objective(params, data)
@@ -159,6 +160,11 @@ class LossMixin:
             max_obj = (
                 (self.obj_train_max_multiplier - 1) * tf.abs(init_obj)
                 + init_obj)
+
+        # No scaling -> init_obj is 1; we still need to compute though due
+        # to obj_train_max_multiplier
+        if not self.scale_objective:
+            init_obj = 1.
 
         # Loss accumulator
         loss = 0.

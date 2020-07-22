@@ -24,6 +24,8 @@ class TrainableOptimizer(
     use_log_objective : bool
         Whether this optimizer uses the logarithm of the objective when
         computing the loss
+    scale_objective : bool
+        Whether the loss should be scaled by the initial value.
     obj_train_max_multiplier : float
         The maximum multiplier for the increase in the objective before
         meta-training is stopped. If <= 0, meta-training is not stopped
@@ -38,7 +40,8 @@ class TrainableOptimizer(
     def __init__(
             self, network,
             name="GenericTrainableOptimizer", weights_file=None,
-            use_log_objective=True, obj_train_max_multiplier=-1,
+            scale_objective=False, use_log_objective=True,
+            obj_train_max_multiplier=-1,
             use_numerator_epsilon=True, epsilon=1e-6):
 
         # Core

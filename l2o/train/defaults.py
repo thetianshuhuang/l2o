@@ -24,6 +24,7 @@ meta_learning = {
     ],
     "loss": {
         "use_log_objective": True,
+        "scale_objective": False,
         "obj_train_max_multiplier": -1,
         "use_numerator_epsilon": True,
         "epsilon": 1e-6
