@@ -185,11 +185,13 @@ class CurriculumLearning:
                 "period_{}".format(self.period)))
             # Add to summary
             self.summary = self.summary.append(
-                {"stage": self.stage, "period": self.period,
-                 "training_loss": training_loss,
-                 "validation_loss": validation_loss},
-                ignore_index=True)
-            self.summary.to_csv(os.path.join(self.directory, "summary.csv"))
+                pd.DataFrame({
+                    "stage": [self.stage], "period": [self.period],
+                    "training_loss": [training_loss],
+                    "validation_loss": [validation_loss]
+                }), ignore_index=True)
+            self.summary.to_csv(
+                os.path.join(self.directory, "summary.csv"), index=False)
             # Finally increment in memory
             self.period += 1
 

@@ -216,10 +216,11 @@ class TrainingMixin:
         unrolls = [meta.unroll_len() for _ in range(epochs)]
 
         # Progress bar
-        size = sum(meta.problem.size(unroll) for unroll in unrolls)
+        sizes = [meta.problem.size(unroll) for unroll in unrolls]
+        size = sum(sizes)
         pbar = Progbar(size, unit_name='step')
 
-        for i, unroll in enumerate(unrolls):
+        for i, (size, unroll) in enumerate(zip(sizes, unrolls)):
 
             # Get unroll weights; concrete_loss must be regenerated due
             # to the change to ``unroll``.
