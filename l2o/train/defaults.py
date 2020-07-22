@@ -21,7 +21,7 @@ meta_learning = {
     "problems": [
         ("mlp_classifier", [],
          {"layers": [20], "dataset": "mnist", "activation": "sigmoid",
-          "shuffle_buffer": 1024, "batch_size": 32}),
+          "shuffle_buffer": 16384, "batch_size": 8}),
     ],
     "loss": {
         "use_log_objective": True,
