@@ -88,10 +88,14 @@ class CurriculumLearning:
             self.summary = pd.read_csv(
                 os.path.join(self.directory, "summary.csv"))
             self.stage = self.summary["stage"].max()
-            self.period = self.summary["period"].max() + 1
+            self.period = self.summary["period"].max()
             self.best_loss = self.summary[
                 self.summary["stage"] == self.stage
             ]["validation_loss"].min()
+            self._load_network(self.stage, self.period)
+            # Increment period to indicate current period
+            self.period += 1
+
         except FileNotFoundError:
             self.summary = pd.DataFrame({
                 "stage": pd.Series([], dtype='int'),
@@ -102,6 +106,13 @@ class CurriculumLearning:
             self.stage = 0
             self.period = 0
             self.best_loss = np.inf
+
+    def _load_network(self, stage, period):
+        path = os.path.join(
+            self.directory, "stage_{}".format(stage),
+            "period_{}".format(period))
+        self.learner.network.load_weights(path)
+        print("Loaded weights: {}".format(path))
 
     def _mean_loss(self, results):
         """Helper function to compute mean loss."""
@@ -167,6 +178,14 @@ class CurriculumLearning:
         print("-" * len(header) + "\n")
 
         makedir(os.path.join(self.directory, "stage_{}".format(self.stage)))
+
+        # First in period and past first period -> load best from previous
+        if self.period == 0 and self.stage > 0:
+            row_idx = self.summary[
+                self.summary["stage"] == self.stage
+            ]["validation_loss"].idxmin()
+            period_idx = self.summary["period"][row_idx]
+            self._load_network(self.stage - 1, period_idx)
 
         # Train for at least ``min_periods`` or until we stop improving
         is_improving = True
