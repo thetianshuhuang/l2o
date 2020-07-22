@@ -2,7 +2,7 @@
 
 meta_learning = {
     "training": {
-        "unroll_weights": "mean",
+        "unroll_weights": "sum",
         "teachers": [],
         "imitation_optimizer": None,
         "strategy": "mean",

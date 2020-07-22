@@ -54,7 +54,7 @@ class Classifier(Problem):
         if self.shuffle_buffer is not None:
             self.dataset = self.dataset.shuffle(self.shuffle_buffer)
         return self.dataset.batch(
-            self.batch_size * unroll, drop_remainder=True)
+            self.batch_size * unroll, drop_remainder=True).shuffle(32)
 
     def get_parameters(self):
         return self.model.get_parameters()
