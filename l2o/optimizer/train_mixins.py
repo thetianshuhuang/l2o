@@ -212,19 +212,20 @@ class TrainingMixin:
         losses = []
         modes = []
 
-        for i in range(epochs):
+        # Generate unrolls (to draw progress bar)
+        unrolls = [meta.unroll_len() for _ in range(epochs)]
 
-            # Get new unroll duration; concrete_loss must be regenerated due
+        # Progress bar
+        size = sum(meta.problem.size(unroll) for unroll in unrolls)
+        pbar = Progbar(size, unit_name='step')
+
+        for unroll in unrolls:
+
+            # Get unroll weights; concrete_loss must be regenerated due
             # to the change to ``unroll``.
-            unroll = meta.unroll_len()
             weights = meta.unroll_weights(unroll)
             dataset = meta.problem.get_dataset(unroll)
             concrete_loss = None
-
-            # Progress bar
-            print("Epoch {}".format(i + 1))
-            size = meta.problem.size(unroll)
-            pbar = Progbar(size, unit_name='step')
 
             # Logging
             losses.append(np.zeros(size, dtype=np.float32))

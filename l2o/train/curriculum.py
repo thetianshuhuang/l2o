@@ -130,15 +130,22 @@ class CurriculumLearning:
 
         # Train for ``epochs_per_period`` meta-epochs
         training_loss = []
-        for _ in range(self.epochs_per_period):
+        for i in range(self.epochs_per_period):
+            print("Training [epoch {}/{}]".format(
+                i + 1, self.epochs_per_period))
             results = train_func(
                 unroll_len=lambda: self.schedule(self.stage), validation=False)
             training_loss.append(self._mean_loss(results))
         training_loss = np.mean(training_loss)
 
+        print("Validating")
+
         # Compute validation with longer unroll
         validation_loss = self._mean_loss(train_func(
             unroll_len=lambda: self.schedule(self.stage + 1), validation=True))
+
+        print("training_loss: {:.3f} | validation_loss: {:.3f}".format(
+            training_loss, validation_loss))
 
         return training_loss, validation_loss
 
@@ -149,7 +156,7 @@ class CurriculumLearning:
         where it last left off based on the contents of summary.csv.
         """
 
-        header = "  {} Stage {} | unroll={}, validation={}  ".format(
+        header = "  {} Stage {}: unroll={}, validation={}  ".format(
             "Starting" if self.period == 0 else "Resuming",
             self.stage, self.schedule(self.stage),
             self.schedule(self.stage + 1))
@@ -169,9 +176,6 @@ class CurriculumLearning:
 
             training_loss, validation_loss = self.learning_period()
 
-            print("training_loss: {:.3f} | validation_loss: {:.3f}".format(
-                training_loss, validation_loss))
-
             # Save optimizer
             self.learner.save(os.path.join(
                 self.directory,
@@ -183,6 +187,7 @@ class CurriculumLearning:
                  "training_loss": training_loss,
                  "validation_loss": validation_loss},
                 ignore_index=True)
+            self.summary.to_csv(os.path.join(self.directory, "summary.csv"))
             # Finally increment in memory
             self.period += 1
 
@@ -203,7 +208,6 @@ class CurriculumLearning:
         print("min_periods={}".format(self.min_periods))
         print("epochs_per_period={}".format(self.epochs_per_period))
         print("max_stages={}".format(self.max_stages))
-        print("\n")
 
         while True:
             self.learning_stage()
