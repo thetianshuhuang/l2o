@@ -232,13 +232,15 @@ class TrainingMixin:
             modes.append(np.zeros(size, dtype=np.bool))
 
             for j, batch in enumerate(dataset):
+                # State (i.e. momentum) needs to be reset
+                if not persistent:
+                    self.reset()
 
                 if meta.teachers is not None:
                     # Sync with student
                     meta.problem.reset(values=params)
-                    # State (i.e. momentum) needs to be reset
+                    # Reset teachers
                     if not persistent:
-                        self.reset()
                         for t in meta.teachers:
                             reset_optimizer(t)
 
