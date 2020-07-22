@@ -3,8 +3,11 @@
 import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
 
+from .network import BaseCoordinateWiseNetwork
+from ..optimizer import CoordinateWiseOptimizer
 
-class DMOptimizer(tf.keras.Model):
+
+class DMOptimizer(BaseCoordinateWiseNetwork):
     """DMOptimizer algorithm as described in
     "Learing to learn by gradient descent by gradient descent"
     (Andrychowicz et. al, 2016)
@@ -18,6 +21,8 @@ class DMOptimizer(tf.keras.Model):
     **kwargs : dict
         Passed onto tf.keras.layers.LSTMCell
     """
+
+    architecture = CoordinateWiseOptimizer
 
     def __init__(self, layers=(20, 20), name="DMOptimizer", **kwargs):
 

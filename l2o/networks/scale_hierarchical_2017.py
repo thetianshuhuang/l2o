@@ -3,6 +3,7 @@ from tensorflow.keras.layers import GRUCell, Dense
 
 from .network import BaseHierarchicalNetwork
 from .moments import rms_momentum
+from ..optimizer import HierarchicalOptimizer
 
 
 class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
@@ -29,6 +30,8 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
     **kwargs : dict
         Passed onto tf.keras.layers.GRUCell
     """
+
+    architecture = HierarchicalOptimizer
 
     def __init__(
             self, param_units=10, tensor_units=5, global_units=5,

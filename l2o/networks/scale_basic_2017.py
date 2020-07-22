@@ -5,9 +5,11 @@ import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
 
 from .moments import rms_scaling
+from .network import BaseCoordinateWiseNetwork
+from ..optimizer import CoordinateWiseOptimizer
 
 
-class ScaleBasicOptimizer(tf.keras.Model):
+class ScaleBasicOptimizer(BaseCoordinateWiseNetwork):
     """Coordinatewise version described by code accompanying
     "Learned Optimizers that Scale and Generalize" (Wichrowska et. al, 2017)
 
@@ -25,6 +27,8 @@ class ScaleBasicOptimizer(tf.keras.Model):
     **kwargs : dict
         Passed onto tf.keras.layers.LSTMCell
     """
+
+    architecture = CoordinateWiseOptimizer
 
     def __init__(
             self, layers=(20, 20), init_lr=(1., 1.),

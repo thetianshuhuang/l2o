@@ -34,12 +34,10 @@ class TrainingResults(_TrainingResults):
     pass
 
 
-def weights_sum(n):
-    return tf.ones([n])
-
-
-def weights_mean(n):
-    return tf.ones([n]) / tf.cast(n, tf.float32)
+builtin_weights = {
+    "sum": lambda n: tf.ones([n]),
+    "mean": lambda n: tf.ones([n]) / tf.cast(n, tf.float32)
+}
 
 
 class TrainingMixin:
@@ -160,7 +158,8 @@ class TrainingMixin:
             if meta.teachers is not None:
                 # Reset only required when ``persistent=True``
                 meta.problem.reset(internal=data)
-                # Teacher state (i.e. momentum) needs to be reset
+                # State (i.e. momentum) needs to be reset
+                self.reset()
                 for t in meta.teachers:
                     reset_optimizer(t)
 
@@ -228,16 +227,17 @@ class TrainingMixin:
             pbar = Progbar(size, unit_name='step')
 
             # Logging
-            loss.append(np.zeros(size, dtype=np.float32))
-            mode.append(np.zeros(size, dtype=np.bool))
+            losses.append(np.zeros(size, dtype=np.float32))
+            modes.append(np.zeros(size, dtype=np.bool))
 
             for j, batch in enumerate(dataset):
 
                 if meta.teachers is not None:
                     # Sync with student
                     meta.problem.reset(values=params)
-                    # Teacher state (i.e. momentum) needs to be reset
+                    # State (i.e. momentum) needs to be reset
                     if not persistent:
+                        self.reset()
                         for t in meta.teachers:
                             reset_optimizer(t)
 
@@ -265,16 +265,16 @@ class TrainingMixin:
 
                 # Logging
                 pbar.add(1, values=[("loss", loss)])
-                losses[j] = loss.numpy()
-                modes[j] = mode
+                losses[i][j] = loss.numpy()
+                modes[i][j] = mode
 
         return TrainingResults(loss=losses, mode=modes)
 
     def train(
             self, problems, optimizer,
-            unroll_len=lambda: 20, unroll_weights=weights_mean,
+            unroll_len=lambda: 20, unroll_weights="sum",
             teachers=[], imitation_optimizer=None,
-            strategy=tf.math.reduce_mean, p_teacher=0,
+            strategy="mean", p_teacher=0,
             epochs=1, repeat=1, persistent=False, validation=False):
         """Run meta-training.
 
@@ -289,7 +289,7 @@ class TrainingMixin:
         ------------
         unroll_len : Callable -> int
             Unroll size or callable that returns unroll size.
-        unroll_weights : Callable(int) -> tf.Tensor
+        unroll_weights : str or Callable(int) -> tf.Tensor
             Callable that generates unroll weights from an unroll size.
         teachers : tf.keras.optimizers.Optimizer[]
             If passed, runs imitation learning instead against ``teacher``.
@@ -298,10 +298,10 @@ class TrainingMixin:
             This may benefit optimization by keeping separate optimizer
             states for imitation and meta learning, as those losses may have
             vastly different gradient magnitudes.
-        strategy : Callable (float[] -> float)
+        strategy : str or Callable (float[] -> float)
             Imitation learning multi-teacher loss strategy. Suggested:
-              - ``tf.math.reduce_mean``: classic multi-teacher mean loss.
-              - ``tf.math.reduce_max``: minimax loss.
+              - "mean" or ``tf.math.reduce_mean``: classic mean loss.
+              - "max" or ``tf.math.reduce_max``: minimax loss.
             Can also implement a custom multi-teacher strategy.
         p_teacher : float
             Probability of choosing imitation learning. Cannot be >0 if
@@ -329,6 +329,20 @@ class TrainingMixin:
             imitation_optimizer = optimizer
 
         results = []
+
+        if type(unroll_weights) == str:
+            try:
+                unroll_weights = builtin_weights[unroll_weights]
+            except KeyError:
+                raise ValueError(
+                    "Invalid unroll_weights: {}".format(unroll_weights))
+
+        if type(strategy) == str:
+            try:
+                strategy = getattr(tf.math, "reduce_" + strategy)
+            except AttributeError:
+                raise ValueError(
+                    "Invalid reduce strategy: {}".format("reduce_" + strategy))
 
         for itr, spec in enumerate(problems):
             spec.print(itr)

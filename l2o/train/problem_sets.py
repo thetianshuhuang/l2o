@@ -14,9 +14,7 @@ stl10         | 96x96x3   | 10  | images
 """
 
 
-from .problem import ProblemSpec
-from .well_behaved import Quadratic
-from .networks import mlp_classifier, conv_classifier
+from ..problems import ProblemSpec, Quadratic, mlp_classifier, conv_classifier
 
 
 # Quadratic

@@ -39,10 +39,11 @@ class TrainableOptimizer(
             self, network,
             name="GenericTrainableOptimizer", weights_file=None,
             use_log_objective=True, obj_train_max_multiplier=-1,
-            use_numerator_epsilon=True, epsilon=1e-6, **kwargs):
+            use_numerator_epsilon=True, epsilon=1e-6):
 
         # Core
         super().__init__(name)
+        self.name = name
         self.network = network
         if weights_file is not None:
             network.load_weights(weights_file)
@@ -193,3 +194,7 @@ class TrainableOptimizer(
         Override of base method to use _state_dict instead of _weights.
         """
         return tf.nest.flatten(self._state_dict)
+
+    def reset(self):
+        """Reset optimizer state."""
+        self._state_dict = {}

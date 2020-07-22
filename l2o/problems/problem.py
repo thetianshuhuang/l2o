@@ -106,7 +106,7 @@ class ProblemSpec:
 
     Parameters
     ----------
-    callable : callable (*args, **kwargs -> problem)
+    target : target (*args, **kwargs -> problem)
         Callable used to create problem
     args : []
         Array of arguments
@@ -115,8 +115,9 @@ class ProblemSpec:
     """
 
     def __init__(
-            self, callable, args, kwargs):
-        self.callable = callable
+            self, target, args, kwargs):
+
+        self.target = target
         self.args = args
         self.kwargs = kwargs
 
@@ -128,9 +129,8 @@ class ProblemSpec:
         problem.Problem
             Class referenced by ``callable``
         """
-        return self.callable(*self.args, *args, **self.kwargs, **kwargs)
+        return self.target(*self.args, *args, **self.kwargs, **kwargs)
 
     def print(self, itr):
-        print("--------- Problem #{} ---------".format(itr))
-        print("{}, args={}, kwargs={}".format(
-            self.callable.__name__, self.args, self.kwargs))
+        print("[#{}] {}, args={}, kwargs={}".format(
+            itr, self.target.__name__, self.args, self.kwargs))

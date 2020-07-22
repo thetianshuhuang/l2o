@@ -100,7 +100,7 @@ def _make_tfds(network, dataset="mnist", **kwargs):
 
 
 def mlp_classifier(
-        dataset="mnist", layers=[128, ], activation=tf.nn.relu, **kwargs):
+        dataset="mnist", layers=[128, ], activation="relu", **kwargs):
     """Create MLP classifier training problem.
 
     Keyword Args
@@ -133,6 +133,9 @@ def mlp_classifier(
     def _preprocess(img):
         shape = img.shape.as_list()
         return tf.cast(tf.reshape(img, shape[:-1] + []), tf.float32) / 255.
+
+    if type(activation) == str:
+        activation = tf.keras.activations.get(activation)
 
     def _network(input_shape, labels):
         return Sequential(
