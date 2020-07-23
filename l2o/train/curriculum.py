@@ -70,7 +70,6 @@ class CurriculumLearning:
             schedule=lambda i: 50 * (2**i)):
 
         self.learner = learner
-        self.loss_args = loss_args
 
         self.problems = problems
         self.optimizer = optimizer
@@ -94,15 +93,17 @@ class CurriculumLearning:
             ]["validation_loss"].min()
             self._load_network(self.stage, self.period)
 
+            # Increment period to indicate current period
+            self.period += 1
             # Check for stage increment
-            loss_last = self._lookup(self.stage, self.period)["loss"]
+            loss_last = self._lookup(
+                self.stage, self.period - 1)["validation_loss"]
             advance = (
                 (loss_last > self.best_loss)
                 and (self.period >= self.min_periods))
             if advance:
                 self.stage += 1
-            # Increment period to indicate current period
-            self.period += 1
+                self.period = 0
 
         except FileNotFoundError:
             self.summary = pd.DataFrame({
