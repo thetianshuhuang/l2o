@@ -162,13 +162,7 @@ class CurriculumLearningStrategy(BaseStrategy):
     def train(self):
         """Start or resume training."""
 
-        print("Curriculum Learning")
-        print("Training {}:{} @ {}".format(
-            self.learner.name, self.learner.network.name, self.directory))
-        print("min_periods={}".format(self.min_periods))
-        print("epochs_per_period={}".format(self.epochs_per_period))
-        print("max_stages={}".format(self.max_stages))
-
+        print(self)
         while True:
             self.learning_stage()
 

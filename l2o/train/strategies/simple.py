@@ -87,13 +87,17 @@ class SimpleStrategy(BaseStrategy):
 
     def train(self):
         """The actual training method."""
+
+        print(self)
         while self.period < self.num_periods:
 
-            print("--- Period {} ---".format(self.period))
+            p_teacher = self.annealing_schedule(self.period)
+            print("--- Period {} [p_teacher={}] ---".format(
+                self.period, p_teacher))
 
             training_loss, validation_loss = self._learning_period(
                 {"unroll_len": self.unroll_distribution,
-                 "p_teacher": self.annealing_schedule(self.period)},
+                 "p_teacher": p_teacher},
                 {"unroll_len": lambda: self.validation_unroll,
                  "p_teacher": 0})
 

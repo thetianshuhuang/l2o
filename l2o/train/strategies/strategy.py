@@ -99,8 +99,9 @@ class BaseStrategy:
             self._start()
 
     def __repr__(self):
-        return "<{} training {} @ {}>".format(
-            self.name, self.learner.name, self.directory)
+        return "<{} training {}:{} @ {}>".format(
+            self.name, self.learner.name,
+            self.learner.network.name, self.directory)
 
     def _path(self, *args, **kwargs):
         """Get saved model file path"""

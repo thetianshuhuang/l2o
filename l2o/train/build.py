@@ -99,7 +99,6 @@ def build(config, overrides, strict=False):
     with open(os.path.join(config["directory"], "config.json"), 'w') as f:
         json.dump(config, f, indent=4)
     print("saved to <{}/config.json>.".format(config["directory"]))
-    print("\n")
 
     # Check saved config
     saved_config = os.path.join(config["directory"], "config.json")
@@ -141,7 +140,7 @@ def build(config, overrides, strict=False):
     return strategy
 
 
-def build_argv(config):
+def build_argv(config, strict=False):
     """Build from command line arguments.
 
     NOTE: this method uses eval, and MUST not be run in a deployed context.
@@ -170,4 +169,4 @@ def build_argv(config):
         [arg.split('=') for arg in sys.argv[1:]]
     ]
 
-    return build(config, overrides)
+    return build(config, overrides, strict=strict)
