@@ -42,7 +42,7 @@ def __deep_warn_equal(path, d1, d2, d1name, d2name):
 
     warnings = []
     for key in iterator:
-        inner_path = path + "/" + key
+        inner_path = path + "/" + str(key)
         if key not in d2:
             warnings.append(
                 "Warning: <{}> is present in {} but not in {}".format(
@@ -51,12 +51,13 @@ def __deep_warn_equal(path, d1, d2, d1name, d2name):
             warnings.append(
                 "Warning: <{}> has type {} in {} but {} in {}".format(
                     inner_path, type(d1[key]), d1name, type(d2[key]), d2name))
-        elif type(d1) == dict or type(d1) == tuple or type(d1) == list:
+        elif type(d1[key]) in (list, tuple, dict):
             warnings += __deep_warn_equal(
                 inner_path, d1[key], d2[key], d1name, d2name)
         elif d1[key] != d2[key]:
-            warnings.append("Warning: <{}> is {} in {} but {} in {}".format(
-                inner_path, d1[key], d1name, d2[key], d2name))
+            warnings.append(
+                "Warning: <{}> has value '{}' in {} but '{}'' in {}".format(
+                    inner_path, d1[key], d1name, d2[key], d2name))
     return warnings
 
 
@@ -65,7 +66,7 @@ def deep_warn_equal(d1, d2, d1name, d2name, strict=False):
     if len(warnings) > 0:
         wstring = (
             "Specified configuration does not match saved configuration "
-            "{}:\n\n{}".format(d2name, '\n'.join(warnings)))
+            "{}:\n{}\n".format(d2name, '\n'.join(warnings)))
         if strict:
             raise ValueError(wstring)
         else:
@@ -92,14 +93,6 @@ def build(config, overrides, strict=False):
     for path, value in overrides:
         override(config, path, value)
 
-    # Check saved config
-    saved_config = os.path.join(config["directory"], "config.json")
-    if os.path.exists(saved_config):
-        with open(saved_config) as f:
-            config_old = json.load(f)
-        deep_warn_equal(
-            config, config_old, "config", saved_config, strict=strict)
-
     # Show & save config
     print("Configuration:")
     pprint.pprint(config)
@@ -107,6 +100,14 @@ def build(config, overrides, strict=False):
         json.dump(config, f, indent=4)
     print("saved to <{}/config.json>.".format(config["directory"]))
     print("\n")
+
+    # Check saved config
+    saved_config = os.path.join(config["directory"], "config.json")
+    if os.path.exists(saved_config):
+        with open(saved_config) as f:
+            config_old = json.load(f)
+        deep_warn_equal(
+            config, config_old, "config", saved_config, strict=strict)
 
     # Initialize network
     if type(config["constructor"]) == str:
@@ -156,10 +157,16 @@ def build_argv(config):
         Initialized strategy with a ``train`` method.
     """
 
+    def eval_or_str(x):
+        try:
+            return eval(x)
+        except Exception:
+            return x
+
     # Path -> split by '/'
     # Value -> evaluate to allow float, int, bool, lambda function.
     overrides = [
-        (path.split('/'), eval(value)) for path, value in
+        (path.split('/'), eval_or_str(value)) for path, value in
         [arg.split('=') for arg in sys.argv[1:]]
     ]
 

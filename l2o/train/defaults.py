@@ -1,8 +1,8 @@
 BASE = {
     "problems": [
-        ("mlp_classifier", [],
+        ["mlp_classifier", [],
          {"layers": [20], "dataset": "mnist", "activation": "sigmoid",
-          "shuffle_buffer": 16384, "batch_size": 8}),
+          "shuffle_buffer": 16384, "batch_size": 8}],
     ],
     "loss_args": {
         "use_log_objective": True,
