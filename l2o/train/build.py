@@ -29,21 +29,38 @@ def override(config, path, value):
     config_[path[-1]] = value
 
 
-def deep_warn_equal(path, d1, d2, d1name, d2name):
+def __deep_warn_equal(path, d1, d2, d1name, d2name):
     """Print warning if two structures are not equal (deeply)"""
+    warnings = []
     for key in d1:
         inner_path = path + "/" + key
         if key not in d2:
-            print("Warning: <{}> is present in {} but not in {}".format(
-                inner_path, d1name, d2name))
+            warnings.append(
+                "Warning: <{}> is present in {} but not in {}".format(
+                    inner_path, d1name, d2name))
         elif not isinstance(d1, type(d2[key])):
-            print("Warning: <{}> has type {} in {} but {} in {}".format(
-                inner_path, type(d1[key]), d1name, type(d2[key]), d2name))
+            warnings.append(
+                "Warning: <{}> has type {} in {} but {} in {}".format(
+                    inner_path, type(d1[key]), d1name, type(d2[key]), d2name))
         elif type(d1) == dict or type(d1) == list or type(d2) == tuple:
-            deep_warn_equal(path + "/" + key, d1[key], d2[key], d1name, d2name)
+            warnings += __deep_warn_equal(
+                inner_path, d1[key], d2[key], d1name, d2name)
         elif d1[key] != d2[key]:
-            print("Warning: <{}> is {} in {} but {} in {}".format(
+            warnings.append("Warning: <{}> is {} in {} but {} in {}".format(
                 inner_path, d1[key], d1name, d2[key], d2name))
+    return warnings
+
+
+def deep_warn_equal(d1, d2, d1name, d2name, strict=False):
+    warnings = __deep_warn_equal("config", d1, d2, d1name, d2name)
+    if len(warnings) > 0:
+        wstring = (
+            "Specified configuration does not match saved configuration "
+            "{}:\n\n{}".format(d2name, '\n'.join(warnings)))
+        if strict:
+            raise ValueError(wstring)
+        else:
+            print(wstring)
 
 
 def build(config, overrides):
@@ -71,15 +88,15 @@ def build(config, overrides):
     if os.path.exists(saved_config):
         with open(saved_config) as f:
             config_old = json.load(f)
-        deep_warn_equal("", config, config_old, "config", saved_config)
+        deep_warn_equal(config, config_old, "config", saved_config)
 
     # Show & save config
-    print("Configuration")
-    print("-------------")
+    print("Configuration:")
     pprint.pprint(config)
     with open(os.path.join(config["directory"], "config.json"), 'w') as f:
         json.dump(config, f, indent=4)
-    print("saved to {}/config.json".format(config["directory"]))
+    print("saved to <{}/config.json>.".format(config["directory"]))
+    print("\n")
 
     # Initialize network
     if type(config["constructor"]) == str:
