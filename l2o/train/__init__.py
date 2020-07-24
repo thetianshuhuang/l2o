@@ -1,11 +1,13 @@
-from .build import build_curriculum
-from .curriculum import CurriculumLearning
-from .simple import SimpleStrategy
-from . import defaults
+from .build import build, build_argv
+from .defaults import get_default
+from .strategies import (
+    BaseStrategy, SimpleStrategy, CurriculumLearningStrategy)
 
 __all__ = [
-    "build_curriculum",
-    "CurriculumLearning",
+    "build",
+    "build_argv",
+    "get_default",
+    "CurriculumLearningStrategy",
     "SimpleStrategy",
-    "defaults"
+    "BaseStrategy"
 ]

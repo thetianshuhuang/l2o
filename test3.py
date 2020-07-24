@@ -10,5 +10,5 @@ default = dict(
 default["training"]["teachers"] = [tf.keras.optimizers.Adam()]
 
 
-st = l2o.train.build_curriculum(default)
+st = l2o.train.build_simple(default)
 st.train()

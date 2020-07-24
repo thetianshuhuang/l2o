@@ -334,19 +334,21 @@ class TrainingMixin:
 
         results = []
 
+        # Deserialize
         if type(unroll_weights) == str:
             try:
                 unroll_weights = builtin_weights[unroll_weights]
             except KeyError:
                 raise ValueError(
                     "Invalid unroll_weights: {}".format(unroll_weights))
-
         if type(strategy) == str:
             try:
                 strategy = getattr(tf.math, "reduce_" + strategy)
             except AttributeError:
                 raise ValueError(
                     "Invalid reduce strategy: {}".format("reduce_" + strategy))
+        # tf.keras.optimizers.get will pass through if already a optimizer
+        teachers = [tf.keras.optimizers.get(t) for t in teachers]
 
         for itr, spec in enumerate(problems):
             spec.print(itr)
