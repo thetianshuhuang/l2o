@@ -31,18 +31,27 @@ def override(config, path, value):
 
 def __deep_warn_equal(path, d1, d2, d1name, d2name):
     """Print warning if two structures are not equal (deeply)"""
+
+    if type(d1) == dict:
+        iterator = d1
+    else:
+        if len(d1) != len(d2):
+            return ["Warning: <{}> has length {} in {} but {} in {}".format(
+                path, len(d1), d1name, len(d2), d2name)]
+        iterator = range(len(d1))
+
     warnings = []
-    for key in d1:
+    for key in iterator:
         inner_path = path + "/" + key
         if key not in d2:
             warnings.append(
                 "Warning: <{}> is present in {} but not in {}".format(
                     inner_path, d1name, d2name))
-        elif not isinstance(d1, type(d2[key])):
+        elif not isinstance(d1[key], type(d2[key])):
             warnings.append(
                 "Warning: <{}> has type {} in {} but {} in {}".format(
                     inner_path, type(d1[key]), d1name, type(d2[key]), d2name))
-        elif type(d1) == dict or type(d1) == list or type(d2) == tuple:
+        elif type(d1) == dict or type(d1) == tuple or type(d1) == list:
             warnings += __deep_warn_equal(
                 inner_path, d1[key], d2[key], d1name, d2name)
         elif d1[key] != d2[key]:
@@ -63,7 +72,7 @@ def deep_warn_equal(d1, d2, d1name, d2name, strict=False):
             print(wstring)
 
 
-def build(config, overrides):
+def build(config, overrides, strict=False):
     """Build learner and learning strategy
 
     Parameters
@@ -88,7 +97,8 @@ def build(config, overrides):
     if os.path.exists(saved_config):
         with open(saved_config) as f:
             config_old = json.load(f)
-        deep_warn_equal(config, config_old, "config", saved_config)
+        deep_warn_equal(
+            config, config_old, "config", saved_config, strict=strict)
 
     # Show & save config
     print("Configuration:")
