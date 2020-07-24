@@ -37,7 +37,7 @@ LOSS = {
             "unroll_weights": "sum",
             "teachers": [
                 {"class_name": "Adam", "config": {
-                    "learning_rate": 0.001, "beat_1": 0.9, "beta_2": 0.999}},
+                    "learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999}},
             ],
             "p_teacher": 1,
             "imitation_optimizer": None,
@@ -52,7 +52,7 @@ LOSS = {
 
 STRATEGY = {
     "simple": {
-        "strategy_constructor": "SimpleStrategy",
+        "strategy_constructor": "Simple",
         "strategy": {
             "epochs_per_period": 10,
             "num_periods": 100,

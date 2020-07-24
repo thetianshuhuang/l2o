@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 
-from .. import problems
+from l2o import problems
 
 
 def _makedir(path, assert_empty=False):
@@ -40,6 +40,7 @@ def _deserialize_problem(p):
         except Exception as e:
             raise TypeError(
                 "Problem could not be deserialized: {}\n{}".format(p, e))
+
 
 class BaseStrategy:
     """Base Class for training strategies

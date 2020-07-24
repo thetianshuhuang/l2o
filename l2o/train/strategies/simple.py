@@ -45,6 +45,7 @@ class SimpleStrategy(BaseStrategy):
             validation_unroll=50, name="SimpleStrategy", **kwargs):
 
         super().__init__(*args, name=name, **kwargs)
+        self.num_periods = num_periods
 
         # Deserialize unroll
         if type(unroll_distribution) == float:
@@ -70,11 +71,6 @@ class SimpleStrategy(BaseStrategy):
                 "Unrecognized annealing_schedule type; must be float or list "
                 "or callable(int -> float)")
 
-        self.num_periods = num_periods
-
-        self.unroll_distribution = unroll_distribution
-        self.annealing_schedule = annealing_schedule
-
     def _path(self, period):
         """Get saved model file path"""
         return os.path.join(self.directory, "period_{}".format(period))
@@ -97,7 +93,7 @@ class SimpleStrategy(BaseStrategy):
 
             training_loss, validation_loss = self._learning_period(
                 {"unroll_len": self.unroll_distribution,
-                 "p_teacher": self.annealing_schedule()},
+                 "p_teacher": self.annealing_schedule(self.period)},
                 {"unroll_len": lambda: self.validation_unroll,
                  "p_teacher": 0})
 

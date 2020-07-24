@@ -1,8 +1,12 @@
 
+import os
 import sys
 
+import pprint
+import json
+
 from . import strategies
-from .. import optimizer
+from .. import networks
 
 
 def override(config, path, value):
@@ -25,6 +29,23 @@ def override(config, path, value):
     config_[path[-1]] = value
 
 
+def deep_warn_equal(path, d1, d2, d1name, d2name):
+    """Print warning if two structures are not equal (deeply)"""
+    for key in d1:
+        inner_path = path + "/" + key
+        if key not in d2:
+            print("Warning: <{}> is present in {} but not in {}".format(
+                inner_path, d1name, d2name))
+        elif not isinstance(d1, type(d2[key])):
+            print("Warning: <{}> has type {} in {} but {} in {}".format(
+                inner_path, type(d1[key]), d1name, type(d2[key]), d2name))
+        elif type(d1) == dict or type(d1) == list or type(d2) == tuple:
+            deep_warn_equal(path + "/" + key, d1[key], d2[key], d1name, d2name)
+        elif d1[key] != d2[key]:
+            print("Warning: <{}> is {} in {} but {} in {}".format(
+                inner_path, d1[key], d1name, d2[key], d2name))
+
+
 def build(config, overrides):
     """Build learner and learning strategy
 
@@ -45,11 +66,26 @@ def build(config, overrides):
     for path, value in overrides:
         override(config, path, value)
 
+    # Check saved config
+    saved_config = os.path.join(config["directory"], "config.json")
+    if os.path.exists(saved_config):
+        with open(saved_config) as f:
+            config_old = json.load(f)
+        deep_warn_equal("", config, config_old, "config", saved_config)
+
+    # Show & save config
+    print("Configuration")
+    print("-------------")
+    pprint.pprint(config)
+    with open(os.path.join(config["directory"], "config.json"), 'w') as f:
+        json.dump(config, f, indent=4)
+    print("saved to {}/config.json".format(config["directory"]))
+
     # Initialize network
     if type(config["constructor"]) == str:
         try:
             nn = config["constructor"] + "Optimizer"
-            network = getattr(optimizer, nn)
+            network = getattr(networks, nn)
         except AttributeError:
             raise ValueError("L2O algorithm does not exist: {}".format(nn))
     else:
