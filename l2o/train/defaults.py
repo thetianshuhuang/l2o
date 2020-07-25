@@ -98,8 +98,8 @@ NETWORK = {
         "constructor": "ScaleBasic",
         "network": {
             # Scale network args
-            "layers": (20, 20),
-            "init_lr": (1., 1.),
+            "layers": [20, 20],
+            "init_lr": [1., 1.],
             "name": "ScaleBasicOptimizer",
             # LSTMCell Args
             "activation": "tanh",
@@ -115,7 +115,7 @@ NETWORK = {
         "constructor": "RNNProp",
         "network": {
             # RNNProp
-            "layers": (20, 20),
+            "layers": [20, 20],
             "beta_1": 0.9,
             "beta_2": 0.9,
             "alpha": 0.1,
@@ -135,7 +135,7 @@ NETWORK = {
         "constructor": "DM",
         "network": {
             # DMOptimizer
-            "layers": (20, 20),
+            "layers": [20, 20],
             "name": "DMOptimizer",
             # LSTMCell Args
             "activation": "tanh",

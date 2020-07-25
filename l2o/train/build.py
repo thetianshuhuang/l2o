@@ -45,18 +45,18 @@ def __deep_warn_equal(path, d1, d2, d1name, d2name):
         inner_path = path + "/" + str(key)
         if key not in d2:
             warnings.append(
-                "Warning: <{}> is present in {} but not in {}".format(
+                "<{}> is present in {} but not in {}".format(
                     inner_path, d1name, d2name))
         elif not isinstance(d1[key], type(d2[key])):
             warnings.append(
-                "Warning: <{}> has type {} in {} but {} in {}".format(
+                "<{}> has type {} in {} but {} in {}".format(
                     inner_path, type(d1[key]), d1name, type(d2[key]), d2name))
         elif type(d1[key]) in (list, tuple, dict):
             warnings += __deep_warn_equal(
                 inner_path, d1[key], d2[key], d1name, d2name)
         elif d1[key] != d2[key]:
             warnings.append(
-                "Warning: <{}> has value '{}' in {} but '{}'' in {}".format(
+                "<{}> has value '{}' in {} but '{}'' in {}".format(
                     inner_path, d1[key], d1name, d2[key], d2name))
     return warnings
 
@@ -65,12 +65,12 @@ def deep_warn_equal(d1, d2, d1name, d2name, strict=False):
     warnings = __deep_warn_equal("config", d1, d2, d1name, d2name)
     if len(warnings) > 0:
         wstring = (
-            "Specified configuration does not match saved configuration "
+            "specified configuration does not match saved configuration "
             "{}:\n{}\n".format(d2name, '\n'.join(warnings)))
         if strict:
             raise ValueError(wstring)
         else:
-            print(wstring)
+            print("Warning: " + wstring)
 
 
 def build(config, overrides, strict=False):
@@ -92,6 +92,10 @@ def build(config, overrides, strict=False):
     # Process overrides
     for path, value in overrides:
         override(config, path, value)
+
+    # Make folder
+    if not os.path.isdir(config["directory"]):
+        os.makedirs(config["directory"])
 
     # Show & save config
     print("Configuration:")

@@ -42,6 +42,22 @@ builtin_weights = {
 
 class TrainingMixin:
 
+    def _regen_teacher_vars(self, meta):
+        """Helper function to force teacher optimizers to generate hidden
+        state variables.
+
+        As of 2.3.0-rc2, I believe f.keras.optimizers.Optimizer has a
+        compatibility issue with get_concrete_function. Using
+        get_concrete_function triggers two traces, and sometimes causes issues
+        on the second retrace with the optimizer trying to create variables.
+
+        Therefore, this method forcibly generates hidden variables outside of
+        the @tf.function loss functions to avoid this bug.
+        """
+        if len(meta.teachers) > 0:
+            for teacher, var_set in zip(meta.teachers, meta.var_set):
+                teacher._add_all_weights(var_set)
+
     def _make_cf(
             self, meta, weights, data, unroll, params=None, states=None,
             global_state=None, is_batched=False):
@@ -155,13 +171,11 @@ class TrainingMixin:
 
             data = meta.problem.get_internal()
 
-            if meta.teachers is not None:
-                # Reset only required when ``persistent=True``
-                meta.problem.reset(internal=data)
-                # State (i.e. momentum) needs to be reset
-                self.reset()
-                for t in meta.teachers:
-                    reset_optimizer(t)
+            self.reset()
+            meta.problem.reset(internal=data)
+            # State (i.e. momentum) needs to be reset
+            for t in meta.teachers:
+                reset_optimizer(t)
 
             # Only create concrete loss on first iteration
             if concrete_loss is None:
@@ -220,6 +234,9 @@ class TrainingMixin:
         size = sum(sizes)
         pbar = Progbar(size, unit_name='step')
 
+        # See docstring for why this is necessary
+        self._regen_teacher_vars(meta)
+
         for i, (size, unroll) in enumerate(zip(sizes, unrolls)):
 
             # Get unroll weights; concrete_loss must be regenerated due
@@ -236,14 +253,12 @@ class TrainingMixin:
                 # State (i.e. momentum) needs to be reset
                 if not persistent:
                     self.reset()
-
-                if meta.teachers is not None:
-                    # Sync with student
-                    meta.problem.reset(values=params)
-                    # Reset teachers
-                    if not persistent:
-                        for t in meta.teachers:
-                            reset_optimizer(t)
+                # Sync with student
+                meta.problem.reset(values=params)
+                # Reset teachers
+                if not persistent:
+                    for t in meta.teachers:
+                        reset_optimizer(t)
 
                 # Data dimensions are ``[unroll, batch] + [data]``
                 batch_stacked = [

@@ -75,7 +75,7 @@ class BaseStrategy:
     def __init__(
             self, learner, name="GenericStrategy", train_args={}, problems=[],
             epochs_per_period=10,
-            optimizer=tf.keras.optimizers.Adam(), directory="weights"):
+            optimizer="Adam", directory="weights"):
 
         self.problems = [_deserialize_problem(p) for p in problems]
 
