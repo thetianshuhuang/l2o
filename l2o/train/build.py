@@ -43,7 +43,7 @@ def __deep_warn_equal(path, d1, d2, d1name, d2name):
     warnings = []
     for key in iterator:
         inner_path = path + "/" + str(key)
-        if key not in d2:
+        if type(d1) == dict and key not in d2:
             warnings.append(
                 "<{}> is present in {} but not in {}".format(
                     inner_path, d1name, d2name))

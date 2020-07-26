@@ -55,8 +55,9 @@ class TrainingMixin:
         the @tf.function loss functions to avoid this bug.
         """
         if len(meta.teachers) > 0:
-            for teacher, var_set in zip(meta.teachers, meta.var_set):
-                teacher._add_all_weights(var_set)
+            pairs = zip(meta.teachers, meta.problem.trainable_variables)
+            for teacher, var_set in pairs:
+                teacher._create_all_weights(var_set)
 
     def _make_cf(
             self, meta, weights, data, unroll, params=None, states=None,

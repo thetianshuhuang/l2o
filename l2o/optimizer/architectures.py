@@ -63,6 +63,12 @@ class HierarchicalOptimizer(TrainableOptimizer):
         init_global = self.network.get_initial_state_global()
         self._state_dict["__global__"] = wrap_variables(init_global)
 
+    def reset(self):
+        """Reset optimizer state. Override needed to define global state."""
+        self._state_dict = {
+            "__global__": wrap_variables(self.network.get_initial_state_global)
+        }
+
     def _initialize_state(self, var):
         """Fetch initial states from child network."""
         return self.network.get_initial_state(var)

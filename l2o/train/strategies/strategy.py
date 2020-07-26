@@ -118,7 +118,8 @@ class BaseStrategy:
     def _append(self, **kwargs):
         """Append to summary statistics"""
         self.summary = self.summary.append(
-            pd.DataFrame({k: [v] for k, v in kwargs}), ignore_index=True)
+            pd.DataFrame({k: [v] for k, v in kwargs.items()}),
+            ignore_index=True)
         self.summary.to_csv(
             os.path.join(self.directory, "summary.csv"), index=False)
 
@@ -142,7 +143,7 @@ class BaseStrategy:
         """Helper function to save network weights"""
         path = self._path(*args, **kwargs)
         _makedir(os.path.dirname(path))
-        self.learner.network.save(path)
+        self.learner.save(path)
         print("Saved weights: {}".format(path))
 
     def _learning_period(self, train_args, validation_args):

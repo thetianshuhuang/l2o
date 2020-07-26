@@ -46,6 +46,7 @@ class SimpleStrategy(BaseStrategy):
 
         super().__init__(*args, name=name, **kwargs)
         self.num_periods = num_periods
+        self.validation_unroll = validation_unroll
 
         # Deserialize unroll
         if type(unroll_distribution) == float:
@@ -101,7 +102,7 @@ class SimpleStrategy(BaseStrategy):
                 {"unroll_len": lambda: self.validation_unroll,
                  "p_teacher": 0})
 
-            self._save_network()
+            self._save_network(self.period)
             self._append(
                 period=self.period, training_loss=training_loss,
                 validation_loss=validation_loss)
