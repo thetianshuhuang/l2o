@@ -193,7 +193,7 @@ class TrainingMixin:
 
         return TrainingResults(loss=[losses], mode=[modes])
 
-    def _train_batch(self, meta, epochs=1, persistent=False):
+    def _train_batch(self, meta, epochs=1, depth=0, persistent=False):
         """Minibatch training.
 
         Parameters
@@ -209,6 +209,12 @@ class TrainingMixin:
             If True, batch training keeps a persistent optimizer and optimizee
             state across iteration trajectories. If False, the optimizer state
             is reset after every iteration.
+        depth : int
+            Optimization depth, in meta-iterations, before the parameters
+            should be reinitialized. If 0, is treated as infinity (no resets).
+            A larger optimization depth allows more opportunities to train
+            on more refined optimization. Only operates when not in persistent
+            mode.
 
         Returns
         -------
@@ -282,6 +288,9 @@ class TrainingMixin:
                 if not persistent:
                     states = None
                     global_state = None
+                    # Every ``depth`` iterations, reset parameters
+                    if depth > 0 and (i + 1) % depth == 0:
+                        params = meta.problems.get_parameters()
 
                 # Logging
                 pbar.add(1, values=[("loss", loss)])
@@ -295,7 +304,7 @@ class TrainingMixin:
             unroll_len=lambda: 20, unroll_weights="sum",
             teachers=[], imitation_optimizer=None,
             strategy="mean", p_teacher=0,
-            epochs=1, repeat=1, persistent=False, validation=False):
+            epochs=1, depth=0, repeat=1, persistent=False, validation=False):
         """Run meta-training.
 
         Parameters
@@ -328,6 +337,12 @@ class TrainingMixin:
             teachers is empty.
         epochs : int
             Number of epochs to run if batched
+        depth : int
+            Optimization depth, in meta-iterations, before the parameters
+            should be reinitialized. If 0, is treated as infinity (no resets).
+            A larger optimization depth allows more opportunities to train
+            on more refined optimization. Only operates when not in persistent
+            mode.
         repeat : int
             Number of repetitions to run using the same graph if full batched.
         persistent : bool
@@ -377,7 +392,8 @@ class TrainingMixin:
             if hasattr(problem, "get_dataset"):
                 results.append(
                     self._train_batch(
-                        meta, epochs=epochs, persistent=persistent))
+                        meta, epochs=epochs, depth=depth,
+                        persistent=persistent))
             elif hasattr(problem, "get_internal"):
                 results.append(
                     self._train_full(meta, repeat=repeat))

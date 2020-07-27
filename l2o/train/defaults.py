@@ -28,6 +28,7 @@ LOSS = {
             "strategy": "mean",
             "p_teacher": 0,
             "epochs": 1,
+            "depth": 1,
             "repeat": 1,
             "persistent": False
         },
@@ -43,6 +44,7 @@ LOSS = {
             "imitation_optimizer": None,
             "strategy": "mean",
             "epochs": 1,
+            "depth": 1,
             "repeat": 1,
             "persistent": False
         }

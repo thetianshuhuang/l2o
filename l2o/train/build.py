@@ -83,6 +83,12 @@ def build(config, overrides, strict=False):
     overrides : list
         Override list of (path: str[], value) to pass to ``override``.
 
+    Keyword Args
+    ------------
+    strict : bool
+        If True, enforces strict equality between saved configuration and
+        specified configuration on resumed training.
+
     Returns
     -------
     strategy.BaseStrategy
@@ -144,7 +150,7 @@ def build(config, overrides, strict=False):
     return strategy
 
 
-def build_argv(config, strict=False):
+def build_argv(config, strict=False, argv=None):
     """Build from command line arguments.
 
     NOTE: this method uses eval, and MUST not be run in a deployed context.
@@ -154,11 +160,22 @@ def build_argv(config, strict=False):
     config : dict
         Default arguments
 
+    Keyword Args
+    ------------
+    strict : bool
+        If True, enforces strict equality between saved configuration and
+        specified configuration on resumed training.
+    argv : str[]
+        List of argument values. If None, fetches from sys.argv.
+
     Returns
     -------
     strategy.BaseStrategy
         Initialized strategy with a ``train`` method.
     """
+
+    if argv is None:
+        argv = sys.argv[1:]
 
     def eval_or_str(x):
         try:
@@ -170,7 +187,7 @@ def build_argv(config, strict=False):
     # Value -> evaluate to allow float, int, bool, lambda function.
     overrides = [
         (path.split('/'), eval_or_str(value)) for path, value in
-        [arg.split('=') for arg in sys.argv[1:]]
+        [arg.split('=') for arg in argv]
     ]
 
     return build(config, overrides, strict=strict)
