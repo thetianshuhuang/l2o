@@ -10,7 +10,7 @@ from .utils import reset_optimizer
 MetaIteration = collections.namedtuple(
     "MetaIteration", [
         "problem", "optimizer",
-        "unroll_len", "unroll_weights",
+        "unroll_len", "weights",
         "teachers", "imitation_optimizer", "strategy", "p_teacher",
         "validation"
     ])

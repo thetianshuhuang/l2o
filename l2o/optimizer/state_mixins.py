@@ -33,7 +33,7 @@ class StateMixin:
             params=params, states=states, global_state=global_state)
 
     def _get_state(self, problem, unroll_state):
-        """Helper function to initialize or use existing states
+        """Helper function to initialize or use existing states.
 
         Parameters
         ----------
@@ -64,17 +64,17 @@ class StateMixin:
 
     def _make_unroll_state(
             self, problem, params=None, states=None, global_state=None):
-        """Helper function to selectively generate UnrollState tuple"""
+        """Helper function to selectively generate UnrollState tuple."""
+        res = UnrollState(None, None, None)
         if params:
-            params = problem.get_parameters()
+            res.params = problem.get_parameters()
         if states:
-            states = [self._initialize_state(p) for p in params]
+            res.states = [self._initialize_state(p) for p in params]
         if global_state:
-            global_state = self.network.get_initial_state_global()
-
-        return UnrollState(params, states, global_state)
+            res.global_state = self.network.get_initial_state_global()
+        return res
 
     def _mask_state(self, unroll_state, mask):
-        """Helper function to mask state to return None based on saved mask"""
+        """Helper function to mask state to return None based on saved mask."""
         return UnrollState(*[
             s if m else None for s, m in zip(unroll_state, mask)])
