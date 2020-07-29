@@ -82,4 +82,4 @@ class StateMixin:
         """Helper function to reset parameters"""
         return UnrollState(
             problem.get_parameters(),
-            unroll_state.state, unroll_state.global_state)
+            unroll_state.states, unroll_state.global_state)

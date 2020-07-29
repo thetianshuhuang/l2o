@@ -19,14 +19,6 @@ def _makedir(path, assert_empty=False):
         os.mkdir(path)
 
 
-def _mean_loss(results):
-    """Helper function to compute mean loss."""
-    return np.mean([
-        np.mean([np.mean(loss_array) for loss_array in result.loss])
-        for result in results
-    ])
-
-
 def _deserialize_problem(p):
     """Helper function to deserialize a problem into a ProblemSpec."""
     if isinstance(p, problems.ProblemSpec):
@@ -173,13 +165,13 @@ class BaseStrategy:
         for i in range(self.epochs_per_period):
             print("Training: Epoch {}/{}".format(
                 i + 1, self.epochs_per_period))
-            training_loss.append(_mean_loss(
-                train_func(validation=False, **train_args)))
+            training_loss.append(
+                np.mean(train_func(validation=False, **train_args)))
         training_loss = np.mean(training_loss)
 
         # Compute validation loss
         print("Validating")
-        validation_loss = _mean_loss(train_func(
+        validation_loss = np.mean(train_func(
             validation=True, **validation_args))
 
         print("training_loss: {} | validation_loss: {}".format(
