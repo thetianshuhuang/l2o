@@ -1,5 +1,3 @@
-import functools
-
 import tensorflow as tf
 
 
@@ -168,7 +166,7 @@ class MetaLossMixin:
             grads = tape.gradient(current_obj, unroll_state.params)
 
             # Early termination for exploding objective
-            if is_batched and self._max_obj(init_obj_step):
+            if is_batched and self._max_obj(init_obj_step, current_obj):
                 break
 
             # Apply gradients
