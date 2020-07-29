@@ -6,7 +6,7 @@ import tensorflow as tf
 class ImitationLossMixin:
 
     @tf.function
-    def _imitation_loss(
+    def imitation_loss(
             self, weights, data, unroll_state,
             unroll=20, problem=None, is_batched=False, teachers=None,
             strategy=tf.math.reduce_mean):
@@ -85,11 +85,20 @@ class ImitationLossMixin:
         return loss, self._mask_state(unroll_state, state_mask)
 
     @tf.function
-    def imitation_step(self, *args, opt=None, **kwargs):
+    def imitation_step(
+            self, weights, data, unroll_state,
+            unroll=20, problem=None, is_batched=False, teachers=None,
+            strategy=tf.math.reduce_mean, opt=None):
         """Wraps imitation_loss to include gradient calculation inside graph
         mode.
 
         See ``meta_loss`` for docstring and ``_base_step`` for internal
         mechanism.
         """
-        return self._base_step(opt, self.imitation_loss, args, kwargs)
+        def loss_wrapper():
+            return self.imitation_loss(
+                weights, data, unroll_state,
+                unroll=unroll, problem=problem, is_batched=is_batched,
+                teachers=teachers, strategy=strategy)
+
+        return self._base_step(opt, loss_wrapper)
