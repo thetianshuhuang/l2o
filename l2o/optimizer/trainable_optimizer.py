@@ -1,13 +1,17 @@
 import tensorflow as tf
 
-from .loss_mixins import LossMixin
+from .state_mixins import StateMixin
+from .meta_mixins import MetaLossMixin
+from .imitation_mixins import ImitationLossMixin
 from .train_mixins import TrainingMixin
+
 from .tf_utils import _var_key
 from .utils import wrap_variables, nested_assign
 
 
 class TrainableOptimizer(
-        LossMixin, TrainingMixin, tf.keras.optimizers.Optimizer):
+        StateMixin, MetaLossMixin, ImitationLossMixin, TrainingMixin,
+        tf.keras.optimizers.Optimizer):
     """Trainable optimizer using keras' optimizer API
 
     Parameters
