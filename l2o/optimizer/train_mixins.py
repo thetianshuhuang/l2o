@@ -56,18 +56,18 @@ class TrainingMixin:
         """
 
         kwargs = dict(
-            unroll_state=unroll_state, unroll=meta.unroll_len,
+            unroll=meta.unroll_len,
             problem=meta.problem, is_batched=is_batched)
+        args = (meta.weights, data, unroll_state)
 
         # P(meta learning) > 0
         if meta.p_teacher < 1:
             kwargs["noise_stddev"] = meta.problem.noise_stddev
             if meta.validation:
-                cf_meta = self.meta_loss.get_concrete_function(
-                    meta.weights, data, **kwargs)
+                cf_meta = self.meta_loss.get_concrete_function(*args, **kwargs)
             else:
                 cf_meta = self.meta_step.get_concrete_function(
-                    meta.optimizer, meta.weights, data, **kwargs)
+                    meta.optimizer, *args, **kwargs)
         else:
             cf_meta = None
         # Teachers are not empty and P(imitation learning) > 0
@@ -76,10 +76,10 @@ class TrainingMixin:
             kwargs["strategy"] = meta.strategy
             if meta.validation:
                 cf_imitation = self.imitation_loss.get_concrete_function(
-                    meta.weights, data, **kwargs)
+                    *args, **kwargs)
             else:
                 cf_imitation = self.imitation_step.get_concrete_function(
-                    meta.optimizer, meta.weights, data, **kwargs)
+                    meta.optimizer, *args, **kwargs)
         else:
             cf_imitation = None
 

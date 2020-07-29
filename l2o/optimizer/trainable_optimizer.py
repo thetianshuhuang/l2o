@@ -4,14 +4,15 @@ from .state_mixins import StateMixin
 from .meta_mixins import MetaLossMixin
 from .imitation_mixins import ImitationLossMixin
 from .train_mixins import TrainingMixin
+from .step_mixins import StepMixin
 
 from .tf_utils import _var_key
 from .utils import wrap_variables, nested_assign
 
 
 class TrainableOptimizer(
-        StateMixin, MetaLossMixin, ImitationLossMixin, TrainingMixin,
-        tf.keras.optimizers.Optimizer):
+        StateMixin, MetaLossMixin, ImitationLossMixin, StepMixin,
+        TrainingMixin, tf.keras.optimizers.Optimizer):
     """Trainable optimizer using keras' optimizer API
 
     Parameters
