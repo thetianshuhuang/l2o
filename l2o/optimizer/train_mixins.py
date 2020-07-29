@@ -56,8 +56,8 @@ class TrainingMixin:
         """
 
         kwargs = dict(
-            unroll_state=unroll_state,
-            unroll=meta.unroll, problem=meta.problem, is_batched=is_batched)
+            unroll_state=unroll_state, unroll=meta.unroll_len,
+            problem=meta.problem, is_batched=is_batched)
 
         # P(meta learning) > 0
         if meta.p_teacher < 1:
@@ -190,7 +190,7 @@ class TrainingMixin:
         losses = np.zeros(epochs, dtype=np.float32)
         for i in range(epochs):
 
-            dataset = meta.problem.get_dataset(meta.unroll)
+            dataset = meta.problem.get_dataset(meta.unroll_len)
             epoch_losses = np.zeros(size, dtype=np.float32)
 
             for j, batch in enumerate(dataset):
@@ -204,7 +204,7 @@ class TrainingMixin:
 
                 # Data dimensions are ``[unroll, batch] + [data]``
                 batch_stacked = [
-                    tf.stack(tf.split(dim, num_or_size_splits=meta.unroll))
+                    tf.stack(tf.split(dim, num_or_size_splits=meta.unroll_len))
                     for dim in batch]
 
                 # Only create concrete loss on first iteration
