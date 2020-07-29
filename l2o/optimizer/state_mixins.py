@@ -25,9 +25,8 @@ class StateMixin:
             self._compute_update(*z) for z in zip(
                 unroll_state.params, grads, unroll_state.states)
         ])))
-        if unroll_state.global_state is not None:
-            global_state = self.network.call_global(
-                states, unroll_state.global_state)
+        global_state = self.network.call_global(
+            states, unroll_state.global_state)
 
         return UnrollState(
             params=params, states=states, global_state=global_state)
@@ -65,14 +64,14 @@ class StateMixin:
     def _make_unroll_state(
             self, problem, params=None, states=None, global_state=None):
         """Helper function to selectively generate UnrollState tuple."""
-        res = UnrollState(None, None, None)
+        params_, states_, global_state_ = None, None, None
         if params:
-            res.params = problem.get_parameters()
+            params_ = problem.get_parameters()
         if states:
-            res.states = [self._initialize_state(p) for p in params]
+            states_ = [self._initialize_state(p) for p in params]
         if global_state:
-            res.global_state = self.network.get_initial_state_global()
-        return res
+            global_state_ = self.network.get_initial_state_global()
+        return UnrollState(params_, states_, global_state_)
 
     def _mask_state(self, unroll_state, mask):
         """Helper function to mask state to return None based on saved mask."""

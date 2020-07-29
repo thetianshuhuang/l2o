@@ -1,3 +1,5 @@
+import functools
+
 import tensorflow as tf
 
 
@@ -57,10 +59,6 @@ class ImitationLossMixin:
             batch = [dim[i] for dim in data] if is_batched else data
 
             # Run learner
-            # NOTE: this cannot be split into a method since tensorflow
-            # has over-strict loop type checking as of 2.3.0-rc1 that raises
-            # an error during autograph conversion whenever global_state is
-            # None, even though in this case global_state will be constant.
             with tf.GradientTape() as tape:
                 tape.watch(unroll_state.params)
                 current_obj = problem.objective(unroll_state.params, batch)
@@ -91,22 +89,8 @@ class ImitationLossMixin:
         """Wraps imitation_loss to include gradient calculation inside graph
         mode.
 
-        See ``imitation_loss`` for docstring.
-
-        Parameters
-        ----------
-        opt : tf.keras.optimizers.Optimizer
-            Optimizer to apply step using
+        See ``meta_loss`` for docstring and ``_base_step`` for internal
+        mechanism.
         """
-
-        # Specify trainable_variables specifically for efficiency
-        with tf.GradientTape(watch_accessed_variables=False) as tape:
-            tape.watch(self.network.trainable_variables)
-            loss, unroll_state = self.imitation_loss(*args, **kwargs)
-
-        # Standard apply_gradient paradigam
-        # Used instead of ``optimizer.minimize`` to expose the current loss
-        grads = tape.gradient(loss, self.network.trainable_variables)
-        opt.apply_gradients(zip(grads, self.network.trainable_variables))
-
-        return loss, unroll_state
+        return self._base_step(
+            opt, functools.partial(self.imitation_loss, *args, **kwargs))

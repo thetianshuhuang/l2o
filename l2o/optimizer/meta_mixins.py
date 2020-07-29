@@ -1,3 +1,5 @@
+import functools
+
 import tensorflow as tf
 
 
@@ -186,22 +188,13 @@ class MetaLossMixin:
     def meta_step(self, opt, *args, **kwargs):
         """Wraps meta_loss to include gradient calculation inside graph mode.
 
-        See ``meta_loss`` for docstring.
+        See ``meta_loss`` for docstring and ``_base_step`` for internal
+        mechanism.
 
         Parameters
         ----------
         opt : tf.keras.optimizers.Optimizer
             Optimizer to apply step using
         """
-
-        # Specify trainable_variables specifically for efficiency
-        with tf.GradientTape(watch_accessed_variables=False) as tape:
-            tape.watch(self.network.trainable_variables)
-            loss, unroll_state = self.meta_loss(*args, **kwargs)
-
-        # Standard apply_gradient paradigam
-        # Used instead of ``optimizer.minimize`` to expose the current loss
-        grads = tape.gradient(loss, self.network.trainable_variables)
-        opt.apply_gradients(zip(grads, self.network.trainable_variables))
-
-        return loss, unroll_state
+        return self._base_step(
+            opt, functools.partial(self.meta_loss, *args, **kwargs))

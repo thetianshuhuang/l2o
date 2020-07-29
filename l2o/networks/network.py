@@ -65,12 +65,17 @@ class BaseCoordinateWiseNetwork(tf.keras.Model):
         raise NotImplementedError()
 
     def call_global(self, states, global_state):
-        """No action"""
-        return None
+        """No action.
+
+        Due to a tensorflow bug that attempts to convert parameters inside
+        nested structures that are None to tf.Tensor, returns "0." instead of
+        ``None`` as it should be.
+        """
+        return 0.
 
     def get_initial_state_global(self):
-        """No global state"""
-        return None
+        """No global state."""
+        return 0.
 
 
 class BaseHierarchicalNetwork(tf.keras.Model):
