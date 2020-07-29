@@ -67,7 +67,7 @@ class TrainingMixin:
                 cf_meta = self.meta_loss.get_concrete_function(*args, **kwargs)
             else:
                 cf_meta = self.meta_step.get_concrete_function(
-                    meta.optimizer, *args, **kwargs)
+                    *args, opt=meta.optimizer, **kwargs)
         else:
             cf_meta = None
         # Teachers are not empty and P(imitation learning) > 0
@@ -79,7 +79,7 @@ class TrainingMixin:
                     *args, **kwargs)
             else:
                 cf_imitation = self.imitation_step.get_concrete_function(
-                    meta.optimizer, *args, **kwargs)
+                    *args, opt=meta.optimizer, **kwargs)
         else:
             cf_imitation = None
 
@@ -103,8 +103,7 @@ class TrainingMixin:
         if meta.validation:
             return concrete_function(meta.weights, data, unroll_state)
         else:
-            opt = meta.imitation_optimizer if is_imitation else meta.optimizer
-            return concrete_function(opt, meta.weights, data, unroll_state)
+            return concrete_function(meta.weights, data, unroll_state)
 
     def _train_full(self, meta, repeat=1):
         """Full batch training.

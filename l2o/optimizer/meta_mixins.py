@@ -185,14 +185,14 @@ class MetaLossMixin:
         return loss, self._mask_state(unroll_state, state_mask)
 
     @tf.function
-    def meta_step(self, opt, *args, **kwargs):
+    def meta_step(self, *args, opt=None, **kwargs):
         """Wraps meta_loss to include gradient calculation inside graph mode.
 
         See ``meta_loss`` for docstring and ``_base_step`` for internal
         mechanism.
 
-        Parameters
-        ----------
+        Keyword Args
+        ------------
         opt : tf.keras.optimizers.Optimizer
             Optimizer to apply step using
         """
