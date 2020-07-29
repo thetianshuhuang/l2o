@@ -77,3 +77,9 @@ class StateMixin:
         """Helper function to mask state to return None based on saved mask."""
         return UnrollState(*[
             s if m else None for s, m in zip(unroll_state, mask)])
+
+    def _reset_params(self, unroll_state, problem):
+        """Helper function to reset parameters"""
+        return UnrollState(
+            problem.get_parameters(),
+            unroll_state.state, unroll_state.global_state)

@@ -216,7 +216,7 @@ class TrainingMixin:
 
                 # Every ``depth`` iterations, reset parameters
                 if depth > 0 and (i + 1) % depth == 0:
-                    unroll_state.params = meta.problem.get_parameters()
+                    self._reset_params(unroll_state, meta.problem)
 
                 pbar.add(1, values=[("loss", loss)])
                 epoch_losses[j] = loss.numpy()

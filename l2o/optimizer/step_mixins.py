@@ -3,7 +3,7 @@ import tensorflow as tf
 
 class StepMixin:
 
-    def _base_step(self, opt, callable):
+    def _base_step(self, opt, callable, args, kwargs):
         """Run a single step.
 
         In addition to the standard GradientTape -> gradient -> apply_gradients
@@ -19,7 +19,7 @@ class StepMixin:
         # trainable_variables not yet built -> capture all variables
         if len(self.network.trainable_variables) == 0:
             with tf.GradientTape() as tape:
-                loss, unroll_state = callable()
+                loss, unroll_state = callable(*args, **kwargs)
         # trainable_variables built -> capture only learner variables
         else:
             with tf.GradientTape(watch_accessed_variables=False) as tape:

@@ -196,5 +196,4 @@ class MetaLossMixin:
         opt : tf.keras.optimizers.Optimizer
             Optimizer to apply step using
         """
-        return self._base_step(
-            opt, functools.partial(self.meta_loss, *args, **kwargs))
+        return self._base_step(opt, self.meta_loss, args, kwargs)
