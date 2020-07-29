@@ -25,10 +25,10 @@ def _deserialize_problem(p):
         return p
     else:
         try:
-            target, args, kwargs = p
+            target = p['target']
             if type(target) == str:
                 target = getattr(problems, target)
-            return problems.ProblemSpec(target, args, kwargs)
+            return problems.ProblemSpec(target, p['args'], p['kwargs'])
         except Exception as e:
             raise TypeError(
                 "Problem could not be deserialized: {}\n{}".format(p, e))
