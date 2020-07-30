@@ -66,13 +66,13 @@ class Classifier(Problem):
 
 
 def load_images(dataset):
-
+    """Load images and cast to float between 0 and 1."""
     dataset, info = tfds.load(
         dataset, split="train", shuffle_files=True,
         with_info=True, as_supervised=True)
 
     def _cast(x, y):
-        return tf.cast(x, tf.float32), y
+        return tf.cast(x, tf.float32) / 255., y
 
     return dataset.map(_cast), info
 
@@ -130,11 +130,6 @@ def mlp_classifier(
     TypeError
         Dataset does not have a fixed input dimension.
     """
-
-    def _preprocess(img):
-        shape = img.shape.as_list()
-        return tf.cast(tf.reshape(img, shape[:-1] + []), tf.float32) / 255.
-
     if type(activation) == str:
         activation = tf.keras.activations.get(activation)
 
