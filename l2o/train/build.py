@@ -103,13 +103,6 @@ def build(config, overrides, strict=False):
     if not os.path.isdir(config["directory"]):
         os.makedirs(config["directory"])
 
-    # Show & save config
-    print("Configuration:")
-    pprint.pprint(config)
-    with open(os.path.join(config["directory"], "config.json"), 'w') as f:
-        json.dump(config, f, indent=4)
-    print("saved to <{}/config.json>.".format(config["directory"]))
-
     # Check saved config
     saved_config = os.path.join(config["directory"], "config.json")
     if os.path.exists(saved_config):
@@ -117,6 +110,13 @@ def build(config, overrides, strict=False):
             config_old = json.load(f)
         deep_warn_equal(
             config, config_old, "config", saved_config, strict=strict)
+
+    # Show & save config
+    print("Configuration:")
+    pprint.pprint(config)
+    with open(saved_config, 'w') as f:
+        json.dump(config, f, indent=4)
+    print("saved to <{}/config.json>.".format(config["directory"]))
 
     # Initialize network
     if type(config["constructor"]) == str:

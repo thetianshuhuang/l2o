@@ -11,7 +11,7 @@ def load(folder, target):
 
     print("Loading {}/{}".format(folder, target))
 
-    with open(os.path.join(folder, "config.json"), 'w') as f:
+    with open(os.path.join(folder, "config.json")) as f:
         config = json.load(f)
     print("config & hyperparameters:")
     pprint.pprint(config)
