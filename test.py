@@ -1,7 +1,28 @@
+import os
+import json
+import pprint
+
+import tensorflow as tf
+
 import l2o
 
 
-import tensorflow as tf
+def load(folder, target):
+
+    print("Loading {}/{}".format(folder, target))
+
+    with open(os.path.join(folder, "config.json"), 'w') as f:
+        config = json.load(f)
+    print("config & hyperparameters:")
+    pprint.pprint(config)
+
+    network = getattr(
+        l2o.networks, config["constructor"] + "Optimizer")(**config["network"])
+    network.load_weights(target)
+
+    learner = network.architecture(network, **config["loss_args"])
+
+    return learner
 
 
 def get_model(info, conv=True):
@@ -24,10 +45,9 @@ def get_model(info, conv=True):
         ])
 
 
-def test_classify(opt=None, conv=True):
+def test_classify(folder, target, conv=True):
 
-    if opt is None:
-        opt = load()
+    opt = load(folder, target)
 
     dataset, info = l2o.problems.load_images("mnist")
     loss = tf.keras.losses.SparseCategoricalCrossentropy()
@@ -40,3 +60,12 @@ def test_classify(opt=None, conv=True):
     model = get_model(info, conv=conv)
     model.compile(tf.keras.optimizers.Adam(), loss)
     model.fit(dataset.batch(32), epochs=2)
+
+
+if __name__ == '__main__':
+
+    import sys
+    folder = sys.argv[1]
+    target = sys.argv[2]
+
+    test_classify(folder, target)
