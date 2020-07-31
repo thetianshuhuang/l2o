@@ -76,7 +76,7 @@ class MetaLossMixin:
             returns the initial objective value for each batch.
         """
         # scale_objective -> need to compute initial values
-        if self._scale_objective:
+        if self.scale_objective:
             # When batched, use initial values for each batch
             if is_batched:
                 init_obj = tf.TensorArray(tf.float32, size=unroll)
@@ -158,7 +158,7 @@ class MetaLossMixin:
         for i in tf.range(unroll):
             batch = [dim[i] for dim in data] if is_batched else data
 
-            if is_batched and self._scale_objective:
+            if is_batched and self.scale_objective:
                 init_obj_step = init_obj.read(i)
             else:
                 init_obj_step = init_obj
