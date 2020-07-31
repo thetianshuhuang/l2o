@@ -99,11 +99,7 @@ class TrainingMixin:
             is_imitation = np.random.uniform(0, 1) > 0.5
 
         concrete_function = cf_imitation if is_imitation else cf_meta
-
-        if meta.validation:
-            return concrete_function(meta.weights, data, unroll_state)
-        else:
-            return concrete_function(meta.weights, data, unroll_state)
+        return concrete_function(meta.weights, data, unroll_state)
 
     def _train_full(self, meta, repeat=1):
         """Full batch training.

@@ -39,8 +39,8 @@ def get_model(info, conv=True):
     else:
         return tf.keras.Sequential([
             tf.keras.layers.Flatten(input_shape=info.features['image'].shape),
-            tf.keras.layers.Dense(128, activation=tf.nn.relu),
-            tf.keras.layers.Dense(64, activation=tf.nn.relu),
+            # tf.keras.layers.Dense(128, activation=tf.nn.relu),
+            tf.keras.layers.Dense(20, activation=tf.nn.sigmoid),
             tf.keras.layers.Dense(10, activation="softmax")
         ])
 
@@ -68,4 +68,4 @@ if __name__ == '__main__':
     folder = sys.argv[1]
     target = sys.argv[2]
 
-    test_classify(folder, target)
+    test_classify(folder, target, conv=False)

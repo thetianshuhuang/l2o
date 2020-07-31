@@ -157,7 +157,11 @@ class MetaLossMixin:
         loss = 0.
         for i in tf.range(unroll):
             batch = [dim[i] for dim in data] if is_batched else data
-            init_obj_step = init_obj.read(i) if is_batched else init_obj
+
+            if is_batched and self._scale_objective:
+                init_obj_step = init_obj.read(i)
+            else:
+                init_obj_step = init_obj
 
             # Compute problem gradient
             with tf.GradientTape() as tape:
