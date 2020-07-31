@@ -82,8 +82,9 @@ Overrides can be specified on the command line as ```<param_name>=<param_value>`
 ##### Simple Training Strategy with Long-Tail Unroll Distribution
 - ```strategy/epochs_per_period [int=10]```: Number of epochs for each period, which forms the basic unit of training
 - ```strategy/num_periods [int=100]```: Number of periods to train for.
-- ```strategy/unroll_distribution [float=0.05 | callable() -> float]```: Specify the distribution used for unrolling.
+- ```strategy/unroll_distribution [float=0.05 | int | callable() -> float]```: Specify the distribution used for unrolling.
     - ```float```: ```n = np.random.geometric(unroll_distribution)```
+    - ```int```: ```n = unroll_distribution```
     - ```callable() -> float```: ```n = unroll_distribution()```
 - ```strategy/annealing_schedule [float=0.5 | float[] | callable(int) -> float]```: Specify the annealing schedule used to govern the probability of choosing imitation learning for each iteration.
     - ```float```: ```p = exp(-i * annealing_schedule)```

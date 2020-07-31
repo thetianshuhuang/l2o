@@ -19,9 +19,10 @@ class SimpleStrategy(BaseStrategy):
         Arguments passed to BaseStrategy
     num_periods : int
         Number of periods to train for
-    unroll_distribution : callable(() -> int) or float
+    unroll_distribution : callable(() -> int) or int or float
         callable: function returning the the unroll length; is rerolled each
             epoch within each training problem.
+        int: fixed unroll length.
         float: sets unroll_distribution ~ Geometric(x)
     annealing_schedule : callable(int -> float) or float or float[]
         callable: function returning the probability of choosing imitation
@@ -52,6 +53,8 @@ class SimpleStrategy(BaseStrategy):
         if type(unroll_distribution) == float:
             self.unroll_distribution = (
                 lambda: np.random.geometric(unroll_distribution))
+        elif type(unroll_distribution) == int:
+            self.unroll_distribution = lambda: unroll_distribution
         elif callable(unroll_distribution):
             self.unroll_distribution = unroll_distribution
         else:
