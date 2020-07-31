@@ -4,14 +4,12 @@ Framework for L2O extending ```tf.keras.optimizers.Optimizer```.
 
 ## Configuration and Hyperparameters
 
-### Parameter Descriptions
-
 Overrides can be specified on the command line as ```<param_name>=<param_value>``` (i.e. ```strategy/epochs_per_period=5```)
 
-#### L2O Architecture
+### L2O Architecture
 - ```constructor [str | l2o.optimizer.TrainableOptimizer]``` Optimizer object or object name, without the ```Optimizer``` prefix. Options: ```DM```, ```RNNProp```, ```ScaleBasic```, ```ScaleHierarchical```.
 
-##### Hierarchical Optimizer, "Learned Optimizers that Scale and Generalize" (Wichrowska et. al, 2017)
+#### Hierarchical Optimizer, "Learned Optimizers that Scale and Generalize" (Wichrowska et. al, 2017)
 - ```network/param_units [int=10]```: Number of hidden units in the parameter RNN.
 - ```network/tensor_units [int=5]```: Number of hidden units in the tensor RNN.
 - ```network/global_units [int=5]```: Number of hidden units in the global RNN.
@@ -27,7 +25,7 @@ Overrides can be specified on the command line as ```<param_name>=<param_value>`
 - ```network/bias_initializer [str="zeros"]```: GRU Cell config
 - ```network/unit_forget_bias [bool=True]```: GRU Cell config
 
-##### Coordinatewise Optimizer, "Learned Optimizers that Scale and Generalize" (Wichrowska et. al, 2017)
+#### Coordinatewise Optimizer, "Learned Optimizers that Scale and Generalize" (Wichrowska et. al, 2017)
 - ```network/layers [int[2]=(20, 20)]```: LSTM layer specifications. Length indicates depth, and value indicates number of hidden units.
 - ```network/init_lr [float[2]=(1., 1.)]```: Learning rate initialization range; initial learning rates are sampled from a log-uniform distribution.
 - ```network/name [str="ScaleBasicOptimizer"]```: Network name.
@@ -39,7 +37,7 @@ Overrides can be specified on the command line as ```<param_name>=<param_value>`
 - ```network/bias_initializer [str="zeros"]```: LSTM Cell config
 - ```network/unit_forget_bias [bool=True]```: LSTM Cell config
 
-##### RNNProp, "Learning Gradient Descent: Better Generalization and Longer Horizons" (Lv. et. al, 2017)
+#### RNNProp, "Learning Gradient Descent: Better Generalization and Longer Horizons" (Lv. et. al, 2017)
 - ```network/layers [int[2]=(20, 20)]```: LSTM layer specifications. Length indicates depth, and value indicates number of hidden units.
 - ```network/beta_1 [float=0.9]```: Momentum decay constant.
 - ```network/beta_2 [float=0.9]```: Variance decay constant.
@@ -54,7 +52,7 @@ Overrides can be specified on the command line as ```<param_name>=<param_value>`
 - ```network/bias_initializer [str="zeros"]```: LSTM Cell config
 - ```network/unit_forget_bias [bool=True]```: LSTM Cell config
 
-##### DMOptimizer, "Learing to learn by gradient descent by gradient descent" (Andrychowicz et. al, 2016)
+#### DMOptimizer, "Learing to learn by gradient descent by gradient descent" (Andrychowicz et. al, 2016)
 - ```network/layers [int[2]=(20, 20)]```: LSTM layer specifications. Length indicates depth, and value indicates number of hidden units.
 - ```network/name [str="RNNPropOptimizer"]```: Network name.
 - ```network/activation [str="tanh"]```: LSTM Cell config
@@ -65,7 +63,7 @@ Overrides can be specified on the command line as ```<param_name>=<param_value>`
 - ```network/bias_initializer [str="zeros"]```: LSTM Cell config
 - ```network/unit_forget_bias [bool=True]```: LSTM Cell config
 
-#### Training Loss
+### Training Loss
 - ```training/unroll_weights [str="sum" | callable(int) -> tf.Tensor]```: Unroll weights used for loss calculation.
 - ```training/teachers```: List of teachers used for imitation learning.
     - ```training/teachers/<i>/class_name```: ```tf.keras.optimizers``` optimizer class name.
@@ -76,10 +74,10 @@ Overrides can be specified on the command line as ```<param_name>=<param_value>`
 - ```training/repeat [int=1]```: Number of times to repeat each problem. Applied only to full batch training problems.
 - ```training/persistent [bool=False]```: Whether to keep optimizer internal state in between iterations
 
-#### Training Strategy
+### Training Strategy
 - ```strategy/strategy_constructor [str | l2o.train.BaseStrategy]```: Strategy object name, without the ```Strategy``` prefix. Options: ```Simple```, ```CurriculumLearning```.
 
-##### Simple Training Strategy with Long-Tail Unroll Distribution
+#### Simple Training Strategy with Long-Tail Unroll Distribution
 - ```strategy/epochs_per_period [int=10]```: Number of epochs for each period, which forms the basic unit of training
 - ```strategy/num_periods [int=100]```: Number of periods to train for.
 - ```strategy/unroll_distribution [float=0.05 | int | callable() -> float]```: Specify the distribution used for unrolling.
@@ -92,7 +90,7 @@ Overrides can be specified on the command line as ```<param_name>=<param_value>`
     - ```callable(int) -> float```: ```p = annealing_schedule(i)```
 - ```strategy/validation_unroll [int=50]```: Unroll length to use for validation.
 
-##### Curriculum Learning Strategy
+#### Curriculum Learning Strategy
 - ```strategy/epochs_per_period [int=10]```: Number of epochs for each period, which forms the basic unit of training
 - ```strategy/schedule [dict={"base": 50, "power": 2} | callable(int) -> int | int[]]```: Curriculum learning unroll length schedule.
     - ```int[]```: ```n = schedule[i]```
@@ -103,12 +101,12 @@ Overrides can be specified on the command line as ```<param_name>=<param_value>`
 - ```strategy/min_periods [int=10]```: Minimum number of periods per stage.
 - ```strategy/max_stages [int=0]```: Maximum number of stages. If ```0```, runs until other termination conditions are reached.
 
-#### Problems
+### Problems
 - ```problems/<i>/target```: Callable that builds the problem.
 - ```problems/<i>/args```: Callable args
 - ```problems/<i>/kwargs```: Callable keyword args
 
-#### Misc
+### Misc
 - ```directory [str="weights"]```: Directory to save weights and metadata to.
 - ```loss_args```: Arguments related to loss calculation
     - ```loss_args/scale_objective [bool=False]```: Scale meta learning objective value by initial value, so that the loss shows relative improvement instead of absolute loss.
@@ -120,7 +118,7 @@ Overrides can be specified on the command line as ```<param_name>=<param_value>`
     - ```optimizer/class_name [str="Adam"]```: ```tf.keras.optimizers``` optimizer name.
     - ```optimizers/config [dic{"learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999}]```: optimizer keyword args used for initialization.
 
-### Sample Configuration
+## Sample Configuration
 
 ```json
 {

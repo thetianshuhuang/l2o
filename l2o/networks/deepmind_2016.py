@@ -28,13 +28,7 @@ class DMOptimizer(BaseCoordinateWiseNetwork):
 
         super().__init__(name=name)
 
-        defaults = {
-            "kernel_initializer": "truncated_normal",
-            "recurrent_initializer": "truncated_normal"
-        }
-        defaults.update(kwargs)
-
-        self.recurrent = [LSTMCell(hsize, **defaults) for hsize in layers]
+        self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
         self.delta = Dense(1, input_shape=(layers[-1],))
 
     def call(self, param, inputs, states):
