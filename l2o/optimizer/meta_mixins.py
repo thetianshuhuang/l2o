@@ -71,7 +71,7 @@ class MetaLossMixin:
 
         Returns
         -------
-        float or tf.TensorArray
+        float or tf.Tensor
             If full batch, returns the initial objective value. If batched,
             returns the initial objective value for each batch.
         """
@@ -79,17 +79,14 @@ class MetaLossMixin:
         if self.scale_objective:
             # When batched, use initial values for each batch
             if is_batched:
-                init_obj = tf.TensorArray(tf.float32, size=unroll)
-                for i in tf.range(unroll):
-                    obj = problem.objective(params, [d[i] for d in data])
-                    init_obj.write(i, obj)
+                return tf.stack([
+                    problem.objective(params, [d[i] for d in data])
+                    for i in range(unroll)])
             else:
-                init_obj = problem.objective(params, data)
+                return problem.objective(params, data)
         # Not scale_objective -> just use 1. as denominator
         else:
-            init_obj = 1.
-
-        return init_obj
+            return 1.
 
     def _max_obj(self, init_obj, current_obj):
         """Helper to check for exceeding maximum objective limits"""
@@ -159,7 +156,7 @@ class MetaLossMixin:
             batch = [dim[i] for dim in data] if is_batched else data
 
             if is_batched and self.scale_objective:
-                init_obj_step = init_obj.read(i)
+                init_obj_step = init_obj[i]
             else:
                 init_obj_step = init_obj
 
