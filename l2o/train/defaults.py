@@ -27,20 +27,20 @@ BASE = {
 LOSS = {
     "meta": {
         "training": {
-            "unroll_weights": "sum",
+            "unroll_weights": "mean",
             "teachers": [],
             "imitation_optimizer": None,
             "strategy": "mean",
             "p_teacher": 0,
             "epochs": 1,
-            "depth": 1,
+            "depth": 0,
             "repeat": 1,
             "persistent": False
         },
     },
     "imitation": {
         "training": {
-            "unroll_weights": "sum",
+            "unroll_weights": "mean",
             "teachers": [
                 {"class_name": "Adam", "config": {
                     "learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999}},
@@ -49,7 +49,7 @@ LOSS = {
             "imitation_optimizer": None,
             "strategy": "mean",
             "epochs": 1,
-            "depth": 1,
+            "depth": 0,
             "repeat": 1,
             "persistent": False
         }
@@ -72,7 +72,7 @@ STRATEGY = {
         "strategy_constructor": "CurriculumLearning",
         "strategy": {
             "epochs_per_period": 10,
-            "schedule": {"base": 50, "power": 2},
+            "schedule": {"base": 32, "power": 2},
             "min_periods": 10,
             "max_stages": 0,
         },

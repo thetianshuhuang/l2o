@@ -101,7 +101,7 @@ class BaseStrategy:
                     for i in range(self.epochs_per_period)
                 })
             self.summary = pd.DataFrame({
-                k: pd.Series([], dtype=v) for k, v in columns})
+                k: pd.Series([], dtype=v) for k, v in columns.items()})
             self._start()
 
     def __repr__(self):
@@ -123,9 +123,6 @@ class BaseStrategy:
 
     def _append(self, results, **kwargs):
         """Append to summary statistics"""
-        for k in kwargs:
-            assert(k in self.COLUMNS, "'{}' is not a valid column.".format(k))
-
         period_losses = {
             "training_loss_{}".format(i): [val]
             for i, val in enumerate(results.training_loss)}

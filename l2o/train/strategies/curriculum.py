@@ -68,7 +68,6 @@ class CurriculumLearningStrategy(BaseStrategy):
 
     def _resume(self):
         """Resume current optimization."""
-
         # Current most recent stage & period
         self.stage = self.summary["stage"].max()
         self.period = self.summary["period"].max()
@@ -89,7 +88,6 @@ class CurriculumLearningStrategy(BaseStrategy):
 
     def _get_best_loss(self):
         """Helper function to get the current validation loss baseline."""
-
         # First period and past first s -> load best from previous
         if self.period == 0 and self.stage > 0:
             # Find best validation loss
@@ -158,8 +156,6 @@ class CurriculumLearningStrategy(BaseStrategy):
 
     def train(self):
         """Start or resume training."""
-
-        print(self)
         while True:
             self.learning_stage()
 
