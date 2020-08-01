@@ -142,7 +142,7 @@ class CurriculumLearningStrategy(BaseStrategy):
                 best_loss = results.validation_loss
 
             # Save optimizer
-            self._save_network()
+            self._save_network(self.stage, self.period)
             # Add to summary
             self._append(
                 results, stage=self.stage, period=self.period,
