@@ -138,14 +138,22 @@ class BaseStrategy:
         self.summary.to_csv(
             os.path.join(self.directory, "summary.csv"), index=False)
 
-    def _lookup(self, **kwargs):
-        """Helper function to look up values from dataframe"""
+    def _filter(self, **kwargs):
+        """Helper function to filter dataframe"""
         try:
             filtered = self.summary
             for k, v in kwargs.items():
                 filtered = filtered[filtered[k] == v]
-            return filtered.iloc[0]
+            return filtered
         except IndexError:
+            return None
+
+    def _lookup(self, **kwargs):
+        """Helper function to look up values from dataframe"""
+        filtered = self._filter(**kwargs)
+        if filtered is not None:
+            return filtered.iloc[0]
+        else:
             return None
 
     def _load_network(self, *args, **kwargs):

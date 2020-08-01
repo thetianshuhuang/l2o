@@ -89,7 +89,7 @@ class CurriculumLearningStrategy(BaseStrategy):
         # First period and past first s -> load best from previous
         if self.period == 0 and self.stage > 0:
             # Find best validation loss
-            row_idx = self._lookup(
+            row_idx = self._filter(
                 stage=self.stage - 1)["validation_loss"].idxmin()
             period_idx = self.summary["period"][row_idx]
             # Load & Validate
@@ -106,7 +106,7 @@ class CurriculumLearningStrategy(BaseStrategy):
         # Not the first -> resume from most recent
         else:
             self._load_network(self.stage, self.period - 1)
-            return self._lookup(stage=self.stage)["validation_loss"].min()
+            return self._filter(stage=self.stage)["validation_loss"].min()
 
     def learning_stage(self):
         """Learn for a single stage.
@@ -158,7 +158,7 @@ class CurriculumLearningStrategy(BaseStrategy):
             self.learning_stage()
 
             # No longer improving
-            improving = self._lookup(stage=self.stage - 1)["improving"].any()
+            improving = self._filter(stage=self.stage - 1)["improving"].any()
             if self.stage > 1 and (not improving):
                 print("Stopped: no longer improving.")
                 break
