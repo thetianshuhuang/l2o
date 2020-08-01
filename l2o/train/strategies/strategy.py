@@ -124,12 +124,12 @@ class BaseStrategy:
     def _append(self, results, **kwargs):
         """Append to summary statistics"""
         period_losses = {
-            "training_loss_{}".format(i): [val]
+            "training_loss_{}".format(i): val
             for i, val in enumerate(results.training_loss)}
         new_row = dict(
-            training_loss_mean=[results.training_loss_mean],
-            validation_loss=[results.validation_loss],
-            **period_losses, **{k: [v] for k, v in kwargs.items()})
+            training_loss_mean=results.training_loss_mean,
+            validation_loss=results.validation_loss,
+            **period_losses, **{k: v for k, v in kwargs.items()})
 
         self.summary = self.summary.append(new_row, ignore_index=True)
         self.summary.to_csv(
