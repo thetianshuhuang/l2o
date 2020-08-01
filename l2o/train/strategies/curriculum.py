@@ -96,7 +96,8 @@ class CurriculumLearningStrategy(BaseStrategy):
             self._load_network(self.stage - 1, period_idx)
             return self.learner.train(
                 self.problems, self.optimizer, validation=False,
-                unroll=self.schedule(self.stage + 1), **self.train_args
+                unroll_len=lambda: self.schedule(self.stage + 1),
+                **self.train_args
             ).validation_loss
 
         # First period and first stage -> best_loss is np.inf & don't load
