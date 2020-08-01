@@ -35,8 +35,13 @@ class Layer:
         """
         return input_shape, in_idx
 
-    def get_parameters(self):
+    def get_parameters(self, seed=None):
         """Get layer parameters.
+
+        Parameters
+        ----------
+        seed : int
+            Initializer seed.
 
         Returns
         -------
@@ -63,6 +68,20 @@ class Layer:
         """
         raise NotImplementedError()
 
+    def _seeded_init(self, initializers, seed=None):
+        """Create initializers with a given seed.
+
+        This helper function is needed since some initializers do not accept
+        seeds, which needs to be handled.
+        """
+        res = []
+        for initializer in initializers:
+            try:
+                res.append(initializer(seed=seed))
+            except TypeError:
+                res.append(initializer())
+        return res
+
 
 class Dense:
     """Dense layer y = sigma(Wx + b)
@@ -87,8 +106,8 @@ class Dense:
             kernel_initializer=tf.keras.initializers.GlorotUniform,
             bias_initializer=tf.keras.initializers.Zeros):
 
-        self.kernel_initializer = kernel_initializer()
-        self.bias_initializer = bias_initializer()
+        self.kernel_initializer = kernel_initializer
+        self.bias_initializer = bias_initializer
 
         self.units = units
         self.activation = activation
@@ -99,11 +118,10 @@ class Dense:
         self.out_idx = in_idx + 2
         return self.units, self.out_idx
 
-    def get_parameters(self):
-        return [
-            self.kernel_initializer([self.input_shape, self.units]),
-            self.bias_initializer([self.units])
-        ]
+    def get_parameters(self, seed=None):
+        kernel, bias = self._seeded_init(
+            self.kernel_initializer, self.bias_initializer, seed=seed)
+        return [kernel([self.input_shape, self.units]), bias([self.units])]
 
     def call(self, params, x):
         x = tf.reshape(x, [x.shape[0], -1])
@@ -122,8 +140,8 @@ class Conv2D(Layer):
             kernel_initializer=tf.keras.initializers.GlorotUniform,
             bias_initializer=tf.keras.initializers.Zeros):
 
-        self.kernel_initializer = kernel_initializer()
-        self.bias_initializer = bias_initializer()
+        self.kernel_initializer = kernel_initializer
+        self.bias_initializer = bias_initializer
 
         self.filters = filters
         self.kernel_size = kernel_size
@@ -139,13 +157,12 @@ class Conv2D(Layer):
             math.ceil(input_shape[1] / self.stride), self.filters]
         return self.output_dim, self.out_idx
 
-    def get_parameters(self):
-        return [
-            self.kernel_initializer([
-                self.kernel_size, self.kernel_size,
-                self.input_dim, self.filters]),
-            self.bias_initializer(self.output_dim)
-        ]
+    def get_parameters(self, seed=None):
+        kernel, bias = self._seeded_init(
+            self.kernel_initializer, self.bias_initializer, seed=seed)
+        kernel_shape = [
+            self.kernel_size, self.kernel_size, self.input_dim, self.filters]
+        return [kernel(kernel_shape), bias(self.output_dim)]
 
     def call(self, params, x):
 
@@ -182,18 +199,32 @@ class Sequential:
         for layer in layers:
             s, idx = layer.build(s, idx)
 
-    def get_parameters(self):
+    def get_parameters(self, seed=None):
         """Get model parameters
+
+        Keyword Args
+        ------------
+        seed : int
+            Model seed to use for initialization. If not None, the layers seeds
+            are fetched from np.random.randint(0, 2**31) with the model seed as
+            the random seed for the layer seeds.
 
         Returns
         -------
         tf.Tensor[]
             Initialized model parameters.
         """
+        # Build seeds
+        if seed is not None:
+            np.random.seed(seed)
+            seeds = np.random.randint(0, 0x80000000, [self.layers])
+        else:
+            seeds = [None for _ in self.layers]
 
+        # Build layers
         res = []
-        for layer in self.layers:
-            res += layer.get_parameters()
+        for s, layer in zip(seeds, self.layers):
+            res += layer.get_parameters(seed=s)
         return res
 
     def call(self, params, x):

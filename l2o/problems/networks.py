@@ -57,8 +57,8 @@ class Classifier(Problem):
             self.batch_size * unroll, drop_remainder=True
         ).prefetch(tf.data.experimental.AUTOTUNE)
 
-    def get_parameters(self):
-        return self.model.get_parameters()
+    def get_parameters(self, seed=None):
+        return self.model.get_parameters(seed=seed)
 
     def objective(self, params, data):
         x, y = data

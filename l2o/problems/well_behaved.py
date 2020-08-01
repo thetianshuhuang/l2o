@@ -35,7 +35,7 @@ class Quadratic(Problem):
     def get_parameters(self):
         return [tf.zeros([self.ndim, 1], tf.float32)]
 
-    def get_internal(self):
+    def get_internal(self, seed=None):
         return {
             'W': tf.random.normal([self.ndim, self.ndim]),
             'y': tf.random.normal([self.ndim, 1])

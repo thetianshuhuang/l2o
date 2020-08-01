@@ -12,7 +12,7 @@ MetaIteration = collections.namedtuple(
         "problem", "optimizer",
         "unroll_len", "weights",
         "teachers", "imitation_optimizer", "strategy", "p_teacher",
-        "validation"
+        "validation", "seed"
     ])
 
 
@@ -227,7 +227,8 @@ class TrainingMixin:
             unroll_len=lambda: 20, unroll_weights="sum",
             teachers=[], imitation_optimizer=None,
             strategy="mean", p_teacher=0,
-            epochs=1, depth=0, repeat=1, persistent=False, validation=False):
+            epochs=1, depth=0, repeat=1, persistent=False,
+            validation=False, seed=None):
         """Run meta-training.
 
         Parameters
@@ -275,6 +276,10 @@ class TrainingMixin:
         validation : bool
             If True, runs in validation mode (does not perform any parameter
             updates)
+        seed : int
+            Random seed to use for model initializations. If None, no specific
+            seed is used. Should be set to None to reduce overfitting during
+            training, but fixed during validation.
 
         Returns
         -------
@@ -311,7 +316,7 @@ class TrainingMixin:
 
             meta = MetaIteration(
                 problem, optimizer, unroll, unroll_weights(unroll), teachers,
-                imitation_optimizer, strategy, p_teacher, validation)
+                imitation_optimizer, strategy, p_teacher, validation, seed)
 
             if hasattr(problem, "get_dataset"):
                 results.append(

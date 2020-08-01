@@ -39,8 +39,6 @@ class CurriculumLearningStrategy(BaseStrategy):
             schedule=lambda i: 50 * (2**i), name="CurriculumLearningStrategy",
             **kwargs):
 
-        super().__init__(*args, name=name, **kwargs)
-
         # List -> convert to function
         if type(schedule) == list or type(schedule) == tuple:
             self.schedule = schedule.__getitem__
@@ -60,6 +58,8 @@ class CurriculumLearningStrategy(BaseStrategy):
         self.min_periods = min_periods
         self.max_stages = max_stages
 
+        super().__init__(*args, name=name, **kwargs)
+
     def _path(self, stage, period):
         """Get saved model file path"""
         return os.path.join(
@@ -71,15 +71,13 @@ class CurriculumLearningStrategy(BaseStrategy):
         # Current most recent stage & period
         self.stage = self.summary["stage"].max()
         self.period = self.summary["period"].max()
+        self.period += 1
 
         # Not improving, and past minimum periods
-        last_row = self._lookup(stage=self.stage, period=self.period)
-        if (not last_row["is_improving"]) and self.period >= self.min_periods:
+        last_row = self._lookup(stage=self.stage, period=self.period - 1)
+        if not last_row["is_improving"] and self.period >= self.min_periods:
             self.stage += 1
             self.period = 0
-        # Same period
-        else:
-            self.period += 1
 
     def _start(self):
         """Start new optimization."""
@@ -160,8 +158,8 @@ class CurriculumLearningStrategy(BaseStrategy):
             self.learning_stage()
 
             # No longer improving
-            is_improving = self._lookup(stage=self.stage)["improving"].any()
-            if self.stage > 1 and (not is_improving):
+            improving = self._lookup(stage=self.stage - 1)["improving"].any()
+            if self.stage > 1 and (not improving):
                 print("Stopped: no longer improving.")
                 break
             # Past specified maximum

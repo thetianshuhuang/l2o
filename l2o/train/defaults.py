@@ -62,6 +62,7 @@ STRATEGY = {
         "strategy_constructor": "Simple",
         "strategy": {
             "epochs_per_period": 10,
+            "validaton_seed": 12345,
             "num_periods": 100,
             "unroll_distribution": 0.05,
             "annealing_schedule": 0.5,
@@ -72,6 +73,7 @@ STRATEGY = {
         "strategy_constructor": "CurriculumLearning",
         "strategy": {
             "epochs_per_period": 10,
+            "validation_seed": 12345,
             "schedule": {"base": 32, "power": 2},
             "min_periods": 10,
             "max_stages": 0,

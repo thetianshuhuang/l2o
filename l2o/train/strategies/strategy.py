@@ -56,6 +56,8 @@ class BaseStrategy:
         List of problem specifications to train on
     epochs_per_period : int
         Number of meta-epochs to train per training 'period'
+    validation_seed : int
+        Seed for optimizee initialization during validation
     optimizer : tf.keras.optimizers.Optimizer or str or dict
         Optimizer to train learned optimizer with; initialized with
         tf.keras.optimizers.get to support str and dict formats.
@@ -74,7 +76,7 @@ class BaseStrategy:
 
     def __init__(
             self, learner, name="GenericStrategy", train_args={}, problems=[],
-            epochs_per_period=10,
+            epochs_per_period=10, validation_seed=12345,
             optimizer="Adam", directory="weights"):
 
         self.problems = [_deserialize_problem(p) for p in problems]
@@ -84,6 +86,7 @@ class BaseStrategy:
         self.train_args = train_args
 
         self.epochs_per_period = epochs_per_period
+        self.validation_seed = validation_seed
 
         self.name = name
         self.directory = directory
@@ -197,7 +200,8 @@ class BaseStrategy:
         # Compute validation loss
         print("Validating:")
         validation_loss = np.mean(train_func(
-            validation=True, **validation_args))
+            validation=True, validation_seed=self.validation_seed,
+            **validation_args))
 
         print("training_loss: {} | validation_loss: {}".format(
             training_loss_mean, validation_loss))
