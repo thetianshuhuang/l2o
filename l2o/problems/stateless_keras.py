@@ -217,7 +217,7 @@ class Sequential:
         # Build seeds
         if seed is not None:
             np.random.seed(seed)
-            seeds = np.random.randint(0, 0x80000000, [self.layers])
+            seeds = [np.random.randint(0, 0x80000000) for _ in self.layers]
         else:
             seeds = [None for _ in self.layers]
 

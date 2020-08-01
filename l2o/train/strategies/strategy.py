@@ -208,7 +208,7 @@ class BaseStrategy:
         # Compute validation loss
         print("Validating:")
         validation_loss = np.mean(train_func(
-            validation=True, validation_seed=self.validation_seed,
+            validation=True, seed=self.validation_seed,
             **validation_args))
 
         print("training_loss: {} | validation_loss: {}".format(
