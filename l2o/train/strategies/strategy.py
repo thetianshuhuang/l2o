@@ -1,11 +1,17 @@
 import os
 import functools
+import collections
 
 import tensorflow as tf
 import numpy as np
 import pandas as pd
 
 from l2o import problems
+
+
+TrainingPeriod = collections.namedtuple(
+    "TrainingPeriod",
+    ["training_loss_mean", "training_loss", "validation_loss"])
 
 
 def _makedir(path, assert_empty=False):
@@ -59,7 +65,9 @@ class BaseStrategy:
     Attributes
     ----------
     COLUMNS : dict
-        Dict containing summary keys and data types; should be overridden
+        Dict containing additional summary keys and data types; can be
+        overridden to add keys other than 'training_loss',
+        'mean_training_loss', and 'validation_loss'.
     """
 
     COLUMNS = {}
@@ -86,8 +94,14 @@ class BaseStrategy:
                 os.path.join(self.directory, "summary.csv"))
             self._resume()
         except FileNotFoundError:
+            columns = dict(
+                training_loss_mean=float, validation_loss=float,
+                **self.COLUMNS, **{
+                    "training_loss_{}".format(i): float
+                    for i in range(self.epochs_per_period)
+                })
             self.summary = pd.DataFrame({
-                k: pd.Series([], dtype=v) for k, v in self.COLUMNS.items()})
+                k: pd.Series([], dtype=v) for k, v in columns})
             self._start()
 
     def __repr__(self):
@@ -107,11 +121,20 @@ class BaseStrategy:
         """Start new optimization."""
         raise NotImplementedError()
 
-    def _append(self, **kwargs):
+    def _append(self, results, **kwargs):
         """Append to summary statistics"""
-        self.summary = self.summary.append(
-            pd.DataFrame({k: [v] for k, v in kwargs.items()}),
-            ignore_index=True)
+        for k in kwargs:
+            assert(k in self.COLUMNS, "'{}' is not a valid column.".format(k))
+
+        period_losses = {
+            "training_loss_{}".format(i): [val]
+            for i, val in enumerate(results.training_loss)}
+        new_row = dict(
+            training_loss_mean=[results.training_loss_mean],
+            validation_loss=[results.validation_loss],
+            **period_losses, **{k: [v] for k, v in kwargs.items()})
+
+        self.summary = self.summary.append(new_row, ignore_index=True)
         self.summary.to_csv(
             os.path.join(self.directory, "summary.csv"), index=False)
 
@@ -150,10 +173,16 @@ class BaseStrategy:
 
         Returns
         -------
-        [float, float]
-            [0] Training loss
-            [1] Validation loss
+        TrainingPeriod
+            Named tuple, with keywords:
+            training_loss_mean: float
+                Mean training loss
+            training_loss : float[]
+                Training loss for each meta-epoch
+            validation_loss : float
+                Validation loss
         """
+        print("Training:")
 
         # Bind common arguments; functools.partial can be overridden
         train_func = functools.partial(
@@ -163,21 +192,20 @@ class BaseStrategy:
         # Train for ``epochs_per_period`` meta-epochs
         training_loss = []
         for i in range(self.epochs_per_period):
-            print("Training: Epoch {}/{}".format(
-                i + 1, self.epochs_per_period))
+            print("Meta Epoch {}/{}".format(i + 1, self.epochs_per_period))
             training_loss.append(
                 np.mean(train_func(validation=False, **train_args)))
-        training_loss = np.mean(training_loss)
+        training_loss_mean = np.mean(training_loss)
 
         # Compute validation loss
-        print("Validating")
+        print("Validating:")
         validation_loss = np.mean(train_func(
             validation=True, **validation_args))
 
         print("training_loss: {} | validation_loss: {}".format(
-            training_loss, validation_loss))
-
-        return training_loss, validation_loss
+            training_loss_mean, validation_loss))
+        return TrainingPeriod(
+            training_loss_mean, training_loss, validation_loss)
 
     def train(self):
         """The actual training method."""

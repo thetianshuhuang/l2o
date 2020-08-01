@@ -7,10 +7,6 @@ from .strategy import BaseStrategy
 class CurriculumLearningStrategy(BaseStrategy):
     """Curriculum Learning Manager
 
-    While network weights and learning progress are saved on disk after every
-    training period, the caller is responsible for ensuring that the same
-    hyper-parameters are passed to the initializer when resumed.
-
     Parameters
     ----------
     *args : object[]
@@ -35,9 +31,7 @@ class CurriculumLearningStrategy(BaseStrategy):
     COLUMNS = {
         'period': int,
         'stage': int,
-        'training_loss': float,
-        'validation_loss': float,
-        'improved': bool,
+        'is_improving': bool,
     }
 
     def __init__(
@@ -79,15 +73,9 @@ class CurriculumLearningStrategy(BaseStrategy):
         self.stage = self.summary["stage"].max()
         self.period = self.summary["period"].max()
 
-        # Get row of best loss & last loss
-        best_loss_row = self.summary[
-            self._lookup(stage=self.stage)["validation_loss"].idxmin()]
-        self.best_loss = best_loss_row["validation_loss"]
-        last_loss = self._lookup(
-            stage=self.stage, period=self.period)["validation_loss"]
-
-        # New period
-        if last_loss > self.best_loss and self.period >= self.min_periods:
+        # Not improving, and past minimum periods
+        last_row = self._lookup(stage=self.stage, period=self.period)
+        if (not last_row["is_improving"]) and self.period >= self.min_periods:
             self.stage += 1
             self.period = 0
         # Same period
@@ -98,7 +86,31 @@ class CurriculumLearningStrategy(BaseStrategy):
         """Start new optimization."""
         self.stage = 0
         self.period = 0
-        self.best_loss = np.inf
+
+    def _get_best_loss(self):
+        """Helper function to get the current validation loss baseline."""
+
+        # First period and past first s -> load best from previous
+        if self.period == 0 and self.stage > 0:
+            # Find best validation loss
+            row_idx = self._lookup(
+                stage=self.stage - 1)["validation_loss"].idxmin()
+            period_idx = self.summary["period"][row_idx]
+            # Load & Validate
+            self._load_network(self.stage - 1, period_idx)
+            return self.learner.train(
+                self.problems, self.optimizer, validation=False,
+                unroll=self.schedule(self.stage + 1), **self.train_args
+            ).validation_loss
+
+        # First period and first stage -> best_loss is np.inf & don't load
+        elif self.period == 0 and self.stage == 0:
+            return np.inf
+
+        # Not the first -> resume from most recent
+        else:
+            self._load_network(self.stage, self.period - 1)
+            return self._lookup(stage=self.stage)["validation_loss"].min()
 
     def learning_stage(self):
         """Learn for a single stage.
@@ -114,48 +126,33 @@ class CurriculumLearningStrategy(BaseStrategy):
         print(header)
         print("-" * len(header) + "\n")
 
-        # First in period and past first period -> load best from previous
-        if self.period == 0 and self.stage > 0:
-            row_idx = self.summary[
-                self.summary["stage"] == (self.stage - 1)
-            ]["validation_loss"].idxmin()
-            period_idx = self.summary["period"][row_idx]
-            self._load_network(self.stage - 1, period_idx)
-            self.best_loss = self._mean_loss(self.learner.train(
-                self.problems, self.optimizer, validation=False,
-                unroll=self.schedule(self.stage + 1), **self.train_args))
-        # Not the first -> resume from most recent
-        else:
-            self._load_network(self.stage, self.period - 1)
+        best_loss = self._get_best_loss()
 
         # Train for at least ``min_periods`` or until we stop improving
         is_improving = True
         while (self.period < self.min_periods) or (is_improving):
-            is_improving = False
-
+            # Learn
             print("--- Stage {}, Period {} ---".format(
                 self.stage, self.period))
-
-            training_loss, validation_loss = self._learning_period(
+            results = self._learning_period(
                 {"unroll_len": lambda: self.schedule(self.stage)},
                 {"unroll_len": lambda: self.schedule(self.stage + 1)})
 
             # Check for improvement
-            if validation_loss < self.best_loss:
-                self.best_loss = validation_loss
-                is_improving = True
+            is_improving = results.validation_loss < best_loss
+            if is_improving:
+                best_loss = results.validation_loss
 
             # Save optimizer
             self._save_network()
             # Add to summary
             self._append(
-                stage=self.stage, period=self.period,
-                training_loss=training_loss, validation_loss=validation_loss,
-                improved=is_improving)
-
+                results, stage=self.stage, period=self.period,
+                is_improving=is_improving)
             # Finally increment in memory
             self.period += 1
 
+        # Increment stage
         self.stage += 1
         self.period = 0
 
@@ -169,7 +166,9 @@ class CurriculumLearningStrategy(BaseStrategy):
             # No longer improving
             is_improving = self._lookup(stage=self.stage)["improving"].any()
             if self.stage > 1 and (not is_improving):
+                print("Stopped: no longer improving.")
                 break
             # Past specified maximum
             if self.max_stages > 0 and self.stage >= self.max_stages:
+                print("Stopped: reached max_stages specification.")
                 break

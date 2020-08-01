@@ -5,8 +5,7 @@ from .strategy import BaseStrategy
 
 
 class SimpleStrategy(BaseStrategy):
-    """
-
+    """Basic Iterative Training Strategy
 
     Parameters
     ----------
@@ -33,11 +32,7 @@ class SimpleStrategy(BaseStrategy):
         Unroll length to use for validation.
     """
 
-    COLUMNS = {
-        'period': int,
-        'training_loss': float,
-        'validation_loss': float
-    }
+    COLUMNS = {'period': int}
 
     def __init__(
             self, *args, num_periods=100,
@@ -99,14 +94,12 @@ class SimpleStrategy(BaseStrategy):
             print("--- Period {} [p_teacher={}] ---".format(
                 self.period, p_teacher))
 
-            training_loss, validation_loss = self._learning_period(
+            results = self._learning_period(
                 {"unroll_len": self.unroll_distribution,
                  "p_teacher": p_teacher},
                 {"unroll_len": lambda: self.validation_unroll,
                  "p_teacher": 0})
 
             self._save_network(self.period)
-            self._append(
-                period=self.period, training_loss=training_loss,
-                validation_loss=validation_loss)
+            self._append(results, period=self.period)
             self.period += 1
