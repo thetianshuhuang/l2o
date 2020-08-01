@@ -57,7 +57,7 @@ class TrainingMixin:
 
         kwargs = dict(
             unroll=meta.unroll_len, problem=meta.problem,
-            is_batched=is_batched)
+            is_batched=is_batched, seed=meta.seed)
         kwargs_meta = dict(noise_stddev=meta.problem.noise_stddev)
         kwargs_imitation = dict(teachers=meta.teachers, strategy=meta.strategy)
         args = (meta.weights, data, unroll_state)
@@ -121,7 +121,8 @@ class TrainingMixin:
         """
         # No states are persistent
         unroll_state = self._make_unroll_state(
-            meta.problem, params=None, states=None, global_state=None)
+            meta.problem, params=None, states=None, global_state=None,
+            seed=meta.seed)
         concrete_step = None
 
         pbar = Progbar(repeat, unit_name='step')
@@ -129,7 +130,7 @@ class TrainingMixin:
         losses = np.zeros(repeat, dtype=np.float32)
         for i in range(repeat):
 
-            data = meta.problem.get_internal()
+            data = meta.problem.get_internal(seed=meta.seed)
 
             self.reset()
             meta.problem.reset(internal=data)
@@ -172,8 +173,8 @@ class TrainingMixin:
             Mean training loss for this meta-iteration
         """
         unroll_state = self._make_unroll_state(
-            meta.problem,
-            params=True, states=persistent, global_state=persistent)
+            meta.problem, params=True, states=persistent,
+            global_state=persistent, seed=meta.seed)
         concrete_step = None
 
         size = meta.problem.size(meta.unroll_len)
@@ -185,7 +186,7 @@ class TrainingMixin:
         losses = np.zeros(epochs, dtype=np.float32)
         for i in range(epochs):
 
-            dataset = meta.problem.get_dataset(meta.unroll_len)
+            dataset = meta.problem.get_dataset(meta.unroll_len, seed=meta.seed)
             epoch_losses = np.zeros(size, dtype=np.float32)
 
             for j, batch in enumerate(dataset):
@@ -213,7 +214,7 @@ class TrainingMixin:
                 # Every ``depth`` iterations, reset parameters
                 if depth > 0 and (j + 1) % depth == 0:
                     unroll_state = self._reset_params(
-                        unroll_state, meta.problem)
+                        unroll_state, meta.problem, seed=meta.seed)
 
                 pbar.add(1, values=[("loss", loss)])
                 epoch_losses[j] = loss.numpy()

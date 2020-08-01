@@ -69,8 +69,13 @@ class Problem:
         """
         return None
 
-    def get_parameters(self):
+    def get_parameters(self, seed=None):
         """Make variables corresponding to this problem.
+
+        Parameters
+        ----------
+        seed : int
+            Random seed to intialize with.
 
         Returns
         -------

@@ -32,7 +32,7 @@ class Quadratic(Problem):
     def size(self, unroll):
         return 1
 
-    def get_parameters(self):
+    def get_parameters(self, seed=None):
         return [tf.zeros([self.ndim, 1], tf.float32)]
 
     def get_internal(self, seed=None):

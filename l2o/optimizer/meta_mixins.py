@@ -101,7 +101,7 @@ class MetaLossMixin:
     @tf.function
     def meta_loss(
             self, weights, data, unroll_state, unroll=20, problem=None,
-            is_batched=False, noise_stddev=0.0):
+            is_batched=False, noise_stddev=0.0, seed=None):
         """Get meta-training loss.
 
         By decorating as a @tf.function, the for loop is wrapped into a
@@ -139,6 +139,8 @@ class MetaLossMixin:
             Batch training or full batch training?
         noise_stddev : float (bound)
             Normal noise to add to gradients.
+        seed : int or None
+            Seed to use for intializing parameters.
 
         Returns
         -------
@@ -147,7 +149,8 @@ class MetaLossMixin:
             [1] Final (params, state, global_state) tuple. None values in are
                 returned as None values.
         """
-        unroll_state, state_mask = self._get_state(problem, unroll_state)
+        unroll_state, state_mask = self._get_state(
+            problem, unroll_state, seed=seed)
         init_obj = self._compute_init_obj(
             unroll_state.params, problem, data, unroll, is_batched)
 
@@ -186,7 +189,7 @@ class MetaLossMixin:
     @tf.function
     def meta_step(
             self, weights, data, unroll_state, unroll=20, problem=None,
-            is_batched=False, noise_stddev=0.0, opt=None):
+            is_batched=False, noise_stddev=0.0, seed=None, opt=None):
         """Wraps meta_loss to include gradient calculation inside graph mode.
 
         See ``meta_loss`` for docstring and ``_base_step`` for internal
@@ -200,6 +203,6 @@ class MetaLossMixin:
         def loss_wrapper():
             return self.meta_loss(
                 weights, data, unroll_state, unroll=unroll, problem=problem,
-                is_batched=is_batched, noise_stddev=noise_stddev)
+                is_batched=is_batched, noise_stddev=noise_stddev, seed=seed)
 
         return self._base_step(opt, loss_wrapper)

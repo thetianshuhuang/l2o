@@ -50,10 +50,11 @@ class Classifier(Problem):
     def size(self, unroll):
         return math.floor(self._size / (unroll * self.batch_size))
 
-    def get_dataset(self, unroll):
+    def get_dataset(self, unroll, seed=None):
+        dataset = self.dataset
         if self.shuffle_buffer is not None:
-            self.dataset = self.dataset.shuffle(self.shuffle_buffer)
-        return self.dataset.batch(
+            dataset = self.dataset.shuffle(self.shuffle_buffer, seed=seed)
+        return dataset.batch(
             self.batch_size * unroll, drop_remainder=True
         ).prefetch(tf.data.experimental.AUTOTUNE)
 

@@ -31,7 +31,7 @@ class StateMixin:
         return UnrollState(
             params=params, states=states, global_state=global_state)
 
-    def _get_state(self, problem, unroll_state):
+    def _get_state(self, problem, unroll_state, seed=None):
         """Helper function to initialize or use existing states.
 
         Parameters
@@ -53,7 +53,7 @@ class StateMixin:
 
         params, states, global_state = unroll_state
         if params is None:
-            params = problem.get_parameters()
+            params = problem.get_parameters(seed=seed)
         if states is None:
             states = [self._initialize_state(p) for p in params]
         if global_state is None:
@@ -62,11 +62,12 @@ class StateMixin:
         return UnrollState(params, states, global_state), mask
 
     def _make_unroll_state(
-            self, problem, params=None, states=None, global_state=None):
+            self, problem,
+            params=None, states=None, global_state=None, seed=None):
         """Helper function to selectively generate UnrollState tuple."""
         params_, states_, global_state_ = None, None, None
         if params:
-            params_ = problem.get_parameters()
+            params_ = problem.get_parameters(seed=seed)
         if states:
             states_ = [self._initialize_state(p) for p in params]
         if global_state:
@@ -78,8 +79,8 @@ class StateMixin:
         return UnrollState(*[
             s if m else None for s, m in zip(unroll_state, mask)])
 
-    def _reset_params(self, unroll_state, problem):
+    def _reset_params(self, unroll_state, problem, seed=None):
         """Helper function to reset parameters"""
         return UnrollState(
-            problem.get_parameters(),
+            problem.get_parameters(seed=seed),
             unroll_state.states, unroll_state.global_state)

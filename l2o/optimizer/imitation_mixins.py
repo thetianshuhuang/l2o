@@ -7,7 +7,7 @@ class ImitationLossMixin:
     def imitation_loss(
             self, weights, data, unroll_state,
             unroll=20, problem=None, is_batched=False, teachers=None,
-            strategy=tf.math.reduce_mean):
+            strategy=tf.math.reduce_mean, seed=None):
         """Get imitation learning loss.
 
         The problem must be built in persistent mode for the teacher to use,
@@ -42,6 +42,8 @@ class ImitationLossMixin:
             Imitation learning multi-teacher loss strategy. Suggested:
               - ``tf.math.reduce_mean``: classic multi-teacher mean loss.
               - ``tf.math.reduce_max``: minimax loss.
+        seed : int or None
+            Seed to use for intializing parameters.
 
         Returns
         -------
@@ -50,7 +52,8 @@ class ImitationLossMixin:
             [1] Final (params, state, global_state) tuple. None values in are
                 returned as None values.
         """
-        unroll_state, state_mask = self._get_state(problem, unroll_state)
+        unroll_state, state_mask = self._get_state(
+            problem, unroll_state, seed=seed)
 
         loss = 0.
         for i in tf.range(unroll):
@@ -86,7 +89,7 @@ class ImitationLossMixin:
     def imitation_step(
             self, weights, data, unroll_state,
             unroll=20, problem=None, is_batched=False, teachers=None,
-            strategy=tf.math.reduce_mean, opt=None):
+            strategy=tf.math.reduce_mean, opt=None, seed=None):
         """Wraps imitation_loss to include gradient calculation inside graph
         mode.
 
@@ -97,6 +100,6 @@ class ImitationLossMixin:
             return self.imitation_loss(
                 weights, data, unroll_state,
                 unroll=unroll, problem=problem, is_batched=is_batched,
-                teachers=teachers, strategy=strategy)
+                teachers=teachers, strategy=strategy, seed=seed)
 
         return self._base_step(opt, loss_wrapper)

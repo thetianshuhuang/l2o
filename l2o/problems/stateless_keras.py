@@ -68,14 +68,14 @@ class Layer:
         """
         raise NotImplementedError()
 
-    def _seeded_init(self, initializers, seed=None):
+    def _seeded_init(self, *args, seed=None):
         """Create initializers with a given seed.
 
         This helper function is needed since some initializers do not accept
         seeds, which needs to be handled.
         """
         res = []
-        for initializer in initializers:
+        for initializer in args:
             try:
                 res.append(initializer(seed=seed))
             except TypeError:
@@ -83,7 +83,7 @@ class Layer:
         return res
 
 
-class Dense:
+class Dense(Layer):
     """Dense layer y = sigma(Wx + b)
 
     Parameters
