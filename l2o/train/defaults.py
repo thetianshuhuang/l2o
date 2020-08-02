@@ -11,10 +11,10 @@ BASE = {
     ],
     "loss_args": {
         "use_log_objective": True,
-        "scale_objective": False,
+        "scale_objective": True,
         "obj_train_max_multiplier": -1,
         "use_numerator_epsilon": True,
-        "epsilon": 1e-6
+        "epsilon": 1e-10
     },
     "optimizer": {
         "class_name": "Adam",

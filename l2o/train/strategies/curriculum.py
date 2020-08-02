@@ -115,7 +115,8 @@ class CurriculumLearningStrategy(BaseStrategy):
 
         header = "  {} Stage {}: unroll={}, validation={}  ".format(
             "Starting" if self.period == 0 else "Resuming", self.stage,
-            self.schedule(self.stage), self.schedule(self.stage + 1))
+            self.unroll_schedule(self.stage),
+            self.unroll_schedule(self.stage + 1))
         print("\n" + "-" * len(header))
         print(header)
         print("-" * len(header) + "\n")
@@ -131,9 +132,9 @@ class CurriculumLearningStrategy(BaseStrategy):
             print("\n--- Stage {}, Period {} [p_teacher={}] ---".format(
                 self.stage, self.period, self.p_teacher))
             results = self._learning_period(
-                {"unroll_len": lambda: self.schedule(self.stage),
+                {"unroll_len": lambda: self.unroll_schedule(self.stage),
                  "p_teacher": p_teacher},
-                {"unroll_len": lambda: self.schedule(self.stage + 1),
+                {"unroll_len": lambda: self.unroll_schedule(self.stage + 1),
                  "p_teacher": 0})
 
             # Check for improvement
