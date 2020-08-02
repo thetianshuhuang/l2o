@@ -126,7 +126,8 @@ class CurriculumLearningStrategy(BaseStrategy):
         is_improving = True
         while (self.period < self.min_periods) or (is_improving):
             # Learn
-            p_teacher = self.annealing_schedule(self.stage)
+            p_teacher = self.annealing_schedule(
+                self.stage * self.min_periods + self.period)
             print("\n--- Stage {}, Period {} [p_teacher={}] ---".format(
                 self.stage, self.period, self.p_teacher))
             results = self._learning_period(
