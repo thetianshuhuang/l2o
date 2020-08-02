@@ -134,8 +134,10 @@ class CurriculumLearningStrategy(BaseStrategy):
                 self.stage * self.min_periods + self.period)
             unroll_len = self.unroll_schedule(self.stage)
             validation_len = self.unroll_schedule(self.stage + 1)
-            print("\n--- Stage {}, Period {} [p_teacher={}] ---".format(
-                self.stage, self.period, self.p_teacher))
+            print("\n--- Stage {}, Period {} ---".format(
+                self.stage, self.period))
+            print("p_teacher={} unroll_len={} validation_len={}".format(
+                p_teacher, unroll_len, validation_len))
             results = self._learning_period(
                 {"unroll_len": lambda: unroll_len, "p_teacher": p_teacher},
                 {"unroll_len": lambda: validation_len, "p_teacher": 0})
