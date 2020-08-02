@@ -200,7 +200,7 @@ class BaseStrategy:
         # Train for ``epochs_per_period`` meta-epochs
         training_loss = []
         for i in range(self.epochs_per_period):
-            print("Meta Epoch {}/{}".format(i + 1, self.epochs_per_period))
+            print("Meta-Epoch {}/{}".format(i + 1, self.epochs_per_period))
             training_loss.append(
                 np.mean(train_func(validation=False, **train_args)))
         training_loss_mean = np.mean(training_loss)

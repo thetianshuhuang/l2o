@@ -2,6 +2,7 @@ import os
 import numpy as np
 
 from .strategy import BaseStrategy
+from .deserialize import to_integer_distribution, to_float_schedule
 
 
 class SimpleStrategy(BaseStrategy):
@@ -44,31 +45,10 @@ class SimpleStrategy(BaseStrategy):
         self.num_periods = num_periods
         self.validation_unroll = validation_unroll
 
-        # Deserialize unroll
-        if type(unroll_distribution) == float:
-            self.unroll_distribution = (
-                lambda: np.random.geometric(unroll_distribution))
-        elif type(unroll_distribution) == int:
-            self.unroll_distribution = lambda: unroll_distribution
-        elif callable(unroll_distribution):
-            self.unroll_distribution = unroll_distribution
-        else:
-            raise TypeError(
-                "Unrecognized unroll distribution type; must be float or "
-                "callable(() -> int)")
-
-        # Deserialize annealing schedule
-        if type(annealing_schedule) == float:
-            self.annealing_schedule = (
-                lambda i: np.exp(i * -np.abs(annealing_schedule)))
-        elif type(annealing_schedule) in (list, tuple):
-            self.annealing_schedule = annealing_schedule.__getitem__
-        elif callable(annealing_schedule):
-            self.annealing_schedule = annealing_schedule
-        else:
-            raise TypeError(
-                "Unrecognized annealing_schedule type; must be float or list "
-                "or callable(int -> float)")
+        self.unroll_distribution = to_integer_distribution(
+            unroll_distribution, name="unroll")
+        self.annealing_schedule = to_float_schedule(
+            annealing_schedule, name="annealing")
 
     def _path(self, period):
         """Get saved model file path"""

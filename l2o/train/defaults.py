@@ -74,7 +74,7 @@ STRATEGY = {
         "strategy": {
             "epochs_per_period": 10,
             "validation_seed": 12345,
-            "schedule": {"base": 32, "power": 2},
+            "unroll_schedule": {"coefficient": 32, "base": 2},
             "min_periods": 10,
             "max_stages": 0,
         },

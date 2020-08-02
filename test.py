@@ -40,7 +40,7 @@ def get_model(info, conv=True):
         return tf.keras.Sequential([
             tf.keras.layers.Flatten(input_shape=info.features['image'].shape),
             # tf.keras.layers.Dense(128, activation=tf.nn.relu),
-            tf.keras.layers.Dense(20, activation=tf.nn.sigmoid),
+            tf.keras.layers.Dense(20, activation=tf.nn.relu),
             tf.keras.layers.Dense(10, activation="softmax")
         ])
 
