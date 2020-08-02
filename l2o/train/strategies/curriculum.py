@@ -38,6 +38,9 @@ class CurriculumLearningStrategy(BaseStrategy):
         'period': int,
         'stage': int,
         'is_improving': bool,
+        'unroll_len': int,
+        'validation_len': int,
+        'p_teacher': float,
     }
 
     def __init__(
@@ -129,13 +132,13 @@ class CurriculumLearningStrategy(BaseStrategy):
             # Learn
             p_teacher = self.annealing_schedule(
                 self.stage * self.min_periods + self.period)
+            unroll_len = self.unroll_schedule(self.stage)
+            validation_len = self.unroll_schedule(self.stage + 1)
             print("\n--- Stage {}, Period {} [p_teacher={}] ---".format(
                 self.stage, self.period, self.p_teacher))
             results = self._learning_period(
-                {"unroll_len": lambda: self.unroll_schedule(self.stage),
-                 "p_teacher": p_teacher},
-                {"unroll_len": lambda: self.unroll_schedule(self.stage + 1),
-                 "p_teacher": 0})
+                {"unroll_len": lambda: unroll_len, "p_teacher": p_teacher},
+                {"unroll_len": lambda: validation_len, "p_teacher": 0})
 
             # Check for improvement
             is_improving = results.validation_loss < best_loss
@@ -147,7 +150,8 @@ class CurriculumLearningStrategy(BaseStrategy):
             # Add to summary
             self._append(
                 results, stage=self.stage, period=self.period,
-                is_improving=is_improving)
+                is_improving=is_improving, p_teacher=p_teacher,
+                unroll_len=unroll_len, validation_len=validation_len)
             # Finally increment in memory
             self.period += 1
 
