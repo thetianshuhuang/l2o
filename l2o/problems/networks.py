@@ -2,13 +2,12 @@ import math
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
-
 from .problem import Problem
 from .stateless_keras import Dense, Sequential, Conv2D
 
 
 class Classifier(Problem):
-    """Generic classifier problem
+    """Generic classifier problem.
 
     Parameters
     ----------
@@ -79,8 +78,7 @@ def load_images(dataset):
 
 
 def _make_tfds(network, dataset="mnist", **kwargs):
-    """Helper function to create training problem using tensorflow_datasets"""
-
+    """Create training problem using tensorflow_datasets."""
     dataset, info = load_images(dataset)
 
     try:
@@ -173,7 +171,6 @@ def conv_classifier(
     TypeError
         Dataset does not have a fixed input dimension.
     """
-
     def _preprocess(img):
         shape = img.shape.as_list()
         return tf.cast(tf.reshape(img, shape[:-1] + []), tf.float32) / 255.

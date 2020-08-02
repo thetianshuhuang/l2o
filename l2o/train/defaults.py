@@ -1,3 +1,5 @@
+"""Default Settings."""
+
 BASE = {
     "problems": [
         {
@@ -178,5 +180,5 @@ NETWORK = {
 
 
 def get_default(loss="meta", strategy="simple", network="dmoptimizer"):
-    """Get default arguments"""
+    """Get default arguments."""
     return dict(**BASE, **LOSS[loss], **STRATEGY[strategy], **NETWORK[network])

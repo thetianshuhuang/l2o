@@ -1,7 +1,9 @@
+"""Imitation Learning Methods."""
 import tensorflow as tf
 
 
 class ImitationLossMixin:
+    """Imitation Learning Loss Mixins."""
 
     @tf.function
     def imitation_loss(
@@ -90,8 +92,7 @@ class ImitationLossMixin:
             self, weights, data, unroll_state,
             unroll=20, problem=None, is_batched=False, teachers=None,
             strategy=tf.math.reduce_mean, opt=None, seed=None):
-        """Wraps imitation_loss to include gradient calculation inside graph
-        mode.
+        """Wraps imitation_loss to compute meta-gradients inside graph mode.
 
         See ``meta_loss`` for docstring and ``_base_step`` for internal
         mechanism.

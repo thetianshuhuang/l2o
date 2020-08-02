@@ -1,4 +1,4 @@
-"""Optimizer Architectures"""
+"""Optimizer Architectures."""
 
 import itertools
 
@@ -7,7 +7,9 @@ from .utils import wrap_variables, nested_assign
 
 
 class CoordinateWiseOptimizer(TrainableOptimizer):
-    """Coordinatewise Optimizer as described in
+    """Coordinatewise Optimizer.
+
+    Described in
     "Learing to learn by gradient descent by gradient descent"
     (Andrychowicz et. al, 2016)
 
@@ -38,7 +40,9 @@ class CoordinateWiseOptimizer(TrainableOptimizer):
 
 
 class HierarchicalOptimizer(TrainableOptimizer):
-    """Hierarchical Optimizer as described in
+    """Hierarchical Optimizer.
+
+    Described in
     "Learned Optimizers that Scale and Generalize" (Wichrowska et. al, 2017)
 
     Parameters
@@ -85,7 +89,6 @@ class HierarchicalOptimizer(TrainableOptimizer):
 
     def apply_gradients(self, grads_and_vars, *args, **kwargs):
         """Overrides apply_gradients in order to call global update."""
-
         # Make copy since grads_and_vars is a zip iterable which is
         # not reusable once super().apply_gradients() sucks it up
         grads_and_vars, grads_and_vars_cpy = itertools.tee(grads_and_vars)

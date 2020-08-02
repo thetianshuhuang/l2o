@@ -1,3 +1,4 @@
+"""Private helper functions copied from tensorflow source code."""
 # Copyright 2018 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +18,7 @@
 
 def _var_key(var):
     """Key for representing a primary variable, for looking up slots.
+
     In graph mode the name is derived from the var shared name.
     In eager mode the name is derived from the var unique id.
     If distribution strategy exists, get the primary variable first.
@@ -25,8 +27,6 @@ def _var_key(var):
     Returns:
         the unique name of the variable.
     """
-
-    # pylint: disable=protected-access
     # Get the distributed variable if it exists.
     if hasattr(var, "_distributed_container"):
         var = var._distributed_container()

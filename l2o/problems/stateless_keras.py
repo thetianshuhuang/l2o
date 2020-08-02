@@ -12,7 +12,7 @@ import math
 
 
 class Layer:
-    """Base layer class"""
+    """Base layer class."""
 
     def __init__(self, name):
         self.name = name
@@ -84,7 +84,7 @@ class Layer:
 
 
 class Dense(Layer):
-    """Dense layer y = sigma(Wx + b)
+    """Dense layer y = sigma(Wx + b).
 
     Parameters
     ----------
@@ -200,7 +200,7 @@ class Sequential:
             s, idx = layer.build(s, idx)
 
     def get_parameters(self, seed=None):
-        """Get model parameters
+        """Get model parameters.
 
         Keyword Args
         ------------
@@ -243,7 +243,6 @@ class Sequential:
         tf.Tensor
             Layer output
         """
-
         for layer in self.layers:
             x = layer.call(params, x)
 

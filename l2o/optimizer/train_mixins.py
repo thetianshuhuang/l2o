@@ -1,3 +1,4 @@
+"""Optimizer Training."""
 import tensorflow as tf
 import numpy as np
 import collections
@@ -23,10 +24,11 @@ builtin_weights = {
 
 
 class TrainingMixin:
+    """Training Method Mixins for TrainableOptimizer."""
 
     def _regen_teacher_vars(self, meta):
-        """Helper function to force teacher optimizers to generate hidden
-        state variables.
+        """Force teacher optimizers to generate hidden state variables.
+
         As of 2.3.0-rc2, I believe f.keras.optimizers.Optimizer has a
         compatibility issue with get_concrete_function. Using
         get_concrete_function triggers two traces, and sometimes causes issues
@@ -54,7 +56,6 @@ class TrainingMixin:
             This is because non-primitive objects are interpreted as
             ``UnknownArgument`` by tensorflow.
         """
-
         kwargs = dict(
             unroll=meta.unroll_len, problem=meta.problem,
             is_batched=is_batched, seed=meta.seed)
@@ -87,7 +88,6 @@ class TrainingMixin:
 
     def _meta_step(self, meta, concrete_step, data, unroll_state):
         """Helper function to run for a single step."""
-
         cf_meta, cf_imitation = concrete_step
         # Only imitation learning or only meta learning
         if cf_meta is None:

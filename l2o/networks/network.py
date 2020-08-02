@@ -1,12 +1,13 @@
-"""Base API documentation (for tools to pull parent docstrings)"""
+"""Base API documentation (for tools to pull parent docstrings)."""
 
 import tensorflow as tf
 
 
 class BaseCoordinateWiseNetwork(tf.keras.Model):
+    """Base Class for CoordinateWise L2O Networks."""
 
     def call(self, param, inputs, states):
-        """Network call override (handled by tf.keras.Model)
+        """Network call override (handled by tf.keras.Model).
 
         Parameters
         ----------
@@ -41,7 +42,7 @@ class BaseCoordinateWiseNetwork(tf.keras.Model):
         raise NotImplementedError()
 
     def get_initial_state(self, var):
-        """Get initial model state as a dictionary
+        """Get initial model state as a dictionary.
 
         Parameters
         ----------
@@ -79,9 +80,10 @@ class BaseCoordinateWiseNetwork(tf.keras.Model):
 
 
 class BaseHierarchicalNetwork(tf.keras.Model):
+    """Base Class for Hierarchical L2O Models."""
 
     def call(self, param, grads, states, global_state):
-        """Call function for parameter and tensor RNN updates
+        """Call function for parameter and tensor RNN updates.
 
         The (param, grads, states) triple encodes the current optimization
         state for a single tensor. The call method should run parameter updates
@@ -110,11 +112,10 @@ class BaseHierarchicalNetwork(tf.keras.Model):
         -----
         The same rules as BaseCoordinateWiseNetwork should be followed.
         """
-
         raise NotImplementedError()
 
     def get_initial_state(self, var):
-        """Get initial model state as a dictionary
+        """Get initial model state as a dictionary.
 
         Parameters
         ----------
@@ -138,7 +139,7 @@ class BaseHierarchicalNetwork(tf.keras.Model):
         raise NotImplementedError()
 
     def call_global(self, states, global_state):
-        """Call function for global RNN update
+        """Call function for global RNN update.
 
         Parameters
         ----------
@@ -156,7 +157,7 @@ class BaseHierarchicalNetwork(tf.keras.Model):
         raise NotImplementedError()
 
     def get_initial_state_global(self):
-        """Initialize global hidden state
+        """Initialize global hidden state.
 
         Returns
         -------

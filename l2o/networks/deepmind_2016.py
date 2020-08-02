@@ -1,4 +1,4 @@
-"""Deepmind, 2016 optimizer implementation"""
+"""Deepmind, 2016 optimizer implementation."""
 
 import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
@@ -8,7 +8,9 @@ from ..optimizer import CoordinateWiseOptimizer
 
 
 class DMOptimizer(BaseCoordinateWiseNetwork):
-    """DMOptimizer algorithm as described in
+    """DMOptimizer algorithm.
+
+    Described in
     "Learing to learn by gradient descent by gradient descent"
     (Andrychowicz et. al, 2016)
 

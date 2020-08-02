@@ -1,8 +1,9 @@
+"""Deserialization Helper Functions for Training Strategies."""
 import numpy as np
 
 
 def to_integer_distribution(x, name="undefined"):
-    """Helper function to deserialize an unroll distribution."""
+    """Deserializes an unroll distribution."""
     if type(x) == float:
         return lambda: np.random.geometric(x)
     elif type(x) == int:
@@ -16,7 +17,7 @@ def to_integer_distribution(x, name="undefined"):
 
 
 def to_float_schedule(x, name="undefined"):
-    """Helper function to deserialize an annealing schedule."""
+    """Deserializes a floating point schedule."""
     if type(x) == float:
         return lambda i: np.exp(i * -np.abs(x))
     elif type(x) in (list, tuple):
@@ -30,6 +31,7 @@ def to_float_schedule(x, name="undefined"):
 
 
 def to_integer_schedule(x, name="undefined"):
+    """Deserializes an integer schedule."""
     # List -> convert to function
     if type(x) == list or type(x) == tuple:
         return x.__getitem__

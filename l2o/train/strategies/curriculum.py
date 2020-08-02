@@ -1,3 +1,4 @@
+"""Curriculum Learning Training Strategy."""
 import os
 import numpy as np
 
@@ -6,7 +7,7 @@ from .deserialize import to_float_schedule, to_integer_schedule
 
 
 class CurriculumLearningStrategy(BaseStrategy):
-    """Curriculum Learning Manager
+    """Curriculum Learning Training Manager.
 
     Parameters
     ----------
@@ -60,7 +61,7 @@ class CurriculumLearningStrategy(BaseStrategy):
         super().__init__(*args, name=name, **kwargs)
 
     def _path(self, stage, period):
-        """Get saved model file path"""
+        """Get saved model file path."""
         return os.path.join(
             self.directory,
             "stage_{}".format(stage), "period_{}".format(period))
@@ -84,7 +85,7 @@ class CurriculumLearningStrategy(BaseStrategy):
         self.period = 0
 
     def _get_best_loss(self):
-        """Helper function to get the current validation loss baseline."""
+        """Get the current validation loss baseline."""
         # First period and past first s -> load best from previous
         if self.period == 0 and self.stage > 0:
             # Find best validation loss
@@ -115,7 +116,6 @@ class CurriculumLearningStrategy(BaseStrategy):
         If a stage is partially completed, this method will continue from
         where it last left off based on the contents of summary.csv.
         """
-
         header = "  {} Stage {}: unroll={}, validation={}  ".format(
             "Starting" if self.period == 0 else "Resuming", self.stage,
             self.unroll_schedule(self.stage),

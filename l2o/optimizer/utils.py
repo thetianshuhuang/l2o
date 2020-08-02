@@ -1,3 +1,4 @@
+"""Misc optimizer utilities."""
 import tensorflow as tf
 
 
@@ -20,7 +21,6 @@ def wrap_variables(x, trainable=False):
         Same nested structure as x, except with all tensors wrapped in
         variables.
     """
-
     if isinstance(x, tf.Tensor):
         return tf.Variable(x, trainable=trainable)
     if isinstance(x, tf.Variable):
@@ -43,7 +43,6 @@ def nested_assign(x, y):
     y : object
         Nested structure of variables or tensors to assign from
     """
-
     tf.nest.assert_same_structure(x, y)
 
     if isinstance(x, tf.Variable):
@@ -57,7 +56,7 @@ def nested_assign(x, y):
 
 
 def reset_optimizer(opt):
-    """Reset tensorflow optimizer
+    """Reset tensorflow optimizer.
 
     Parameters
     ----------

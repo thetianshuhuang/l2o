@@ -1,12 +1,16 @@
+"""Meta loss computation."""
 import tensorflow as tf
 
 
 class MetaLossMixin:
+    """Meta Loss Computation Mixin."""
 
     def _scale_objective(self, objective, initial_obj, weight):
         """Normalizes the objective based on the initial objective value.
+
         This function is not a @tf.function since it should be wrapped by
         meta_loss, which should handle conversion.
+
         Parameters
         ----------
         objective : tf.Tensor
@@ -15,6 +19,7 @@ class MetaLossMixin:
             Initial objective value to normalize by.
         weight : tf.Tensor
             Weight for this objective value.
+
         Returns
         -------
         tf.Tensor
@@ -34,8 +39,9 @@ class MetaLossMixin:
             return weight * objective / (initial_obj + self.epsilon)
 
     def _add_noise(self, grads, noise_stddev=0.0):
-        """Add normally distributed noise to gradients in order to simulate
-        minibatch noise.
+        """Add normally distributed noise to gradients.
+
+        This simulates minibatch noise in otherwise full-batch problems.
 
         Parameters
         ----------
@@ -53,7 +59,7 @@ class MetaLossMixin:
             return grads
 
     def _compute_init_obj(self, params, problem, data, unroll, is_batched):
-        """Compute initial objective value
+        """Compute initial objective value.
 
         Parameters
         ----------
@@ -89,7 +95,7 @@ class MetaLossMixin:
             return 1.
 
     def _max_obj(self, init_obj, current_obj):
-        """Helper to check for exceeding maximum objective limits"""
+        """Helper to check for exceeding maximum objective limits."""
         if self.obj_train_max_multiplier > 0:
             max_obj = (
                 (self.obj_train_max_multiplier - 1) * tf.abs(init_obj)

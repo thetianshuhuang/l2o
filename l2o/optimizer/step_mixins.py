@@ -1,7 +1,9 @@
+"""Optimization Step Methods."""
 import tensorflow as tf
 
 
 class StepMixin:
+    """Optimization Step Mixin."""
 
     def _base_step(self, opt, callable):
         """Run a single step.

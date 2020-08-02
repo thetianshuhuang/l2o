@@ -1,10 +1,11 @@
-"""Exponential moving average 1st and 2nd moment scaling utilities"""
+"""Exponential moving average 1st and 2nd moment scaling utilities."""
 
 import tensorflow as tf
 
 
 def rms_momentum(grad, m, v, beta_1=0.9, beta_2=0.9):
-    """RMS Moving Geometric Average Momentum Scaling (as used by Adam)
+    """RMS Moving Geometric Average Momentum Scaling (as used by Adam).
+
     Notation is as described by Table 1 in scale.
 
     Parameters
@@ -29,7 +30,6 @@ def rms_momentum(grad, m, v, beta_1=0.9, beta_2=0.9):
         [0] : updated momentum m
         [1] : updated variance v
     """
-
     # At initialization (i.e. m = v = 0), initialize m and v with current grad.
     # if (tf.math.count_nonzero(m) == 0) and (tf.math.count_nonzero(v) == 0):
     #     m = grad
@@ -42,7 +42,7 @@ def rms_momentum(grad, m, v, beta_1=0.9, beta_2=0.9):
 
 
 def rms_scaling(grad, decay, ms, epsilon=1e-16):
-    """RMS Moving Geometric Average Gradient Scaling (as used by RMSprop)
+    """RMS Moving Geometric Average Gradient Scaling (as used by RMSprop).
 
     Parameters
     ----------
@@ -64,7 +64,6 @@ def rms_scaling(grad, decay, ms, epsilon=1e-16):
         [0] Scaled gradient
         [1] New mean square value
     """
-
     # At initialization (i.e. ms = 0), don't use decay and just fully commit
     # grad_vec to ms.
     # if tf.math.count_nonzero(ms) == 0:

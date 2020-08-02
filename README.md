@@ -66,11 +66,14 @@ Overrides can be specified on the command line as ```<param_name>=<param_value>`
 ### Training Loss
 - ```training/unroll_weights [str="sum" | callable(int) -> tf.Tensor]```: Unroll weights used for loss calculation.
 - ```training/teachers```: List of teachers used for imitation learning.
-    - ```training/teachers/<i>/class_name```: ```tf.keras.optimizers``` optimizer class name.
+    - ```training/teachers/<i>/class_name [str]```: ```tf.keras.optimizers``` optimizer class name.
     - ```training/teachers/<i>/config [dict]```: Optimizer configuration keyword arguments to pass to initializer.
 - ```training/p_teacher [float=0.]```: Probability of choosing imitation learning; may be overridden.
+- ```training/imitation_optimizer [dict | None]```: Separate optimizer to use for imitation learning. Used to handle large differences in magnitude between meta and imitation loss.
+    - ```training/imitation_optimizer/class_name [str=Adam]```: ```tf.keras.optimizers``` optimizer class name.
+    - ```training/imitation_optimizer/config [dict]```: Optimizer configuration keyword arguments to pass to initializer.
 - ```training/epochs [int=1]```: Number of epochs to run per problem. Applied only to batch training problems.
-- ```training/depth [int=1]```: Depth, in unrolls, before parameters are reset.
+- ```training/depth [int=0]```: Depth, in unrolls, before parameters are reset.
 - ```training/repeat [int=1]```: Number of times to repeat each problem. Applied only to full batch training problems.
 - ```training/persistent [bool=False]```: Whether to keep optimizer internal state in between iterations
 
@@ -109,7 +112,7 @@ Overrides can be specified on the command line as ```<param_name>=<param_value>`
 ### Misc
 - ```directory [str="weights"]```: Directory to save weights and metadata to.
 - ```loss_args```: Arguments related to loss calculation
-    - ```loss_args/scale_objective [bool=False]```: Scale meta learning objective value by initial value, so that the loss shows relative improvement instead of absolute loss.
+    - ```loss_args/scale_objective [bool=True]```: Scale meta learning objective value by initial value, so that the loss shows relative improvement instead of absolute loss.
     - ```loss_args/use_log_objective [bool=True]```: Take log objective value.
     - ```loss_args/obj_train_max_multiplier [float=-1]```: If the meta-loss exceeds this multiplier, iteration is terminated, and the current loss is returned. Defaults to ```-1``` (no maximum loss)
     - ```loss_args/use_numerator_epsilon [bool=True]```: Epsilon in the numerator as well as denominator (i.e. to prevent gradient of sqrt being NaN at 0)

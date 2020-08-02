@@ -173,7 +173,6 @@ def build_argv(config, strict=False, argv=None):
     strategy.BaseStrategy
         Initialized strategy with a ``train`` method.
     """
-
     if argv is None:
         argv = sys.argv[1:]
 

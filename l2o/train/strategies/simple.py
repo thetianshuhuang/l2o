@@ -1,3 +1,4 @@
+"""Simple Training Strategy."""
 import os
 import numpy as np
 
@@ -6,7 +7,7 @@ from .deserialize import to_integer_distribution, to_float_schedule
 
 
 class SimpleStrategy(BaseStrategy):
-    """Basic Iterative Training Strategy
+    """Basic Iterative Training Strategy.
 
     Parameters
     ----------
@@ -51,7 +52,7 @@ class SimpleStrategy(BaseStrategy):
             annealing_schedule, name="annealing")
 
     def _path(self, period):
-        """Get saved model file path"""
+        """Get saved model file path."""
         return os.path.join(self.directory, "period_{}".format(period))
 
     def _resume(self):
@@ -61,13 +62,11 @@ class SimpleStrategy(BaseStrategy):
         self.period = most_recent + 1
 
     def _start(self):
-        """Resume current optimization."""
+        """Start new optimization."""
         self.period = 0
 
     def train(self):
-        """The actual training method."""
-
-        print(self)
+        """Start or resume training."""
         while self.period < self.num_periods:
 
             p_teacher = self.annealing_schedule(self.period)

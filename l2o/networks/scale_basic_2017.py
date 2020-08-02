@@ -1,4 +1,4 @@
-"""Coordinatewise Optimizer bundled with Code for the Scale, 2017 paper"""
+"""Coordinatewise Optimizer bundled with Code for the Scale, 2017 paper."""
 
 import numpy as np
 import tensorflow as tf
@@ -10,7 +10,9 @@ from ..optimizer import CoordinateWiseOptimizer
 
 
 class ScaleBasicOptimizer(BaseCoordinateWiseNetwork):
-    """Coordinatewise version described by code accompanying
+    """Coordinatewise version.
+
+    Described by code accompanying
     "Learned Optimizers that Scale and Generalize" (Wichrowska et. al, 2017)
 
     Keyword Args

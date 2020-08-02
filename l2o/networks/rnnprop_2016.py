@@ -1,4 +1,4 @@
-"""RNNProp Implementation"""
+"""RNNProp Implementation."""
 
 import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
@@ -9,7 +9,9 @@ from ..optimizer import CoordinateWiseOptimizer
 
 
 class RNNPropOptimizer(BaseCoordinateWiseNetwork):
-    """RNNProp algorithm as described in
+    """RNNProp algorithm.
+
+    Described in
     "Learning Gradient Descent: Better Generalization and Longer Horizons"
     (Lv. et. al, 2017)
 

@@ -1,3 +1,4 @@
+"""Optimization State Computation and Management."""
 import collections
 
 UnrollState = collections.namedtuple(
@@ -5,6 +6,7 @@ UnrollState = collections.namedtuple(
 
 
 class StateMixin:
+    """Optimization State Mixin."""
 
     def _train_apply_gradients(self, unroll_state, grads):
         """Helper function to apply gradients.
@@ -80,7 +82,7 @@ class StateMixin:
             s if m else None for s, m in zip(unroll_state, mask)])
 
     def _reset_params(self, unroll_state, problem, seed=None):
-        """Helper function to reset parameters"""
+        """Helper function to reset parameters."""
         return UnrollState(
             problem.get_parameters(seed=seed),
             unroll_state.states, unroll_state.global_state)

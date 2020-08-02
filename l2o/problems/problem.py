@@ -1,3 +1,5 @@
+"""Base Problem Class and Problem Specification API."""
+
 import tensorflow as tf
 
 
@@ -127,7 +129,7 @@ class ProblemSpec:
         self.kwargs = kwargs
 
     def build(self, *args, **kwargs):
-        """Initialize this problem
+        """Initialize this problem.
 
         Returns
         -------

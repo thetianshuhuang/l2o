@@ -1,3 +1,4 @@
+"""Hierarchical Optimizer described by the Scale, 2017 paper."""
 import tensorflow as tf
 from tensorflow.keras.layers import GRUCell, Dense
 
@@ -7,7 +8,9 @@ from ..optimizer import HierarchicalOptimizer
 
 
 class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
-    """Hierarchical optimizer described in
+    """Hierarchical optimizer.
+
+    Described in
     "Learned Optimizers that Scale and Generalize" (Wichrowska et. al, 2017)
 
     Keyword Args

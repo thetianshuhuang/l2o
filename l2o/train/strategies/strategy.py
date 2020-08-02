@@ -1,3 +1,4 @@
+"""Base Strategy Class and Utilities."""
 import os
 import functools
 import collections
@@ -15,7 +16,7 @@ TrainingPeriod = collections.namedtuple(
 
 
 def _makedir(path, assert_empty=False):
-    """Helper function to create a directory"""
+    """Helper function to create a directory."""
     if os.path.isdir(path):
         if assert_empty:
             raise Exception(
@@ -41,7 +42,7 @@ def _deserialize_problem(p):
 
 
 class BaseStrategy:
-    """Base Class for training strategies
+    """Base Class for training strategies.
 
     Parameters
     ----------

@@ -1,3 +1,4 @@
+"""Trainable optimizer base class extending tf.keras.optimizers.Optimizer."""
 import tensorflow as tf
 
 from .state_mixins import StateMixin
@@ -13,7 +14,7 @@ from .utils import wrap_variables, nested_assign
 class TrainableOptimizer(
         StateMixin, MetaLossMixin, ImitationLossMixin, StepMixin,
         TrainingMixin, tf.keras.optimizers.Optimizer):
-    """Trainable optimizer using keras' optimizer API
+    """Trainable optimizer using keras' optimizer API.
 
     Parameters
     ----------
@@ -94,7 +95,7 @@ class TrainableOptimizer(
         return self._state_dict[_var_key(var)]
 
     def _create_slots(self, var_list):
-        """Create slots function required by tf.keras.optimizers.Optimizer
+        """Create slots function required by tf.keras.optimizers.Optimizer.
 
         Parameters
         ----------
@@ -121,7 +122,7 @@ class TrainableOptimizer(
         return {}
 
     def _initialize_global_state(self):
-        """todo"""
+        """Optimizer does not use the default global state API."""
         return []
 
     def _resource_apply_dense(self, grad, var, apply_state):
@@ -180,11 +181,13 @@ class TrainableOptimizer(
         raise NotImplementedError()
 
     def get_config(self):
+        """Serialize Configuration."""
         return {
             "use_log_objective": self.use_log_objective,
             "obj_train_max_multiplier": self.obj_train_max_multiplier,
             "use_numerator_epsilon": self.use_numerator_epsilon,
-            "epsilon": self.epsilon
+            "epsilon": self.epsilon,
+            "scale_objective": self.scale_objective
         }
 
     def save(self, filepath, **kwargs):

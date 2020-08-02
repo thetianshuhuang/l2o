@@ -1,10 +1,12 @@
+"""Well-behaved problems."""
+
 import tensorflow as tf
 
 from .problem import Problem
 
 
 class Quadratic(Problem):
-    """Simple quadratic bowl $L(x) = ||Wx-y||_2^2$
+    """Simple quadratic bowl $L(x) = ||Wx-y||_2^2$.
 
     Parameters
     ----------
