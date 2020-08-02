@@ -18,7 +18,11 @@ BASE = {
     },
     "optimizer": {
         "class_name": "Adam",
-        "config": {"learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999}
+        "config": {
+            "learning_rate": 0.001,
+            "beta_1": 0.9,
+            "beta_2": 0.999
+        }
     },
     "directory": "weights"
 }
@@ -42,11 +46,24 @@ LOSS = {
         "training": {
             "unroll_weights": "mean",
             "teachers": [
-                {"class_name": "Adam", "config": {
-                    "learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999}},
+                {
+                    "class_name": "Adam",
+                    "config": {
+                        "learning_rate": 0.001,
+                        "beta_1": 0.9,
+                        "beta_2": 0.999
+                    }
+                },
             ],
             "p_teacher": 1,
-            "imitation_optimizer": None,
+            "imitation_optimizer": {
+                "class_name": "Adam",
+                "config": {
+                    "learning_rate": 0.001,
+                    "beta_1": 0.9,
+                    "beta_2": 0.999
+                }
+            },
             "strategy": "mean",
             "epochs": 1,
             "depth": 0,
