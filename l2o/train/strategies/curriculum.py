@@ -94,10 +94,10 @@ class CurriculumLearningStrategy(BaseStrategy):
             # Load & Validate
             self._load_network(self.stage - 1, period_idx)
             print("Validating (for next stage):")
-            return np.mean(self.learner.train(
-                self.problems, self.optimizer, validation=False,
-                unroll_len=lambda: self.schedule(self.stage + 1),
-                **self.train_args))
+            train_func = self._base_train()
+            return np.mean(train_func(
+                unroll_len=lambda: self.unroll_schedule(self.stage + 1),
+                validation=False, p_teacher=0))
 
         # First period and first stage -> best_loss is np.inf & don't load
         elif self.period == 0 and self.stage == 0:

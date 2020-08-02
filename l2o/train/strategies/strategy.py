@@ -169,6 +169,12 @@ class BaseStrategy:
         self.learner.save(path)
         print("Saved weights: {}".format(path))
 
+    def _base_train(self):
+        """Get base training function"""
+        return functools.partial(
+            self.learner.train, self.problems, self.optimizer,
+            **self.train_args)
+
     def _learning_period(self, train_args, validation_args):
         """Trains for ``epochs_per_period`` meta-epochs.
 
@@ -193,9 +199,7 @@ class BaseStrategy:
         print("Training:")
 
         # Bind common arguments; functools.partial can be overridden
-        train_func = functools.partial(
-            self.learner.train,
-            self.problems, self.optimizer, **self.train_args)
+        train_func = self._base_train()
 
         # Train for ``epochs_per_period`` meta-epochs
         training_loss = []
