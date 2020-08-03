@@ -66,9 +66,13 @@ class Classifier(Problem):
 
 
 def load_images(dataset):
-    """Load images and cast to float between 0 and 1."""
+    """Load images and cast to float between 0 and 1.
+
+    Note: shuffle_files MUST be false, since shuffling with seeds occurs later
+    in the pipeline.
+    """
     dataset, info = tfds.load(
-        dataset, split="train", shuffle_files=True,
+        dataset, split="train", shuffle_files=False,
         with_info=True, as_supervised=True)
 
     def _cast(x, y):

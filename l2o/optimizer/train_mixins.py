@@ -131,9 +131,8 @@ class TrainingMixin:
         for i in range(repeat):
 
             data = meta.problem.get_internal(seed=meta.seed)
-
-            self.reset()
             meta.problem.reset(internal=data)
+
             # State (i.e. momentum) needs to be reset
             for t in meta.teachers:
                 reset_optimizer(t)
@@ -192,7 +191,6 @@ class TrainingMixin:
             for j, batch in enumerate(dataset):
                 # State (i.e. momentum) needs to be reset
                 if not persistent:
-                    self.reset()
                     for t in meta.teachers:
                         reset_optimizer(t)
                 # Sync with student
