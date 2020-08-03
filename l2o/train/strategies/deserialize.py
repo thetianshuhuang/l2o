@@ -24,6 +24,8 @@ def to_float_schedule(x, name="undefined"):
         return x.__getitem__
     elif callable(x):
         return x
+    elif type(x) == str:
+        return eval(x)
     else:
         raise TypeError(
             "Unrecognized {}_schedule type; must be float, list "
