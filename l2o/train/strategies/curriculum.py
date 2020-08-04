@@ -70,7 +70,7 @@ class CurriculumLearningStrategy(BaseStrategy):
         """Resume current optimization."""
         # Current most recent stage & period
         self.stage = self.summary["stage"].max()
-        self.period = self.summary["period"].max()
+        self.period = self._filter(stage=self.stage)["period"].max()
         self.period += 1
 
         # Not improving, and past minimum periods

@@ -13,7 +13,7 @@ MetaIteration = collections.namedtuple(
         "problem", "optimizer",
         "unroll_len", "weights",
         "teachers", "imitation_optimizer", "strategy", "p_teacher",
-        "validation", "seed"
+        "validation", "seed", "persistent"
     ])
 
 
@@ -149,7 +149,32 @@ class TrainingMixin:
 
         return np.mean(losses)
 
-    def _train_batch(self, meta, epochs=1, depth=1, persistent=False):
+    def _train_batch_inner(self, meta, batch, unroll_state, concrete_step):
+        """Helper function for inner train_batch loop."""
+        # State (i.e. momentum) needs to be reset
+        if not meta.persistent:
+            for t in meta.teachers:
+                reset_optimizer(t)
+        # Sync with student
+        meta.problem.reset(values=unroll_state.params)
+
+        # Data dimensions are ``[unroll, batch] + [data]``
+        batch_stacked = [
+            tf.stack(tf.split(dim, num_or_size_splits=meta.unroll_len))
+            for dim in batch]
+        # Only create concrete loss on first iteration
+        if concrete_step is None:
+            concrete_step = self._make_cf(
+                meta, batch_stacked, unroll_state, is_batched=True)
+
+        # The actual step
+        loss, unroll_state = self._meta_step(
+            meta, concrete_step, batch_stacked, unroll_state)
+
+        return loss, unroll_state, concrete_step
+
+    def _train_batch(
+            self, meta, epochs=1, repeat=1, depth=1, persistent=False):
         """Minibatch training.
 
         Parameters
@@ -161,6 +186,8 @@ class TrainingMixin:
         ------------
         epochs : int
             Number of epochs to run for.
+        repeat : int
+            Number of times to repeat. Will reset at the end of every repeat.
         persistent : bool
             Keeps a persistent optimizer?
         depth : int
@@ -171,53 +198,47 @@ class TrainingMixin:
         float
             Mean training loss for this meta-iteration
         """
-        unroll_state = self._make_unroll_state(
-            meta.problem, params=True, states=persistent,
-            global_state=persistent, seed=meta.seed)
+        # concrete_step, unroll_state will be assigned on first iteration.
         concrete_step = None
+        unroll_state = None
 
+        # Single progress bar
         size = meta.problem.size(meta.unroll_len)
-        pbar = Progbar(size * epochs, unit_name='step')
+        pbar = Progbar(size * epochs * repeat, unit_name='step')
 
         # See docstring for why this is necessary
         self._regen_teacher_vars(meta)
 
-        losses = np.zeros(epochs, dtype=np.float32)
-        for i in range(epochs):
+        # Generate seeds.
+        # If None, keep None and let each component decide.
+        # If present, generate a new seed for each epoch.
+        if meta.seed is None:
+            seeds = [None for _ in range(epochs * repeat)]
+        else:
+            np.random.seed(meta.seed)
+            seeds = [
+                np.random.randint(0, 0x80000000)
+                for _ in range(epochs * repeat)]
 
-            dataset = meta.problem.get_dataset(meta.unroll_len, seed=meta.seed)
-            epoch_losses = np.zeros(size, dtype=np.float32)
-
+        losses = []
+        for i, seed in enumerate(seeds):
+            # Get new state for each repeat
+            if i % epochs == 0:
+                unroll_state = self._make_unroll_state(
+                    meta.problem, params=True, states=persistent,
+                    global_state=persistent, seed=seed)
+            # New dataset using seed for each epoch.
+            dataset = meta.problem.get_dataset(meta.unroll_len, seed=seed)
             for j, batch in enumerate(dataset):
-                # State (i.e. momentum) needs to be reset
-                if not persistent:
-                    for t in meta.teachers:
-                        reset_optimizer(t)
-                # Sync with student
-                meta.problem.reset(values=unroll_state.params)
-
-                # Data dimensions are ``[unroll, batch] + [data]``
-                batch_stacked = [
-                    tf.stack(tf.split(dim, num_or_size_splits=meta.unroll_len))
-                    for dim in batch]
-
-                # Only create concrete loss on first iteration
-                if concrete_step is None:
-                    concrete_step = self._make_cf(
-                        meta, batch_stacked, unroll_state, is_batched=True)
-                # The actual step
-                loss, unroll_state = self._meta_step(
-                    meta, concrete_step, batch_stacked, unroll_state)
-
                 # Every ``depth`` iterations, reset parameters
                 if depth > 0 and (j + 1) % depth == 0:
                     unroll_state = self._reset_params(
-                        unroll_state, meta.problem, seed=meta.seed)
-
+                        unroll_state, meta.problem, seed=seed)
+                # Run update.
+                loss, unroll_state, concrete_step = self._train_batch_inner(
+                    meta, batch, unroll_state, concrete_step)
                 pbar.add(1, values=[("loss", loss)])
-                epoch_losses[j] = loss.numpy()
-
-            losses[i] = np.mean(epoch_losses)
+                losses.append(loss.numpy())
 
         return np.mean(losses)
 
@@ -315,13 +336,13 @@ class TrainingMixin:
 
             meta = MetaIteration(
                 problem, optimizer, unroll, unroll_weights(unroll), teachers,
-                imitation_optimizer, strategy, p_teacher, validation, seed)
+                imitation_optimizer, strategy, p_teacher, validation, seed,
+                persistent)
 
             if hasattr(problem, "get_dataset"):
                 results.append(
                     self._train_batch(
-                        meta, epochs=epochs, depth=depth,
-                        persistent=persistent))
+                        meta, repeat=repeat, epochs=epochs, depth=depth))
             elif hasattr(problem, "get_internal"):
                 results.append(
                     self._train_full(meta, repeat=repeat))
