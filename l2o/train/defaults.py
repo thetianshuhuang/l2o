@@ -146,7 +146,7 @@ NETWORK = {
             # RNNProp
             "layers": [20, 20],
             "beta_1": 0.9,
-            "beta_2": 0.9,
+            "beta_2": 0.999,
             "alpha": 0.1,
             "epsilon": 1e-10,
             "name": "RNNPropOptimizer",

@@ -40,6 +40,9 @@ def to_integer_schedule(x, name="undefined"):
     # Dict -> convert to exponential
     elif type(x) == dict:
         return lambda i: x["coefficient"] * (x["base"]**i)
+    # int -> constant
+    elif type(x) == int:
+        return lambda i: x
     # Callable
     elif callable(x):
         return x
