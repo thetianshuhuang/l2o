@@ -73,7 +73,7 @@ def deep_warn_equal(d1, d2, d1name, d2name, strict=False):
             print("Warning: " + wstring)
 
 
-def __check_and_save_config(config):
+def __check_and_save_config(config, directory, strict=True):
     """Check configuration against saved config in specified directory."""
     # Check saved config
     saved_config = os.path.join(config["directory"], "config.json")
@@ -126,7 +126,7 @@ def build(
 
     # Check, show & save config
     if saved_config:
-        __check_and_save_config(config)
+        __check_and_save_config(config, directory, strict=strict)
 
     # Initialize network
     if type(config["constructor"]) == str:

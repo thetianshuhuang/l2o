@@ -1,4 +1,7 @@
+"""Optimizer evaluation."""
+
 import json
+import time
 
 import tensorflow as tf
 
@@ -6,8 +9,21 @@ from l2o.problems import load_images
 from . import models
 
 
+class EpochTimeTracker(tf.keras.callbacks.Callback):
+    """Callback to add time tracking to tf.keras.Model.fit."""
+
+    def on_train_begin(self, logs=None):
+        """Called at the beginning of training."""
+        self.times = []
+        self.start_time = time.time()
+
+    def on_epoch_end(self, logs=None):
+        """Called at the end of an epoch."""
+        self.times.append(time.time() - self.start_time)
+
+
 def evaluate(
-        opt, model="simple_conv", dataset="mnist", epochs=100, batch_size=32,
+        opt, model="simple_conv", dataset="mnist", epochs=50, batch_size=32,
         activation=tf.nn.relu):
     """Evaluate L2O.
 
@@ -55,6 +71,11 @@ def evaluate(
         return ds.batch(
             batch_size=batch_size).prefetch(tf.data.experimental.AUTOTUNE)
 
-    return model.fit(
+    time_tracking = EpochTimeTracker()
+    results = model.fit(
         _batch(ds_train.shuffle(buffer_size=batch_size * 16)),
-        validation_data=_batch(ds_val), epochs=epochs).history
+        validation_data=_batch(ds_val),
+        epochs=epochs,
+        callabacks=[time_tracking])
+
+    return dict(**results.history, epoch_time=time_tracking)

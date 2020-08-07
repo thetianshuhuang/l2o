@@ -189,7 +189,7 @@ class BaseStrategy:
     def _run_training_loop(self, problems, **kwargs):
         """Run Training Loop."""
         args_merged = {**self.train_args, **kwargs}
-        return self.learner.train(problems, self.optimizer, args_merged)
+        return self.learner.train(problems, self.optimizer, **args_merged)
 
     def _learning_period(self, train_args, validation_args):
         """Trains for ``epochs_per_period`` meta-epochs.
