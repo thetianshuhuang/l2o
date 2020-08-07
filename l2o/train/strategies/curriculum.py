@@ -95,8 +95,8 @@ class CurriculumLearningStrategy(BaseStrategy):
             # Load & Validate
             self._load_network(self.stage - 1, period_idx)
             print("Validating (for next stage):")
-            train_func = self._base_train()
-            return np.mean(train_func(
+            return np.mean(self._run_training_loop(
+                self.validation_problems,
                 unroll_len=lambda: self.unroll_schedule(self.stage + 1),
                 validation=False, p_teacher=0))
 

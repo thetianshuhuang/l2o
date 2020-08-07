@@ -46,6 +46,9 @@ def to_integer_schedule(x, name="undefined"):
     # Callable
     elif callable(x):
         return x
+    # Callable in str form
+    elif type(x) == str:
+        return eval(x)
     else:
         raise TypeError(
             "Unrecognized {}_schedule dtype; must be int[], dict with keys "

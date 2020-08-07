@@ -1,3 +1,5 @@
+"""NN based training problems."""
+
 import math
 import tensorflow as tf
 import tensorflow_datasets as tfds
@@ -47,9 +49,11 @@ class Classifier(Problem):
         super().__init__(persistent=persistent)
 
     def size(self, unroll):
+        """Get number of batches for this unroll duration."""
         return math.floor(self._size / (unroll * self.batch_size))
 
     def get_dataset(self, unroll, seed=None):
+        """Get problem dataset."""
         dataset = self.dataset
         if self.shuffle_buffer is not None:
             dataset = self.dataset.shuffle(self.shuffle_buffer, seed=seed)
@@ -58,21 +62,36 @@ class Classifier(Problem):
         ).prefetch(tf.data.experimental.AUTOTUNE)
 
     def get_parameters(self, seed=None):
+        """Make variables corresponding to this problem."""
         return self.model.get_parameters(seed=seed)
 
-    def objective(self, params, data):
+    def objective(self, parameters, data):
+        """Objective function."""
         x, y = data
-        return self.loss(y, self.model.call(params, x))
+        return self.loss(y, self.model.call(parameters, x))
 
 
-def load_images(dataset):
+def load_images(dataset, split="train"):
     """Load images and cast to float between 0 and 1.
 
     Note: shuffle_files MUST be false, since shuffling with seeds occurs later
     in the pipeline.
+
+    Parameters
+    ----------
+    dataset : str
+        Dataset name in tfds.
+    split : str
+        "train" or "test".
+
+    Returns
+    -------
+    [tf.data.Dataset, tfds.core.DatasetInfo]
+        [0] Loaded dataset
+        [1] tfds info object.
     """
     dataset, info = tfds.load(
-        dataset, split="train", shuffle_files=False,
+        dataset, split=split, shuffle_files=False,
         with_info=True, as_supervised=True)
 
     def _cast(x, y):
@@ -133,7 +152,7 @@ def mlp_classifier(
     TypeError
         Dataset does not have a fixed input dimension.
     """
-    if type(activation) == str:
+    if isinstance(activation, str):
         activation = tf.keras.activations.get(activation)
 
     def _network(input_shape, labels):

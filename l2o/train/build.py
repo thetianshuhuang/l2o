@@ -1,3 +1,4 @@
+"""Methods related to building optimizers and training strategy."""
 
 import os
 import sys
@@ -10,8 +11,7 @@ from .. import networks
 
 
 def override(config, path, value):
-    """Helper function to programmatically set values in dict"""
-
+    """Helper function to programmatically set values in dict."""
     config_ = config
     try:
         for key in path[:-1]:
@@ -30,8 +30,7 @@ def override(config, path, value):
 
 
 def __deep_warn_equal(path, d1, d2, d1name, d2name):
-    """Print warning if two structures are not equal (deeply)"""
-
+    """Print warning if two structures are not equal (deeply)."""
     if type(d1) == dict:
         iterator = d1
     else:
@@ -62,6 +61,7 @@ def __deep_warn_equal(path, d1, d2, d1name, d2name):
 
 
 def deep_warn_equal(d1, d2, d1name, d2name, strict=False):
+    """Warn if two nested structures are not (deeply) equal."""
     warnings = __deep_warn_equal("config", d1, d2, d1name, d2name)
     if len(warnings) > 0:
         wstring = (
@@ -73,8 +73,26 @@ def deep_warn_equal(d1, d2, d1name, d2name, strict=False):
             print("Warning: " + wstring)
 
 
-def build(config, overrides, strict=False):
-    """Build learner and learning strategy
+def __check_and_save_config(config):
+    """Check configuration against saved config in specified directory."""
+    # Check saved config
+    saved_config = os.path.join(config["directory"], "config.json")
+    if os.path.exists(saved_config):
+        with open(saved_config) as f:
+            config_old = json.load(f)
+        deep_warn_equal(
+            config, config_old, "config", saved_config, strict=strict)
+
+    # Show & save
+    print("Configuration:")
+    pprint.pprint(config)
+    with open(saved_config, 'w') as f:
+        json.dump(config, f, indent=4)
+    print("saved to <{}/config.json>.".format(config["directory"]))
+
+
+def build(config, overrides, saved_config=True, strict=True):
+    """Build learner and learning strategy.
 
     Parameters
     ----------
@@ -85,6 +103,8 @@ def build(config, overrides, strict=False):
 
     Keyword Args
     ------------
+    saved_config : bool
+        Check against saved configuration and save configuration to folder
     strict : bool
         If True, enforces strict equality between saved configuration and
         specified configuration on resumed training.
@@ -94,29 +114,15 @@ def build(config, overrides, strict=False):
     strategy.BaseStrategy
         Initialized strategy with a ``train`` method.
     """
-
-    # Process overrides
     for path, value in overrides:
         override(config, path, value)
 
-    # Make folder
     if not os.path.isdir(config["directory"]):
         os.makedirs(config["directory"])
 
-    # Check saved config
-    saved_config = os.path.join(config["directory"], "config.json")
-    if os.path.exists(saved_config):
-        with open(saved_config) as f:
-            config_old = json.load(f)
-        deep_warn_equal(
-            config, config_old, "config", saved_config, strict=strict)
-
-    # Show & save config
-    print("Configuration:")
-    pprint.pprint(config)
-    with open(saved_config, 'w') as f:
-        json.dump(config, f, indent=4)
-    print("saved to <{}/config.json>.".format(config["directory"]))
+    # Check, show & save config
+    if check_config:
+        __check_and_save_config(config)
 
     # Initialize network
     if type(config["constructor"]) == str:
@@ -144,13 +150,15 @@ def build(config, overrides, strict=False):
     strategy = strategy(
         learner,
         optimizer=config["optimizer"], train_args=config["training"],
-        problems=config["problems"], directory=config["directory"],
+        problems=config["problems"],
+        validation_problems=config["validation_problems"],
+        directory=config["directory"],
         **config["strategy"])
 
     return strategy
 
 
-def build_argv(config, strict=False, argv=None):
+def build_argv(config, strict=True, argv=None):
     """Build from command line arguments.
 
     NOTE: this method uses eval, and MUST not be run in a deployed context.
@@ -189,4 +197,18 @@ def build_argv(config, strict=False, argv=None):
         [arg.split('=') for arg in argv]
     ]
 
-    return build(config, overrides, strict=strict)
+    return build(config, overrides, saved_config=True, strict=strict)
+
+
+def build_from_config(config_file):
+    """Build from saved configuration.
+
+    Parameters
+    ----------
+    config_file : str
+        Configuration file.
+    """
+    with open(config_file) as x:
+        config = json.load(x)
+
+    return build(config, [], saved_config=False, strict=False)

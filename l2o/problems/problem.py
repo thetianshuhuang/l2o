@@ -139,5 +139,6 @@ class ProblemSpec:
         return self.target(*self.args, *args, **self.kwargs, **kwargs)
 
     def print(self, itr):
+        """Print problem information."""
         print("[#{}] {}, args={}, kwargs={}".format(
             itr, self.target.__name__, self.args, self.kwargs))

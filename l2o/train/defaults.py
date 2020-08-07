@@ -11,6 +11,7 @@ BASE = {
             }
         },
     ],
+    "validation_problems": None,
     "loss_args": {
         "use_log_objective": True,
         "scale_objective": True,
