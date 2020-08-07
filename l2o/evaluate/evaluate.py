@@ -1,3 +1,5 @@
+import json
+
 import tensorflow as tf
 
 from l2o.problems import load_images
@@ -49,9 +51,10 @@ def evaluate(
         loss=tf.keras.losses.SparseCategoricalCrossentropy(),
         metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
 
-    results = model.fit(
-        dataset.shuffle(buffer_size=batch_size * 16)
-        .batch(batch_size=batch_size)
-        .prefetch(tf.data.experimental.AUTOTUNE),
-        validation_data=ds_val, epochs=epochs)
-    return results.history
+    def _batch(ds):
+        return ds.batch(
+            batch_size=batch_size).prefetch(tf.data.experimental.AUTOTUNE)
+
+    return model.fit(
+        _batch(ds_train.shuffle(buffer_size=batch_size * 16)),
+        validation_data=_batch(ds_val), epochs=epochs).history

@@ -1,5 +1,6 @@
 """Base Strategy Class and Utilities."""
 import os
+import json
 import collections
 
 import tensorflow as tf
