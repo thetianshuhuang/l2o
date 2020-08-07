@@ -27,7 +27,6 @@ BASE = {
             "beta_2": 0.999
         }
     },
-    "directory": "weights"
 }
 
 

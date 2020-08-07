@@ -1,4 +1,6 @@
-"""Basic models for evaluation"""
+"""Basic models for evaluation."""
+
+import tensorflow as tf
 
 
 def simple_conv(info, activation=tf.nn.relu):
@@ -27,7 +29,7 @@ def deeper_mlp(info, activation=tf.nn.relu):
     """Deeper MLP."""
     return tf.keras.Sequential([
         tf.keras.layers.Flatten(input_shape=info.features['image'].shape),
-        tf.keras.layers.Dense(128, activation=activation)
+        tf.keras.layers.Dense(128, activation=activation),
         tf.keras.layers.Dense(20, activation=activation),
         tf.keras.layers.Dense(10, activation="softmax")
     ])

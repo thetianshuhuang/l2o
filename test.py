@@ -7,10 +7,6 @@ import tensorflow as tf
 import l2o
 
 
-def load(folder):
-    return l2o.train.build_from_config(os.path.join(folder, "config.json"))
-
-
 if __name__ == '__main__':
 
     import sys
@@ -18,5 +14,5 @@ if __name__ == '__main__':
     stage = sys.argv[2]
     period = sys.argv[3]
 
-    strategy = load(folder)
+    strategy = l2o.train.build_from_config(folder)
     strategy.evaluate(int(stage), int(period))

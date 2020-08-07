@@ -91,7 +91,9 @@ def __check_and_save_config(config):
     print("saved to <{}/config.json>.".format(config["directory"]))
 
 
-def build(config, overrides, saved_config=True, strict=True):
+def build(
+        config, overrides, directory="weights",
+        saved_config=True, strict=True):
     """Build learner and learning strategy.
 
     Parameters
@@ -103,6 +105,8 @@ def build(config, overrides, saved_config=True, strict=True):
 
     Keyword Args
     ------------
+    directory : str
+        Directory to run inside.
     saved_config : bool
         Check against saved configuration and save configuration to folder
     strict : bool
@@ -117,11 +121,11 @@ def build(config, overrides, saved_config=True, strict=True):
     for path, value in overrides:
         override(config, path, value)
 
-    if not os.path.isdir(config["directory"]):
-        os.makedirs(config["directory"])
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
 
     # Check, show & save config
-    if check_config:
+    if saved_config:
         __check_and_save_config(config)
 
     # Initialize network
@@ -151,14 +155,14 @@ def build(config, overrides, saved_config=True, strict=True):
         learner,
         optimizer=config["optimizer"], train_args=config["training"],
         problems=config["problems"],
-        validation_problems=config["validation_problems"],
-        directory=config["directory"],
+        validation_problems=config.get("validation_problems"),
+        directory=directory,
         **config["strategy"])
 
     return strategy
 
 
-def build_argv(config, strict=True, argv=None):
+def build_argv(config, directory="weights", strict=True, argv=None):
     """Build from command line arguments.
 
     NOTE: this method uses eval, and MUST not be run in a deployed context.
@@ -197,18 +201,21 @@ def build_argv(config, strict=True, argv=None):
         [arg.split('=') for arg in argv]
     ]
 
-    return build(config, overrides, saved_config=True, strict=strict)
+    return build(
+        config, overrides, directory=directory, saved_config=True,
+        strict=strict)
 
 
-def build_from_config(config_file):
+def build_from_config(directory):
     """Build from saved configuration.
 
     Parameters
     ----------
-    config_file : str
-        Configuration file.
+    directory : str
+        Directory containing saved configuration and data.
     """
-    with open(config_file) as x:
+    with open(os.path.join(directory, "config.json")) as x:
         config = json.load(x)
 
-    return build(config, [], saved_config=False, strict=False)
+    return build(
+        config, [], directory=directory, saved_config=False, strict=False)
