@@ -28,6 +28,11 @@ class CurriculumLearningStrategy(BaseStrategy):
         int[]: list of unroll lengths specified explicitly. Will limit
             max_stages to its length.
         dict: unroll length in the form of N_i = ["base"] * ["power"]^i
+    epoch_schedule : callable(int) -> int or int[] or dict
+        callable: callable that obtains the number of epochs to run for each
+            problem for training stage i.
+        int[]: list of epoch depths specified explicitly.
+        dict: epoch depth in the form of N_i = ["base"] * ["power"]^i
     annealing_schedule : callable(int) -> float or float or float[]
         callable: function returning the probability of choosing imitation
             learning for a given period. The idea is to anneal this to 0.
@@ -46,12 +51,15 @@ class CurriculumLearningStrategy(BaseStrategy):
 
     def __init__(
             self, *args, min_periods=100, max_stages=0,
-            unroll_schedule=lambda i: 50 * (2**i),
+            unroll_schedule=lambda i: 32 * (2**i),
+            epoch_schedule=lambda i: 5 * (2**i),
             annealing_schedule=lambda i: np.exp(i * -0.5),
             name="CurriculumLearningStrategy", **kwargs):
 
         self.unroll_schedule = to_integer_schedule(
             unroll_schedule, name="unroll")
+        self.epoch_schedule = to_integer_schedule(
+            epoch_schedule, name="epoch")
         self.annealing_schedule = to_float_schedule(
             annealing_schedule, name="annealing")
 
@@ -139,8 +147,12 @@ class CurriculumLearningStrategy(BaseStrategy):
             print("p_teacher={} unroll_len={} validation_len={}".format(
                 p_teacher, unroll_len, validation_len))
             results = self._learning_period(
-                {"unroll_len": lambda: unroll_len, "p_teacher": p_teacher},
-                {"unroll_len": lambda: validation_len, "p_teacher": 0})
+                {"unroll_len": lambda: unroll_len,
+                 "epochs": self.epoch_schedule(self.stage),
+                 "p_teacher": p_teacher},
+                {"unroll_len": lambda: validation_len,
+                 "epochs": self.epoch_schedule(self.stage + 1),
+                 "p_teacher": 0})
 
             # Check for improvement
             is_improving = results.validation_loss < best_loss
