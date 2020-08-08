@@ -17,13 +17,13 @@ class EpochTimeTracker(tf.keras.callbacks.Callback):
         self.times = []
         self.start_time = time.time()
 
-    def on_epoch_end(self, logs=None):
+    def on_epoch_end(self, epoch, logs=None):
         """Called at the end of an epoch."""
         self.times.append(time.time() - self.start_time)
 
 
 def evaluate(
-        opt, model="simple_conv", dataset="mnist", epochs=50, batch_size=32,
+        opt, model="simple_conv", dataset="mnist", epochs=25, batch_size=32,
         activation=tf.nn.relu):
     """Evaluate L2O.
 
@@ -76,6 +76,6 @@ def evaluate(
         _batch(ds_train.shuffle(buffer_size=batch_size * 16)),
         validation_data=_batch(ds_val),
         epochs=epochs,
-        callabacks=[time_tracking])
+        callbacks=[time_tracking])
 
-    return dict(**results.history, epoch_time=time_tracking)
+    return dict(**results.history, epoch_time=time_tracking.times)

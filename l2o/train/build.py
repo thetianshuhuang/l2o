@@ -76,7 +76,7 @@ def deep_warn_equal(d1, d2, d1name, d2name, strict=False):
 def __check_and_save_config(config, directory, strict=True):
     """Check configuration against saved config in specified directory."""
     # Check saved config
-    saved_config = os.path.join(config["directory"], "config.json")
+    saved_config = os.path.join(directory, "config.json")
     if os.path.exists(saved_config):
         with open(saved_config) as f:
             config_old = json.load(f)
@@ -88,7 +88,7 @@ def __check_and_save_config(config, directory, strict=True):
     pprint.pprint(config)
     with open(saved_config, 'w') as f:
         json.dump(config, f, indent=4)
-    print("saved to <{}/config.json>.".format(config["directory"]))
+    print("saved to <{}/config.json>.".format(directory))
 
 
 def build(
