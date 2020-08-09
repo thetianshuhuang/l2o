@@ -92,31 +92,46 @@ class CurriculumLearningStrategy(BaseStrategy):
         self.stage = 0
         self.period = 0
 
+    def _validation_loss(self):
+        """Compute Validation Loss."""
+        return np.mean(self._run_training_loop(
+            self.validation_problems,
+            unroll_len=lambda: self.unroll_schedule(self.stage + 1),
+            epochs=self.epoch_schedule(self.stage + 1),
+            validation=False, p_teacher=0))
+
     def _get_best_loss(self):
         """Get the current validation loss baseline."""
-        # First period and past first s -> load best from previous
-        if self.period == 0 and self.stage > 0:
-            # Find best validation loss
+        # First stage
+        if self.stage == 0:
+            # First period -> best_loss is np.inf & don't load
+            if self.period == 0:
+                print("First training run; weights initialized from scratch.")
+                return np.inf
+            # Not the first -> resume from most recent, use previous best loss
+            else:
+                self._load_network(self.stage, self.period - 1)
+                return self._filter(stage=self.stage)["validation_loss"].min()
+        # Not first stage
+        else:
+            # Find best validation loss from previous period
             row_idx = self._filter(
                 stage=self.stage - 1)["validation_loss"].idxmin()
             period_idx = self.summary["period"][row_idx]
             # Load & Validate
             self._load_network(self.stage - 1, period_idx)
-            print("Validating (for next stage):")
-            return np.mean(self._run_training_loop(
-                self.validation_problems,
-                unroll_len=lambda: self.unroll_schedule(self.stage + 1),
-                validation=False, p_teacher=0))
+            print("Validating Best L2O from Stage {}:".format(self.stage - 1))
+            best_previous = self._validation_loss()
 
-        # First period and first stage -> best_loss is np.inf & don't load
-        elif self.period == 0 and self.stage == 0:
-            print("First training run; weights initialized from scratch.")
-            return np.inf
-
-        # Not the first -> resume from most recent
-        else:
-            self._load_network(self.stage, self.period - 1)
-            return self._filter(stage=self.stage)["validation_loss"].min()
+            # First period -> use previous best
+            if self.period == 0:
+                return best_previous
+            # Not the first -> resume from most recent
+            else:
+                self._load_network(self.stage, self.period - 1)
+                return min(
+                    best_previous,
+                    self._filter(stage=self.stage)["validation_loss"].min())
 
     def learning_stage(self):
         """Learn for a single stage.
