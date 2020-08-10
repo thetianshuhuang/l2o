@@ -40,12 +40,19 @@ class ScaleBasicOptimizer(BaseCoordinateWiseNetwork):
 
         self.init_lr = init_lr
 
-        self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
+        self.recurrent = [
+            LSTMCell(hsize, name="recurrent_{}".format(i), **kwargs)
+            for i, hsize in enumerate(layers)]
 
-        self.delta = Dense(1, input_shape=(layers[-1],))
-        self.decay = Dense(1, input_shape=(layers[-1],), activation="sigmoid")
+        self.delta = Dense(
+            1, input_shape=(layers[-1],),
+            name="delta")
+        self.decay = Dense(
+            1, input_shape=(layers[-1],), activation="sigmoid",
+            name="decay")
         self.learning_rate_change = Dense(
-            1, input_shape=(layers[-1],), activation="sigmoid")
+            1, input_shape=(layers[-1],), activation="sigmoid",
+            name="learning_rate_change")
 
     def call(self, param, inputs, states):
         states_new = {}
@@ -60,12 +67,14 @@ class ScaleBasicOptimizer(BaseCoordinateWiseNetwork):
             hidden_name = "rnn_{}".format(i)
             x, states_new[hidden_name] = layer(x, states[hidden_name])
 
+        def compute(layer):
+            return tf.reshape(layer(x), tf.shape(param))
+
         # Update scaling hyperparameters
-        states_new["decay"] = tf.reshape(self.decay(x), tf.shape(param))
-        states_new["learning_rate"] *= tf.reshape(
-            2. * self.learning_rate_change(x), tf.shape(param))
-        update = tf.reshape(
-            states_new["learning_rate"] * self.delta(x), tf.shape(param))
+        states_new["decay"] = compute(self.decay)
+        states_new["learning_rate"] = (
+            states["learning_rate"] * 2. * compute(self.learning_rate_change))
+        update = states_new["learning_rate"] * compute(self.delta)
 
         return update, states
 
@@ -80,7 +89,7 @@ class ScaleBasicOptimizer(BaseCoordinateWiseNetwork):
         }
 
         # Learning rate random initialization
-        if type(self.init_lr) == tuple or type(self.init_lr) == list:
+        if isinstance(self.init_lr, tuple) or isinstance(self.init_lr, list):
             init_lr = tf.exp(tf.random.uniform(
                 tf.shape(var),
                 np.log(self.init_lr[0]),

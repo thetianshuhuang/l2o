@@ -49,23 +49,26 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
         self.epsilon = epsilon
 
         # Parameter, Tensor, & Global RNNs (may have different size)
-        self.param_rnn = GRUCell(param_units, **kwargs)
-        self.tensor_rnn = GRUCell(tensor_units, **kwargs)
-        self.global_rnn = GRUCell(global_units, **kwargs)
+        self.param_rnn = GRUCell(param_units, name="param_rnn", **kwargs)
+        self.tensor_rnn = GRUCell(tensor_units, name="tensor_rnn", **kwargs)
+        self.global_rnn = GRUCell(global_units, name="global_rnn", **kwargs)
 
         # Parameter change
-        self.d_theta = Dense(1, input_shape=(param_units,))
+        self.d_theta = Dense(1, input_shape=(param_units,), name="d_theta")
         # Learning rate change
         # Zero initializer is required; otherwise, the learning rate
         # explodes to 0 and infinity.
         self.delta_nu = Dense(
-            1, kernel_initializer="zeros", input_shape=(param_units,))
+            1, kernel_initializer="zeros", input_shape=(param_units,),
+            name="delta_nu")
         # Momentum decay rate
         self.beta_g = Dense(
-            1, input_shape=(param_units,), activation="sigmoid")
+            1, input_shape=(param_units,), activation="sigmoid",
+            name="beta_g")
         # Variance/scale decay rate
         self.beta_lambda = Dense(
-            1, input_shape=(param_units,), activation="sigmoid")
+            1, input_shape=(param_units,), activation="sigmoid",
+            name="beta_lambda")
 
         # Gamma parameter
         # Stored as a logit - the actual gamma used will be sigmoid(gamma)
@@ -178,7 +181,7 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
 
         # RNN Update
         # Eq 10
-        states_new["param"], _ = self.param_rnn(param_in, states["param"])
+        a, states_new["param"] = self.param_rnn(param_in, states["param"])
         # Eq 11
         tensor_in = tf.concat([
             tf.math.reduce_mean(states_new["param"], 0, keepdims=True),

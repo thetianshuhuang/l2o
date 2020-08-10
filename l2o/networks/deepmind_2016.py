@@ -30,8 +30,10 @@ class DMOptimizer(BaseCoordinateWiseNetwork):
 
         super().__init__(name=name)
 
-        self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
-        self.delta = Dense(1, input_shape=(layers[-1],))
+        self.recurrent = [
+            LSTMCell(hsize, name="recurrent_{}".format(i), **kwargs)
+            for i, hsize in enumerate(layers)]
+        self.delta = Dense(1, input_shape=(layers[-1],), name="delta")
 
     def call(self, param, inputs, states):
         states_new = {}
