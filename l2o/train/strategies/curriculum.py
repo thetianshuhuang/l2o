@@ -92,14 +92,6 @@ class CurriculumLearningStrategy(BaseStrategy):
         self.stage = 0
         self.period = 0
 
-    def _validation_loss(self):
-        """Compute Validation Loss."""
-        return np.mean(self._run_training_loop(
-            self.validation_problems,
-            unroll_len=lambda: self.unroll_schedule(self.stage + 1),
-            epochs=self.epoch_schedule(self.stage + 1),
-            validation=False, p_teacher=0))
-
     def _get_best_loss(self):
         """Get the current validation loss baseline."""
         # First stage
@@ -121,7 +113,11 @@ class CurriculumLearningStrategy(BaseStrategy):
             # Load & Validate
             self._load_network(self.stage - 1, period_idx)
             print("Validating Best L2O from Stage {}:".format(self.stage - 1))
-            best_previous = self._validation_loss()
+            best_previous = np.mean(self._run_training_loop(
+                self.validation_problems,
+                unroll_len=lambda: self.unroll_schedule(self.stage + 1),
+                epochs=self.epoch_schedule(self.stage + 1),
+                validation=False, p_teacher=0))
 
             # First period -> use previous best
             if self.period == 0:

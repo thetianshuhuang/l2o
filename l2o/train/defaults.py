@@ -111,7 +111,7 @@ NETWORK = {
             "param_units": 10,
             "tensor_units": 5,
             "global_units": 5,
-            "init_lr": (1e-6, 1e-2),
+            "init_lr": [1e-6, 1e-2],
             "timescales": 5,
             "epsilon": 1e-10,
             "name": "ScaleHierarchicalOptimizer",

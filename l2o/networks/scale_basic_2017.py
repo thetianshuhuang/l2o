@@ -80,7 +80,7 @@ class ScaleBasicOptimizer(BaseCoordinateWiseNetwork):
         }
 
         # Learning rate random initialization
-        if type(self.init_lr) == tuple:
+        if type(self.init_lr) == tuple or type(self.init_lr) == list:
             init_lr = tf.exp(tf.random.uniform(
                 tf.shape(var),
                 np.log(self.init_lr[0]),
