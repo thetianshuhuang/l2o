@@ -3,8 +3,8 @@
 import tensorflow as tf
 
 
-class BaseCoordinateWiseNetwork(tf.keras.Model):
-    """Base Class for CoordinateWise L2O Networks."""
+class BaseLearnToOptimizeNetwork(tf.keras.Model):
+    """Base L2O Class."""
 
     def call(self, param, inputs, states):
         """Network call override (handled by tf.keras.Model).
@@ -65,6 +65,10 @@ class BaseCoordinateWiseNetwork(tf.keras.Model):
         """
         raise NotImplementedError()
 
+
+class BaseCoordinateWiseNetwork(BaseLearnToOptimizeNetwork):
+    """Base Class for CoordinateWise L2O Networks."""
+
     def call_global(self, states, global_state):
         """No action.
 
@@ -79,64 +83,8 @@ class BaseCoordinateWiseNetwork(tf.keras.Model):
         return 0.
 
 
-class BaseHierarchicalNetwork(tf.keras.Model):
+class BaseHierarchicalNetwork(BaseLearnToOptimizeNetwork):
     """Base Class for Hierarchical L2O Models."""
-
-    def call(self, param, grads, states, global_state):
-        """Call function for parameter and tensor RNN updates.
-
-        The (param, grads, states) triple encodes the current optimization
-        state for a single tensor. The call method should run parameter updates
-        on the entire tensor as a batch, and tensor updates with a batch size
-        of 1.
-        If any per-tensor inputs are required for the global RNN, they should
-        be prepared here.
-
-        Parameters
-        ----------
-        param : tf.Variable
-            Corresponding input variable.
-        inputs : tf.Tensor
-            Inputs; should be gradients.
-        states : object
-            Nested structure containing current states for parameter and tensor
-            RNN.
-
-        Returns
-        -------
-        (tf.Tensor, object)
-            [0] : Output; gradient delta
-            [1] : New state
-
-        Notes
-        -----
-        The same rules as BaseCoordinateWiseNetwork should be followed.
-        """
-        raise NotImplementedError()
-
-    def get_initial_state(self, var):
-        """Get initial model state as a dictionary.
-
-        Parameters
-        ----------
-        var : tf.Variable
-            Variable to create initial states for.
-
-        Returns
-        -------
-        object
-            Nested structure containing state information.
-
-        Notes
-        -----
-        Rules are as of TF 2.3.0-RC1.
-        (1) The state should consist only of ``tf.Tensor``s and cannot contain
-            ``tf.Variable``. This is because variable assignments stop
-            gradients. The ``TrainableOptimizer`` will wrap the state with
-            ``tf.Variable`` during evaluation, but keep them as ``tf.Tensor``
-            during training.
-        """
-        raise NotImplementedError()
 
     def call_global(self, states, global_state):
         """Call function for global RNN update.

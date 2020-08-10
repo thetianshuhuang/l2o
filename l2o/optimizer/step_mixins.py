@@ -19,7 +19,7 @@ class StepMixin:
         variables.
         """
         # trainable_variables not yet built -> capture all variables
-        if len(self.network.trainable_variables) == 0:
+        if len(self.network.trainable_variables) <= 2:
             with tf.GradientTape() as tape:
                 loss, unroll_state = callable()
         # trainable_variables built -> capture only learner variables
