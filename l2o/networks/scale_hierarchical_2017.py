@@ -48,6 +48,7 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
             init_lr=(1e-6, 1e-2), timescales=1, epsilon=1e-10,
             momentum_decay_bias_init=logit(0.9),
             variance_decay_bias_init=logit(0.999),
+            use_gradient_shortcut=True,
             name="ScaleHierarchicalOptimizer", **kwargs):
 
         super().__init__(name=name)
@@ -78,6 +79,11 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
             bias_initializer=tf.constant_initializer(
                 value=variance_decay_bias_init),
             activation="sigmoid", name="beta_lambda")
+        # Momentum shortcut
+        if use_gradient_shortcut:
+            self.gradient_shortcut = Dense(
+                1, input_shape=(timescales,), use_bias=False,
+                name="gradient_shortcut")
 
         # Gamma parameter
         # Stored as a logit - the actual gamma used will be sigmoid(gamma)
@@ -137,11 +143,17 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
         # gamma_t: [timescales, *var shape] -> [var size, timescales]
         return tf.transpose(tf.reshape(_gamma, [self.timescales, -1]))
 
-    def _parameterized_change(self, param, states, states_new):
+    def _parameterized_change(self, param, states, states_new, m):
         """Equation 5, 7, 8.
 
         Helper function for parameter change explicitly parameterized into
         direction and learning rate
+
+        Notes
+        -----
+        (1) Direction is no longer explicitly parameterized, as specified by
+            appendix D.3 in Wichrowska et al.
+        (2) A shortcut connection is include as per appendix B.1.
         """
         # New learning rate
         # Eq 7, 8
@@ -156,13 +168,11 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
             eta - tf.math.reduce_mean(eta), [-1, 1])
 
         # Direction
-        # Eq 5
-        # NOTE: tf.norm(d_theta, ord=2) has a NaN gradient when d_theta is 0,
-        # so the norm is manually computed instead.
-        d_theta = tf.reshape(self.d_theta(states["param"]), tf.shape(param))
-        return (
-            tf.exp(eta) * d_theta * tf.cast(tf.size(param), tf.float32)
-            / tf.sqrt(tf.reduce_sum(tf.square(d_theta)) + self.epsilon))
+        # Eq 5, using the update given in Appendix D.3
+        d_theta = tf.reshape(
+            self.d_theta(states_new["param"]) + self.gradient_shortcut(m),
+            tf.shape(param))
+        return tf.exp(eta) * d_theta
 
     def call(self, param, grads, states, global_state):
         """Optimizer Update.
@@ -174,7 +184,7 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
             instead of EMA(..., g^n-1), etc
         (2) h^n = RNN(x^n, h^n-1) instead of h^n+1 = RNN(x^n, h^n)
         Then, the g^n -> g_bar^n, lambda^n -> m^n -> h^n -> d^n data flow
-        occurs within the same step instead of across 2 steps. This error is
+        occurs within the same step instead of across 2 steps. This fix is
         reflected in the original Scale code.
 
         In order to reduce state size, the state update computation is split:
@@ -216,8 +226,7 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
         states_new["tensor"], _ = self.tensor_rnn(tensor_in, states["tensor"])
 
         # Eq 5, 7, 8
-        delta_theta, eta_rel = self._parameterized_change(
-            param, states, states_new)
+        delta_theta = self._parameterized_change(param, states, states_new, m)
 
         return delta_theta, states_new
 
