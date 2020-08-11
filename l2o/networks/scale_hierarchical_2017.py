@@ -1,6 +1,7 @@
 """Hierarchical Optimizer described by the Scale, 2017 paper."""
 import tensorflow as tf
 from tensorflow.keras.layers import GRUCell, Dense
+from scipy.special import logit
 
 from .network import BaseHierarchicalNetwork
 from .moments import rms_momentum
@@ -28,6 +29,12 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
         Number of timescales to compute momentum for.
     epsilon : float
         Denominator epsilon for normalization operation in case input is 0.
+    momentum_decay_bias_init : float
+        Constant initializer for EMA momentum decay rate logit beta_g. Should
+        correspond to beta_1 in an Adam teacher.
+    variance_decay_bias_init : float
+        Constant initializer for EMA variance decay rate logit beta_lambda.
+        Should correspond to beta_2 in an Adam teacher.
     name : str
         Name of optimizer network
     **kwargs : dict
@@ -39,6 +46,8 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
     def __init__(
             self, param_units=10, tensor_units=5, global_units=5,
             init_lr=(1e-6, 1e-2), timescales=1, epsilon=1e-10,
+            momentum_decay_bias_init=logit(0.9),
+            variance_decay_bias_init=logit(0.999),
             name="ScaleHierarchicalOptimizer", **kwargs):
 
         super().__init__(name=name)
@@ -63,12 +72,16 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
             name="delta_nu")
         # Momentum decay rate
         self.beta_g = Dense(
-            1, input_shape=(param_units,), activation="sigmoid",
-            name="beta_g")
+            1, input_shape=(param_units,), kernel_initializer="zeros",
+            bias_initializer=tf.constant_initializer(
+                value=momentum_decay_bias_init),
+            activation="sigmoid", name="beta_g")
         # Variance/scale decay rate
         self.beta_lambda = Dense(
-            1, input_shape=(param_units,), activation="sigmoid",
-            name="beta_lambda")
+            1, input_shape=(param_units,), kernel_initializer="zeros",
+            bias_initializer=tf.constant_initializer(
+                value=variance_decay_bias_init),
+            activation="sigmoid", name="beta_lambda")
 
         # Gamma parameter
         # Stored as a logit - the actual gamma used will be sigmoid(gamma)
