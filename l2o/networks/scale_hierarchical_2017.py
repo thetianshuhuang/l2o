@@ -65,11 +65,7 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
         # Parameter change
         self.d_theta = Dense(1, input_shape=(param_units,), name="d_theta")
         # Learning rate change
-        # Zero initializer is required; otherwise, the learning rate
-        # explodes to 0 and infinity.
-        self.delta_nu = Dense(
-            1, kernel_initializer="zeros", input_shape=(param_units,),
-            name="delta_nu")
+        self.delta_nu = Dense(1, input_shape=(param_units,), name="delta_nu")
         # Momentum decay rate
         self.beta_g = Dense(
             1, input_shape=(param_units,), kernel_initializer="zeros",
@@ -88,7 +84,7 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
         self.gamma = tf.Variable(tf.zeros(()), trainable=True, name="gamma")
 
     def call_global(self, states, global_state):
-        """Equation 12
+        """Equation 12.
 
         Global RNN. Inputs are prepared (except for final mean) in ``call``.
         """
@@ -99,7 +95,7 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
         return global_state_new
 
     def _new_momentum_variance(self, grads, states, states_new):
-        """Equation 1, 2, 3, 13
+        """Equation 1, 2, 3, 13.
 
         Helper function for scaled momentum update
         """
@@ -128,36 +124,8 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
         # m_t: [timescales, *var shape] -> [var size, timescales]
         return tf.transpose(tf.reshape(tf.stack(_m), [self.timescales, -1]))
 
-    def _parameterized_change(self, param, states, states_new):
-        """Equation 5, 7, 8
-
-        Helper function for parameter change explicitly parameterized into
-        direction and learning rate
-        """
-        # New learning rate
-        # Eq 7, 8
-        d_eta = tf.reshape(self.delta_nu(states["param"]), tf.shape(param))
-        eta = d_eta + states["eta_bar"]
-        sg = tf.nn.sigmoid(self.gamma)
-        states_new["eta_bar"] = (sg * states["eta_bar"] + (1 - sg) * eta)
-
-        # Relative log learning rate
-        # Eq Unnamed, end of sec 3.2.4
-        eta_rel = tf.reshape(eta - tf.math.reduce_mean(eta), [-1, 1])
-
-        # Direction
-        # Eq 5
-        # NOTE: tf.norm(d_theta, ord=2) has a NaN gradient when d_theta is 0,
-        # so the norm is manually computed instead.
-        d_theta = tf.reshape(self.d_theta(states["param"]), tf.shape(param))
-        delta_theta = (
-            tf.exp(eta) * d_theta * tf.cast(tf.size(param), tf.float32)
-            / tf.sqrt(tf.reduce_sum(tf.square(d_theta)) + self.epsilon))
-
-        return delta_theta, eta_rel
-
     def _relative_log_gradient_magnitude(self, states, states_new):
-        """Equation 4
+        """Equation 4.
 
         Helper function for relative log gradient magnitudes
         """
@@ -169,15 +137,60 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
         # gamma_t: [timescales, *var shape] -> [var size, timescales]
         return tf.transpose(tf.reshape(_gamma, [self.timescales, -1]))
 
+    def _parameterized_change(self, param, states, states_new):
+        """Equation 5, 7, 8.
+
+        Helper function for parameter change explicitly parameterized into
+        direction and learning rate
+        """
+        # New learning rate
+        # Eq 7, 8
+        d_eta = tf.reshape(self.delta_nu(states_new["param"]), tf.shape(param))
+        eta = d_eta + states["eta_bar"]
+        sg = tf.nn.sigmoid(self.gamma)
+        states_new["eta_bar"] = (sg * states["eta_bar"] + (1 - sg) * eta)
+
+        # Relative log learning rate
+        # Eq Unnamed, end of sec 3.2.4
+        states_new["eta_rel"] = tf.reshape(
+            eta - tf.math.reduce_mean(eta), [-1, 1])
+
+        # Direction
+        # Eq 5
+        # NOTE: tf.norm(d_theta, ord=2) has a NaN gradient when d_theta is 0,
+        # so the norm is manually computed instead.
+        d_theta = tf.reshape(self.d_theta(states["param"]), tf.shape(param))
+        return (
+            tf.exp(eta) * d_theta * tf.cast(tf.size(param), tf.float32)
+            / tf.sqrt(tf.reduce_sum(tf.square(d_theta)) + self.epsilon))
+
     def call(self, param, grads, states, global_state):
+        """Optimizer Update.
+
+        Notes
+        -----
+        The state indices in Wichrowska et al. are incorrect, and should be:
+        (1) g_bar^n, lambda^n = EMA(g_bar^n-1, g^n), EMA(lambda^n-1, g^n)
+            instead of EMA(..., g^n-1), etc
+        (2) h^n = RNN(x^n, h^n-1) instead of h^n+1 = RNN(x^n, h^n)
+        Then, the g^n -> g_bar^n, lambda^n -> m^n -> h^n -> d^n data flow
+        occurs within the same step instead of across 2 steps. This error is
+        reflected in the original Scale code.
+
+        In order to reduce state size, the state update computation is split:
+        (1) Compute beta_g, beta_lambda, m.
+        (2) Update Parameter & Tensor RNN.
+        (3) Compute eta, d. This step only depends on the parameter RNN,
+            so the Global RNN being updated after this does not matter.
+        (4) Update Global RNN.
+        eta_rel is the only "transient" (i.e. not RNN hidden states, momentum,
+        variance, learning rate) product stored in the optimizer state.
+        """
         states_new = {}
 
-        # Prerequisites
+        # Prerequisites ("Momentum and variance at various timescales")
         # Eq 1, 2, 3, 13
         m = self._new_momentum_variance(grads, states, states_new)
-        # Eq 5, 7, 8
-        delta_theta, eta_rel = self._parameterized_change(
-            param, states, states_new)
         # Eq 4
         gamma = self._relative_log_gradient_magnitude(states, states_new)
 
@@ -185,7 +198,7 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
         # inputs = [var size, features]
         param_in = tf.concat([
             # x^n:
-            m, gamma, eta_rel,
+            m, gamma, states["eta_rel"],
             # h_tensor: [1, hidden size] -> [var size, hidden size]
             tf.tile(states["tensor"], [tf.size(param), 1]),
             # h_global: [1, hidden size] -> [var size, hidden size]
@@ -194,7 +207,7 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
 
         # RNN Update
         # Eq 10
-        a, states_new["param"] = self.param_rnn(param_in, states["param"])
+        states_new["param"], _ = self.param_rnn(param_in, states["param"])
         # Eq 11
         tensor_in = tf.concat([
             tf.math.reduce_mean(states_new["param"], 0, keepdims=True),
@@ -202,10 +215,14 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
         ], 1)
         states_new["tensor"], _ = self.tensor_rnn(tensor_in, states["tensor"])
 
+        # Eq 5, 7, 8
+        delta_theta, eta_rel = self._parameterized_change(
+            param, states, states_new)
+
         return delta_theta, states_new
 
     def get_initial_state(self, var):
-
+        """Get initial model state as a dictionary."""
         batch_size = tf.size(var)
 
         return {
@@ -220,8 +237,10 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
                 shape=tf.shape(var),
                 minval=tf.math.log(self.init_lr[0]),
                 maxval=tf.math.log(self.init_lr[1]))),
+            "eta_rel": tf.zeros([batch_size, 1]),
         }
 
     def get_initial_state_global(self):
+        """Initialize global hidden state."""
         return self.global_rnn.get_initial_state(
             batch_size=1, dtype=tf.float32)

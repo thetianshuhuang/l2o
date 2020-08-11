@@ -115,7 +115,7 @@ NETWORK = {
             "tensor_units": 10,
             "global_units": 10,
             "init_lr": [1e-6, 1e-2],
-            "timescales": 5,
+            "timescales": 4,
             "epsilon": 1e-10,
             "momentum_decay_bias_init": logit(0.9),
             "variance_decay_bias_init": logit(0.999),
