@@ -96,7 +96,7 @@ class TrainingMixin:
             is_imitation = False
         # Randomly select meta or imitation learning
         else:
-            is_imitation = np.random.uniform(0, 1) > 0.5
+            is_imitation = np.random.uniform(0, 1) < meta.p_teacher
 
         concrete_function = cf_imitation if is_imitation else cf_meta
         return concrete_function(meta.weights, data, unroll_state)
