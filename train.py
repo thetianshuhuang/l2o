@@ -9,7 +9,6 @@ python train.py directory \
 
 Optional flags:
 --initialize: initialize only, but don't actually run training
---resume: resume training config in directory. Ignores all other args.
 --presets=preset1,preset2,...: presets to load.
 """
 
@@ -25,12 +24,6 @@ directory = argparse.pop_get("directory", default="weights")
 # Pick up flags first
 initialize_only = argparse.pop_check("--initialize")
 
-# Resume -> ignore all other args
-if argparse.pop_check("--resume", kwargs):
-    strategy = l2o.train.build_from_config(directory)
-    strategy.train()
-    exit(0)
-
 # Execute presets
 presets = argparse.pop_get("--presets", None)
 overrides = []
@@ -41,7 +34,7 @@ for p in presets.split(','):
 overrides += args.to_overrides()
 
 # Build strategy
-default = l2o.train.get_default(
+default = get_default(
     loss="imitation", strategy="curriculum", network="rnnprop")
 trainer = l2o.train.build(
     default, overrides, directory=directory, saved_config=True, strict=True)

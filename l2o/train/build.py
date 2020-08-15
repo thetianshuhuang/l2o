@@ -11,17 +11,14 @@ from .. import networks
 
 
 def override(config, path, value):
-    """Helper function to programmatically set values in dict."""
+    """Helper function to programmatically set values in a nested structure."""
     config_ = config
     try:
         for key in path[:-1]:
             if type(config_) == dict:
                 config_ = config_[key]
             elif type(config_) == list or type(config_) == tuple:
-                if key == '*':
-                    config_.append(value)
-                else:
-                    config_ = config_[int(key)]
+                config_ = config_[int(key)]
             else:
                 raise TypeError(
                     "Config is not a list or dict: {}".format(config_))
@@ -29,7 +26,10 @@ def override(config, path, value):
         raise Exception(
             "Path {} does not exist in object:\n{}".format(
                 "/".join(path), str(config)))
-    config_[path[-1]] = value
+    if path[-1] == '*':
+        config_.append(value)
+    else:
+        config_[path[-1]] = value
 
 
 def __deep_warn_equal(path, d1, d2, d1name, d2name):

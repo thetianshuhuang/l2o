@@ -44,5 +44,5 @@ class ArgParser:
     def to_overrides(self):
         """Convert argument dictionary to list of overrides."""
         return [
-            path.split('/'), self.__eval_or_str(value)
+            (path[2:].split('/'), self.__eval_or_str(value))
             for path, value in self.kwargs.items()]

@@ -1,7 +1,7 @@
 """Base API documentation (for tools to pull parent docstrings)."""
 
 import tensorflow as tf
-from .optimizer import CoordinateWiseOptimizer, HierarchicalOptimizer
+from l2o.optimizer import CoordinateWiseOptimizer, HierarchicalOptimizer
 
 
 class BaseLearnToOptimizeNetwork(tf.keras.Model):
