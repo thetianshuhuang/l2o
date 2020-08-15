@@ -18,7 +18,7 @@ import sys
 
 # Directory always required
 args = ArgParser(sys.argv[1:])
-directory = args.pop_get("directory", default="weights")
+directory = args.pop_get("--directory", default="weights")
 
 # Pick up flags first
 initialize_only = args.pop_check("--initialize")
