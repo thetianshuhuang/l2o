@@ -9,7 +9,7 @@ period = sys.argv[3]
 strategy = l2o.train.build_from_config(folder)
 
 if period == '*':
-    periods = list(strategy._filter(period=int(period)["stage"]))
+    periods = list(strategy._filter(stage=int(stage))["period"])
 else:
     periods = [int(period)]
 

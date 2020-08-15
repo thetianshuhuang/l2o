@@ -24,8 +24,6 @@ class DMOptimizer(BaseCoordinateWiseNetwork):
         Passed onto tf.keras.layers.LSTMCell
     """
 
-    architecture = CoordinateWiseOptimizer
-
     def __init__(self, layers=(20, 20), name="DMOptimizer", **kwargs):
 
         super().__init__(name=name)

@@ -165,50 +165,6 @@ def build(
     return strategy
 
 
-def build_argv(config, directory="weights", strict=True, argv=None):
-    """Build from command line arguments.
-
-    NOTE: this method uses eval, and MUST not be run in a deployed context.
-
-    Parameters
-    ----------
-    config : dict
-        Default arguments
-
-    Keyword Args
-    ------------
-    strict : bool
-        If True, enforces strict equality between saved configuration and
-        specified configuration on resumed training.
-    argv : str[]
-        List of argument values. If None, fetches from sys.argv.
-
-    Returns
-    -------
-    strategy.BaseStrategy
-        Initialized strategy with a ``train`` method.
-    """
-    if argv is None:
-        argv = sys.argv[1:]
-
-    def eval_or_str(x):
-        try:
-            return eval(x)
-        except Exception:
-            return x
-
-    # Path -> split by '/'
-    # Value -> evaluate to allow float, int, bool, lambda function.
-    overrides = [
-        (path.split('/'), eval_or_str(value)) for path, value in
-        [arg.split('=') for arg in argv if arg.startswith("--")]
-    ]
-
-    return build(
-        config, overrides, directory=directory, saved_config=True,
-        strict=strict)
-
-
 def build_from_config(directory):
     """Build from saved configuration.
 

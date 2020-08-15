@@ -33,8 +33,6 @@ class RNNPropOptimizer(BaseCoordinateWiseNetwork):
         Passed onto tf.keras.layers.LSTMCell
     """
 
-    architecture = CoordinateWiseOptimizer
-
     def __init__(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.9, alpha=0.1,
             epsilon=1e-10, name="RNNPropOptimizer", **kwargs):

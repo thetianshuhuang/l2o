@@ -1,11 +1,10 @@
 """L2O Network Training."""
-from .build import build, build_argv, build_from_config
+from .build import build, build_from_config
 from .strategies import (
     BaseStrategy, SimpleStrategy, CurriculumLearningStrategy)
 
 __all__ = [
     "build",
-    "build_argv",
     "build_from_config",
     "CurriculumLearningStrategy",
     "SimpleStrategy",

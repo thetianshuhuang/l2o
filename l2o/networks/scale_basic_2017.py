@@ -30,8 +30,6 @@ class ScaleBasicOptimizer(BaseCoordinateWiseNetwork):
         Passed onto tf.keras.layers.LSTMCell
     """
 
-    architecture = CoordinateWiseOptimizer
-
     def __init__(
             self, layers=(20, 20), init_lr=(1., 1.),
             name="ScaleBasicOptimizer", **kwargs):

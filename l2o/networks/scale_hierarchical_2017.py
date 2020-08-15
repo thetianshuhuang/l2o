@@ -44,8 +44,6 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
         Passed onto tf.keras.layers.GRUCell
     """
 
-    architecture = HierarchicalOptimizer
-
     def __init__(
             self, param_units=10, tensor_units=5, global_units=5,
             init_lr=(1e-6, 1e-2), timescales=1, epsilon=1e-10,

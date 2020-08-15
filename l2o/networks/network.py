@@ -69,6 +69,8 @@ class BaseLearnToOptimizeNetwork(tf.keras.Model):
 class BaseCoordinateWiseNetwork(BaseLearnToOptimizeNetwork):
     """Base Class for CoordinateWise L2O Networks."""
 
+    architecture = CoordinateWiseOptimizer
+
     def call_global(self, states, global_state):
         """No action.
 
@@ -85,6 +87,8 @@ class BaseCoordinateWiseNetwork(BaseLearnToOptimizeNetwork):
 
 class BaseHierarchicalNetwork(BaseLearnToOptimizeNetwork):
     """Base Class for Hierarchical L2O Models."""
+
+    architecture = HierarchicalOptimizer
 
     def call_global(self, states, global_state):
         """Call function for global RNN update.
