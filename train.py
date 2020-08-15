@@ -16,21 +16,18 @@ import l2o
 from config import get_default, ArgParser, get_preset
 import sys
 
-
 # Directory always required
 args = ArgParser(sys.argv[1:])
-directory = argparse.pop_get("directory", default="weights")
+directory = args.pop_get("directory", default="weights")
 
 # Pick up flags first
-initialize_only = argparse.pop_check("--initialize")
+initialize_only = args.pop_check("--initialize")
 
-# Execute presets
-presets = argparse.pop_get("--presets", None)
+# Build overrides
+presets = args.pop_get("--presets", None)
 overrides = []
 for p in presets.split(','):
     overrides += get_preset(p)
-
-# Build overrides
 overrides += args.to_overrides()
 
 # Build strategy

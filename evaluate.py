@@ -1,6 +1,7 @@
+"""Evalute L2O."""
+
 import sys
 import l2o
-
 
 folder = sys.argv[1]
 stage = sys.argv[2]

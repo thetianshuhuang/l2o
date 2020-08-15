@@ -1,6 +1,11 @@
 # Learn To Optimize
 Framework for L2O extending ```tf.keras.optimizers.Optimizer```.
 
+## Scripts
+- ```resume.py```: Resume training for already-configured directory (has ```config.json``` file containing all necessary training and network parameters)
+- ```train.py```: Train L2O and/or create configuration file for ```resume.py```
+- ```evaluate.py```: Evaluate L2O.
+- ```baseline.py```: Evaluate Adam as a baseline.
 
 ## Configuration and Hyperparameters
 
