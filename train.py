@@ -24,7 +24,7 @@ directory = args.pop_get("directory", default="weights")
 initialize_only = args.pop_check("--initialize")
 
 # Build overrides
-presets = args.pop_get("--presets", None)
+presets = args.pop_get("--presets", "")
 overrides = []
 for p in presets.split(','):
     overrides += get_preset(p)
