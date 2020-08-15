@@ -6,7 +6,6 @@ from tensorflow.keras.layers import LSTMCell, Dense
 
 from .moments import rms_scaling
 from .network import BaseCoordinateWiseNetwork
-from ..optimizer import CoordinateWiseOptimizer
 
 
 class ScaleBasicOptimizer(BaseCoordinateWiseNetwork):

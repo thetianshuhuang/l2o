@@ -4,7 +4,6 @@ import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
 
 from .network import BaseCoordinateWiseNetwork
-from ..optimizer import CoordinateWiseOptimizer
 
 
 class DMOptimizer(BaseCoordinateWiseNetwork):

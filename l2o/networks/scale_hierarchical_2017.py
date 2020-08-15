@@ -5,7 +5,6 @@ from scipy.special import logit
 
 from .network import BaseHierarchicalNetwork
 from .moments import rms_momentum
-from ..optimizer import HierarchicalOptimizer
 
 
 class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):

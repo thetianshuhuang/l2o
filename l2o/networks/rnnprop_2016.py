@@ -5,7 +5,6 @@ from tensorflow.keras.layers import LSTMCell, Dense
 
 from .network import BaseCoordinateWiseNetwork
 from .moments import rms_momentum
-from ..optimizer import CoordinateWiseOptimizer
 
 
 class RNNPropOptimizer(BaseCoordinateWiseNetwork):
