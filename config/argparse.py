@@ -4,6 +4,7 @@ import sys
 
 
 class ArgParser:
+    """Simple custom command line parser."""
 
     def __init__(self, argv):
 
@@ -13,9 +14,9 @@ class ArgParser:
         for arg in argv:
             if arg.startswith("--"):
                 key, value = arg.split('=') if '=' in arg else (arg, None)
-                kwargs[key] = value
+                self.kwargs[key] = value
             else:
-                args.append(arg)
+                self.args.append(arg)
 
     def __eval_or_str(self, x):
         """Evaluate or cast to string."""
