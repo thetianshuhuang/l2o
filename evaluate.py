@@ -7,4 +7,11 @@ stage = sys.argv[2]
 period = sys.argv[3]
 
 strategy = l2o.train.build_from_config(folder)
-strategy.evaluate(int(stage), int(period))
+
+if period == '*':
+    periods = list(strategy._filter(period=int(period)["stage"]))
+else:
+    periods = [int(period)]
+
+for period in periods:
+    strategy.evaluate(int(stage), period)

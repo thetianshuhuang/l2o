@@ -35,6 +35,9 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
     variance_decay_bias_init : float
         Constant initializer for EMA variance decay rate logit beta_lambda.
         Should correspond to beta_2 in an Adam teacher.
+    use_gradient_shortcut : bool
+        Use shortcut connection adding linear transformation of momentum at
+        various timescales to direction output?
     name : str
         Name of optimizer network
     **kwargs : dict

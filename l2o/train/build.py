@@ -18,7 +18,10 @@ def override(config, path, value):
             if type(config_) == dict:
                 config_ = config_[key]
             elif type(config_) == list or type(config_) == tuple:
-                config_ = config_[int(key)]
+                if key == '*':
+                    config_.append(value)
+                else:
+                    config_ = config_[int(key)]
             else:
                 raise TypeError(
                     "Config is not a list or dict: {}".format(config_))
@@ -198,7 +201,7 @@ def build_argv(config, directory="weights", strict=True, argv=None):
     # Value -> evaluate to allow float, int, bool, lambda function.
     overrides = [
         (path.split('/'), eval_or_str(value)) for path, value in
-        [arg.split('=') for arg in argv]
+        [arg.split('=') for arg in argv if arg.startswith("--")]
     ]
 
     return build(

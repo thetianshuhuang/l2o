@@ -10,7 +10,7 @@ BASE = {
             "args": [],
             "kwargs": {
                 "layers": [20], "dataset": "mnist", "activation": "sigmoid",
-                "shuffle_buffer": 16384, "batch_size": 8
+                "shuffle_buffer": 16384, "batch_size": 64
             }
         },
     ],
@@ -61,14 +61,7 @@ LOSS = {
                 },
             ],
             "p_teacher": 1,
-            "imitation_optimizer": {
-                "class_name": "Adam",
-                "config": {
-                    "learning_rate": 0.001,
-                    "beta_1": 0.9,
-                    "beta_2": 0.999
-                }
-            },
+            "imitation_optimizer": None,
             "strategy": "mean",
             "epochs": 1,
             "depth": 0,
@@ -87,20 +80,20 @@ STRATEGY = {
             "validaton_seed": 12345,
             "num_periods": 100,
             "unroll_distribution": 0.05,
-            "annealing_schedule": 0.5,
+            "annealing_schedule": 0.1,
             "validation_unroll": 50
         }
     },
     "curriculum": {
         "strategy_constructor": "CurriculumLearning",
         "strategy": {
-            "epochs_per_period": 10,
+            "epochs_per_period": 5,
             "validation_seed": 12345,
             "unroll_schedule": {"coefficient": 32, "base": 2},
-            "epoch_schedule": 5,
-            "annealing_schedule": 0.2,
-            "min_periods": 10,
-            "max_stages": 0,
+            "epoch_schedule": {"coefficient": 5, "base": 2},
+            "annealing_schedule": 0.1,
+            "min_periods": 20,
+            "max_stages": 3,
         },
     }
 }
@@ -119,6 +112,7 @@ NETWORK = {
             "epsilon": 1e-10,
             "momentum_decay_bias_init": logit(0.9),
             "variance_decay_bias_init": logit(0.999),
+            "use_gradient_shortcut": True,
             "name": "ScaleHierarchicalOptimizer",
             # GRUCell args
             "activation": "tanh",
