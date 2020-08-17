@@ -89,12 +89,12 @@ STRATEGY = {
     "curriculum": {
         "strategy_constructor": "CurriculumLearning",
         "strategy": {
-            "epochs_per_period": 5,
+            "epochs_per_period": 10,
             "validation_seed": 12345,
             "unroll_schedule": {"coefficient": 32, "base": 2},
             "epoch_schedule": {"coefficient": 5, "base": 2},
             "annealing_schedule": 0.1,
-            "min_periods": 20,
+            "min_periods": 10,
             "max_stages": 3,
         },
     }

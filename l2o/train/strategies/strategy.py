@@ -205,7 +205,8 @@ class BaseStrategy:
         """
         args_merged = {**self.train_args, **kwargs}
         results = self.learner.train(problems, self.optimizer, **args_merged)
-        return np.mean([x[0] for x in results]), np.mean(x[1] for x in results)
+        imitation_loss, meta_loss = list(zip(*results))
+        return np.mean(imitation_loss), np.mean(meta_loss)
 
     def _learning_period(self, train_args, validation_args):
         """Trains for ``epochs_per_period`` meta-epochs.
@@ -234,9 +235,8 @@ class BaseStrategy:
         training_loss = []
         for i in range(self.epochs_per_period):
             print("Meta-Epoch {}/{}".format(i + 1, self.epochs_per_period))
-            training_loss.append(
-                np.mean(self._run_training_loop(
-                    self.problems, validation=False, **train_args)))
+            training_loss.append(self._run_training_loop(
+                self.problems, validation=False, **train_args))
         imitation_loss, meta_loss = list(zip(*training_loss))
 
         # Compute validation loss
