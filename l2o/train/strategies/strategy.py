@@ -117,8 +117,8 @@ class BaseStrategy:
             self._resume()
         except FileNotFoundError:
             columns = dict(
-                training_loss_mean=float, validation_loss=float,
-                **self.COLUMNS, **{
+                meta_loss_mean=float, imitation_loss_mean=float,
+                validation_loss=float, **self.COLUMNS, **{
                     name.format(i): float
                     for name in ["meta_loss_{}", "imitation_loss_{}"]
                     for i in range(self.epochs_per_period)
@@ -155,7 +155,8 @@ class BaseStrategy:
             for i, val in enumerate(losses)
         }
         new_row = dict(
-            mean_loss_mean=results.meta_loss_mean,
+            meta_loss_mean=results.meta_loss_mean,
+            imitation_loss_mean=results.imitation_loss_mean,
             validation_loss=results.validation_loss,
             **period_losses, **{k: v for k, v in kwargs.items()})
 
@@ -222,10 +223,14 @@ class BaseStrategy:
         -------
         TrainingPeriod
             Named tuple, with keywords:
-            training_loss_mean: float
-                Mean training loss
-            training_loss : float[]
-                Training loss for each meta-epoch
+            meta_loss_mean : float
+                Mean training loss for meta loss
+            imitation_loss_mean : float
+                Mean training loss for imitation loss
+            meta_loss : float[]
+                Training loss for meta loss
+            imitation_loss : float[]
+                Training loss for imitation loss
             validation_loss : float
                 Validation loss
         """
