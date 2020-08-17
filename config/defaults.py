@@ -44,7 +44,8 @@ LOSS = {
             "epochs": 1,
             "depth": 0,
             "repeat": 1,
-            "persistent": False
+            "persistent": False,
+            "imitation_threshold": 0.01,
         },
     },
     "imitation": {
@@ -66,7 +67,8 @@ LOSS = {
             "epochs": 1,
             "depth": 0,
             "repeat": 1,
-            "persistent": False
+            "persistent": False,
+            "imitation_threshold": 0.01,
         }
     }
 }

@@ -113,11 +113,11 @@ class CurriculumLearningStrategy(BaseStrategy):
             # Load & Validate
             self._load_network(self.stage - 1, period_idx)
             print("Validating Best L2O from Stage {}:".format(self.stage - 1))
-            best_previous = np.mean(self._run_training_loop(
+            _, best_previous = self._run_training_loop(
                 self.validation_problems,
                 unroll_len=lambda: self.unroll_schedule(self.stage + 1),
                 epochs=self.epoch_schedule(self.stage + 1),
-                validation=False, p_teacher=0))
+                validation=False, p_teacher=0)
 
             # First period -> use previous best
             if self.period == 0:
@@ -158,12 +158,10 @@ class CurriculumLearningStrategy(BaseStrategy):
             print("p_teacher={} unroll_len={} validation_len={}".format(
                 p_teacher, unroll_len, validation_len))
             results = self._learning_period(
-                {"unroll_len": lambda: unroll_len,
-                 "epochs": self.epoch_schedule(self.stage),
-                 "p_teacher": p_teacher},
-                {"unroll_len": lambda: validation_len,
-                 "epochs": self.epoch_schedule(self.stage + 1),
-                 "p_teacher": 0})
+                {"unroll_len": lambda: unroll_len, "p_teacher": p_teacher,
+                 "epochs": self.epoch_schedule(self.stage)},
+                {"unroll_len": lambda: validation_len, "p_teacher": 0,
+                 "epochs": self.epoch_schedule(self.stage + 1)})
 
             # Check for improvement
             is_improving = results.validation_loss < best_loss

@@ -13,7 +13,7 @@ MetaIteration = collections.namedtuple(
         "problem", "optimizer",
         "unroll_len", "weights",
         "teachers", "imitation_optimizer", "strategy", "p_teacher",
-        "validation", "seed", "persistent"
+        "validation", "seed", "persistent", "imitation_threshold"
     ])
 
 
@@ -21,6 +21,27 @@ builtin_weights = {
     "sum": lambda n: tf.ones([n]),
     "mean": lambda n: tf.ones([n]) / tf.cast(n, tf.float32)
 }
+
+
+class Loss:
+    """Helper object to hold training loss."""
+
+    def __init__(self, *args):
+        self.losses = {label: [] for label in args}
+
+    def add(self, label, value):
+        """Add loss."""
+        self.losses[label].append(value)
+
+    def get(self, label, mean=True):
+        """Get loss."""
+        if mean:
+            if len(self.losses[label]) == 0:
+                return 0
+            else:
+                return np.mean(self.losses[label])
+        else:
+            return self.losses[label]
 
 
 class TrainingMixin:
@@ -73,8 +94,9 @@ class TrainingMixin:
                     *args, opt=meta.optimizer, **kwargs, **kwargs_meta)
         else:
             cf_meta = None
-        # Teachers are not empty and P(imitation learning) > 0
-        if len(meta.teachers) > 0 and meta.p_teacher > 0:
+        # Teachers are not empty and P(imitation learning) > threshold
+        if(len(meta.teachers) > 0
+                and meta.p_teacher > meta.imitation_threshold):
             if meta.validation:
                 cf_imitation = self.imitation_loss.get_concrete_function(
                     *args, **kwargs, **kwargs_imitation)
@@ -99,7 +121,9 @@ class TrainingMixin:
             is_imitation = np.random.uniform(0, 1) < meta.p_teacher
 
         concrete_function = cf_imitation if is_imitation else cf_meta
-        return concrete_function(meta.weights, data, unroll_state)
+        loss, unroll_state = concrete_function(
+            meta.weights, data, unroll_state)
+        return loss, unroll_state, is_imitation
 
     def _train_full(self, meta, repeat=1):
         """Full batch training.
@@ -126,8 +150,8 @@ class TrainingMixin:
         concrete_step = None
 
         pbar = Progbar(repeat, unit_name='step')
+        losses = Loss("meta", "imitation")
 
-        losses = np.zeros(repeat, dtype=np.float32)
         for i in range(repeat):
 
             data = meta.problem.get_internal(seed=meta.seed)
@@ -141,37 +165,13 @@ class TrainingMixin:
             if concrete_step is None:
                 concrete_step = self._make_cf(meta, data, unroll_state)
 
-            loss, unroll_state = self._meta_step(
+            loss, unroll_state, is_imitation = self._meta_step(
                 meta, concrete_step, data, unroll_state)
 
             pbar.add(1, values=[("loss", loss)])
-            losses[i] = loss.numpy()
+            losses.add("imitation" if is_imitation else "meta", loss.numpy())
 
-        return np.mean(losses)
-
-    def _train_batch_inner(self, meta, batch, unroll_state, concrete_step):
-        """Helper function for inner train_batch loop."""
-        # State (i.e. momentum) needs to be reset
-        if not meta.persistent:
-            for t in meta.teachers:
-                reset_optimizer(t)
-        # Sync with student
-        meta.problem.reset(values=unroll_state.params)
-
-        # Data dimensions are ``[unroll, batch] + [data]``
-        batch_stacked = [
-            tf.stack(tf.split(dim, num_or_size_splits=meta.unroll_len))
-            for dim in batch]
-        # Only create concrete loss on first iteration
-        if concrete_step is None:
-            concrete_step = self._make_cf(
-                meta, batch_stacked, unroll_state, is_batched=True)
-
-        # The actual step
-        loss, unroll_state = self._meta_step(
-            meta, concrete_step, batch_stacked, unroll_state)
-
-        return loss, unroll_state, concrete_step
+        return losses.get("imitation"), losses.get("meta")
 
     def _train_batch(
             self, meta, epochs=1, repeat=1, depth=1, persistent=False):
@@ -205,6 +205,7 @@ class TrainingMixin:
         # Single progress bar
         size = meta.problem.size(meta.unroll_len)
         pbar = Progbar(size * epochs * repeat, unit_name='step')
+        losses = Loss("meta", "imitation")
 
         # See docstring for why this is necessary
         self._regen_teacher_vars(meta)
@@ -220,7 +221,6 @@ class TrainingMixin:
                 np.random.randint(0, 0x80000000)
                 for _ in range(epochs * repeat)]
 
-        losses = []
         for i, seed in enumerate(seeds):
             # Get new state for each repeat
             if i % epochs == 0:
@@ -234,13 +234,32 @@ class TrainingMixin:
                 if depth > 0 and (j + 1) % depth == 0:
                     unroll_state = self._reset_params(
                         unroll_state, meta.problem, seed=seed)
-                # Run update.
-                loss, unroll_state, concrete_step = self._train_batch_inner(
-                    meta, batch, unroll_state, concrete_step)
-                pbar.add(1, values=[("loss", loss)])
-                losses.append(loss.numpy())
 
-        return np.mean(losses)
+                # State (i.e. momentum) needs to be reset
+                if not meta.persistent:
+                    for t in meta.teachers:
+                        reset_optimizer(t)
+                # Sync with student
+                meta.problem.reset(values=unroll_state.params)
+
+                # Data dimensions are ``[unroll, batch] + [data]``
+                batch_stacked = [
+                    tf.stack(tf.split(dim, num_or_size_splits=meta.unroll_len))
+                    for dim in batch]
+                # Only create concrete loss on first iteration
+                if concrete_step is None:
+                    concrete_step = self._make_cf(
+                        meta, batch_stacked, unroll_state, is_batched=True)
+
+                # The actual step
+                loss, unroll_state, is_imitation = self._meta_step(
+                    meta, concrete_step, batch_stacked, unroll_state)
+
+                pbar.add(1, values=[("loss", loss)])
+                losses.add(
+                    "imitation" if is_imitation else "meta", loss.numpy())
+
+        return losses.get("imitation"), losses.get("meta")
 
     def train(
             self, problems, optimizer,
@@ -248,7 +267,7 @@ class TrainingMixin:
             teachers=[], imitation_optimizer=None,
             strategy="mean", p_teacher=0,
             epochs=1, depth=0, repeat=1, persistent=False,
-            validation=False, seed=None):
+            validation=False, seed=None, imitation_threshold=0.01):
         """Run meta-training.
 
         Parameters
@@ -300,12 +319,16 @@ class TrainingMixin:
             Random seed to use for model initializations. If None, no specific
             seed is used. Should be set to None to reduce overfitting during
             training, but fixed during validation.
+        imitation_threshold : float
+            Cutoff threshold for imitation learning probability. If p_teacher
+            is less than imitation_threshold, it is treated as zero, which
+            prevents the concrete function graph from being built.
 
         Returns
         -------
-        float[]
-            Logged loss and training modes for all problems; arranged in the
-            same order as ``problems``.
+        float[][2]
+            Logged imitation loss and meta loss for all problems;
+            arranged in the same order as ``problems``.
         """
         # No imitation optimizer -> use same optimizer for both
         if imitation_optimizer is None:
@@ -337,7 +360,7 @@ class TrainingMixin:
             meta = MetaIteration(
                 problem, optimizer, unroll, unroll_weights(unroll), teachers,
                 imitation_optimizer, strategy, p_teacher, validation, seed,
-                persistent)
+                persistent, imitation_threshold)
 
             if hasattr(problem, "get_dataset"):
                 results.append(

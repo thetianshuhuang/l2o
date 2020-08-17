@@ -12,8 +12,11 @@ from l2o.evaluate import evaluate
 
 
 TrainingPeriod = collections.namedtuple(
-    "TrainingPeriod",
-    ["training_loss_mean", "training_loss", "validation_loss"])
+    "TrainingPeriod", [
+        "meta_loss_mean", "meta_loss",
+        "imitation_loss_mean", "imitation_loss",
+        "validation_loss"
+    ])
 
 
 def _makedir(path, assert_empty=False):
@@ -116,7 +119,8 @@ class BaseStrategy:
             columns = dict(
                 training_loss_mean=float, validation_loss=float,
                 **self.COLUMNS, **{
-                    "training_loss_{}".format(i): float
+                    name.format(i): float
+                    for name in ["meta_loss_{}", "imitation_loss_{}"]
                     for i in range(self.epochs_per_period)
                 })
             self.summary = pd.DataFrame({
@@ -144,10 +148,14 @@ class BaseStrategy:
     def _append(self, results, **kwargs):
         """Append to summary statistics."""
         period_losses = {
-            "training_loss_{}".format(i): val
-            for i, val in enumerate(results.training_loss)}
+            name.format(i): val
+            for name, losses in [
+                ("meta_loss_{}", results.meta_loss),
+                ("imitation_loss_{}", results.imitation_loss)]
+            for i, val in enumerate(losses)
+        }
         new_row = dict(
-            training_loss_mean=results.training_loss_mean,
+            mean_loss_mean=results.meta_loss_mean,
             validation_loss=results.validation_loss,
             **period_losses, **{k: v for k, v in kwargs.items()})
 
@@ -187,9 +195,17 @@ class BaseStrategy:
         print("Saved weights: {}".format(path))
 
     def _run_training_loop(self, problems, **kwargs):
-        """Run Training Loop."""
+        """Run Training Loop.
+        
+        Returns
+        -------
+        float[2]
+            [0] Imitation learning mean loss
+            [1] Meta learning mean loss
+        """
         args_merged = {**self.train_args, **kwargs}
-        return self.learner.train(problems, self.optimizer, **args_merged)
+        results = self.learner.train(problems, self.optimizer, **args_merged)
+        return np.mean([x[0] for x in results]), np.mean(x[1] for x in results)
 
     def _learning_period(self, train_args, validation_args):
         """Trains for ``epochs_per_period`` meta-epochs.
@@ -221,17 +237,25 @@ class BaseStrategy:
             training_loss.append(
                 np.mean(self._run_training_loop(
                     self.problems, validation=False, **train_args)))
-        training_loss_mean = np.mean(training_loss)
+        imitation_loss, meta_loss = list(zip(*training_loss))
 
         # Compute validation loss
         print("Validating:")
-        validation_loss = np.mean(self._run_training_loop(
-            self.validation_problems, validation=True, **validation_args))
+        _, validation_loss = self._run_training_loop(
+            self.validation_problems, validation=True, **validation_args)
 
-        print("training_loss: {} | validation_loss: {}".format(
-            training_loss_mean, validation_loss))
-        return TrainingPeriod(
-            training_loss_mean, training_loss, validation_loss)
+        results = TrainingPeriod(
+            meta_loss_mean=np.mean(meta_loss),
+            meta_loss=meta_loss,
+            imitation_loss_mean=np.mean(imitation_loss),
+            imitation_loss=imitation_loss,
+            validation_loss=validation_loss
+        )
+        print(
+            "imitation_loss: {} | meta_loss: {} | validation_loss: {}".format(
+                results.imitation_loss_mean, results.meta_loss_mean,
+                validation_loss))
+        return results
 
     def train(self):
         """Actual training method."""
