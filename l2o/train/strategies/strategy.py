@@ -197,7 +197,7 @@ class BaseStrategy:
 
     def _run_training_loop(self, problems, **kwargs):
         """Run Training Loop.
-        
+
         Returns
         -------
         float[2]

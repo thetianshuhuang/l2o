@@ -14,5 +14,11 @@ if period == '*':
 else:
     periods = [int(period)]
 
-for period in periods:
-    strategy.evaluate(int(stage), period)
+if stage == '*':
+    stages = list(strategy.summary["stage"].unique())
+else:
+    stages = [int(stage)]
+
+for stage in stages:
+    for period in periods:
+        strategy.evaluate(stage, period)
