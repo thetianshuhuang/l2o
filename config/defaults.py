@@ -94,6 +94,7 @@ STRATEGY = {
             "unroll_schedule": {"coefficient": 16, "base": 2},
             "epoch_schedule": {"coefficient": 2, "base": 2},
             "annealing_schedule": 0.1,
+            "annealing_floor": 0.0,
             "min_periods": 10,
             "max_stages": 3,
         },

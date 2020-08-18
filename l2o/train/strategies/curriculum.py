@@ -38,6 +38,9 @@ class CurriculumLearningStrategy(BaseStrategy):
             learning for a given period. The idea is to anneal this to 0.
         float: sets annealing_schedule ~ exp(-i * x)
         float[]: specify the annealing schedule explicitly as a list or tuple.
+    annealing_floor : float
+        Minimum value of p_teacher; the final p_teacher is computed as
+        annealing_floor + annealing_schedule(i) * (1 - annealing_floor)
     """
 
     COLUMNS = {
@@ -54,6 +57,7 @@ class CurriculumLearningStrategy(BaseStrategy):
             unroll_schedule=lambda i: 32 * (2**i),
             epoch_schedule=lambda i: 5 * (2**i),
             annealing_schedule=lambda i: np.exp(i * -0.5),
+            annealing_floor=0.0,
             name="CurriculumLearningStrategy", **kwargs):
 
         self.unroll_schedule = to_integer_schedule(
@@ -62,6 +66,7 @@ class CurriculumLearningStrategy(BaseStrategy):
             epoch_schedule, name="epoch")
         self.annealing_schedule = to_float_schedule(
             annealing_schedule, name="annealing")
+        self.annealing_floor = annealing_floor
 
         self.min_periods = min_periods
         self.max_stages = max_stages
@@ -129,6 +134,12 @@ class CurriculumLearningStrategy(BaseStrategy):
                     best_previous,
                     self._filter(stage=self.stage)["validation_loss"].min())
 
+    def _get_p_teacher(self):
+        """Helper function to compute p_teacher."""
+        base = self.annealing_schedule(
+            self.stage * self.min_periods + self.period)
+        return self.annealing_floor + (1 - self.annealing_floor) * base
+
     def learning_stage(self):
         """Learn for a single stage.
 
@@ -149,8 +160,7 @@ class CurriculumLearningStrategy(BaseStrategy):
         is_improving = True
         while (self.period < self.min_periods) or (is_improving):
             # Learn
-            p_teacher = self.annealing_schedule(
-                self.stage * self.min_periods + self.period)
+            p_teacher = self._get_p_teacher()
             unroll_len = self.unroll_schedule(self.stage)
             validation_len = self.unroll_schedule(self.stage + 1)
             print("\n--- Stage {}, Period {} ---".format(
