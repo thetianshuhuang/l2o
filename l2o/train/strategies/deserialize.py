@@ -1,6 +1,8 @@
 """Deserialization Helper Functions for Training Strategies."""
 import numpy as np
 
+from l2o import problems
+
 
 def to_integer_distribution(x, name="undefined"):
     """Deserializes an unroll distribution."""
@@ -54,3 +56,26 @@ def to_integer_schedule(x, name="undefined"):
             "Unrecognized {}_schedule dtype; must be int[], dict with keys "
             "'coefficient' (int), 'base' (int), or callable(int) -> int."
             "".format(name))
+
+
+def deserialize_problem(p):
+    """Helper function to deserialize a problem into a ProblemSpec."""
+    if isinstance(p, problems.ProblemSpec):
+        return p
+    else:
+        try:
+            target = p['target']
+            if type(target) == str:
+                target = getattr(problems, target)
+            return problems.ProblemSpec(target, p['args'], p['kwargs'])
+        except Exception as e:
+            raise TypeError(
+                "Problem could not be deserialized: {}\n{}".format(p, e))
+
+
+def deserialize_problems(pset, default=None):
+    """Helper function to _deserialize_problem over a list."""
+    if pset is not None:
+        return [_deserialize_problem(p) for p in pset]
+    else:
+        return default

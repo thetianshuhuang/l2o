@@ -190,16 +190,6 @@ class TrainableOptimizer(
             "scale_objective": self.scale_objective
         }
 
-    def save(self, filepath, **kwargs):
-        """Save model to file.
-
-        Parameters
-        ----------
-        filepath : str
-            Destination file
-        """
-        self.network.save_weights(filepath, **kwargs)
-
     def variables(self):
         """Returns variables of this Optimizer based on the order created.
 

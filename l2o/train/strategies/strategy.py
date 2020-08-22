@@ -9,6 +9,7 @@ import pandas as pd
 
 from l2o import problems
 from l2o.evaluate import evaluate
+from l2o.train.strategies import deserialize_problems
 
 
 TrainingPeriod = collections.namedtuple(
@@ -28,29 +29,6 @@ def _makedir(path, assert_empty=False):
                 "delete the directory.".format(path))
     else:
         os.mkdir(path)
-
-
-def _deserialize_problem(p):
-    """Helper function to deserialize a problem into a ProblemSpec."""
-    if isinstance(p, problems.ProblemSpec):
-        return p
-    else:
-        try:
-            target = p['target']
-            if type(target) == str:
-                target = getattr(problems, target)
-            return problems.ProblemSpec(target, p['args'], p['kwargs'])
-        except Exception as e:
-            raise TypeError(
-                "Problem could not be deserialized: {}\n{}".format(p, e))
-
-
-def _deserialize_problems(pset, default=None):
-    """Helper function to _deserialize_problem over a list."""
-    if pset is not None:
-        return [_deserialize_problem(p) for p in pset]
-    else:
-        return default
 
 
 class BaseStrategy:
@@ -96,8 +74,8 @@ class BaseStrategy:
             epochs_per_period=10, validation_seed=12345,
             optimizer="Adam", directory="weights"):
 
-        self.problems = _deserialize_problems(problems)
-        self.validation_problems = _deserialize_problems(
+        self.problems = deserialize_problems(problems)
+        self.validation_problems = deserialize_problems(
             validation_problems, default=self.problems)
 
         self.learner = learner
@@ -183,20 +161,20 @@ class BaseStrategy:
             return None
 
     def _load_network(self, *args, **kwargs):
-        """Helper function to load network weights."""
+        """Helper function to load network weights and optimizer state."""
         path = self._path(*args, **kwargs)
         checkpoint = tf.train.Checkpoint(
             optimizer=self.optimizer, model=self.learner.network)
-        checkpoint.restore(path)
+        checkpoint.read(path)
         print("Loaded weights: {}".format(path))
 
     def _save_network(self, *args, **kwargs):
-        """Helper function to save network weights."""
+        """Helper function to save network weights and optimizer state."""
         path = self._path(*args, **kwargs)
         _makedir(os.path.dirname(path))
         checkpoint = tf.train.Checkpoint(
             optimizer=self.optimizer, model=self.learner.network)
-        checkpoint.save(file_prefix=path)
+        checkpoint.write(file_prefix=path)
         print("Saved weights: {}".format(path))
 
     def _run_training_loop(self, problems, **kwargs):

@@ -46,7 +46,6 @@ class CurriculumLearningStrategy(BaseStrategy):
     COLUMNS = {
         'period': int,
         'stage': int,
-        'is_improving': bool,
         'unroll_len': int,
         'validation_len': int,
         'p_teacher': float,
@@ -110,7 +109,7 @@ class CurriculumLearningStrategy(BaseStrategy):
         # First period
         if self.period == 0:
             # First stage -> best loss is np.inf & don't load
-            if self.stage == 0:
+            if self.period == 0:
                 print("First training run; weights initialized from scratch.")
                 return np.inf
             # Not the first -> validate previous best
@@ -175,8 +174,8 @@ class CurriculumLearningStrategy(BaseStrategy):
             # Add to summary
             self._append(
                 results, stage=self.stage, period=self.period,
-                is_improving=True, p_teacher=p_teacher,
-                unroll_len=unroll_len, validation_len=validation_len)
+                p_teacher=p_teacher, unroll_len=unroll_len,
+                validation_len=validation_len)
             # Finally increment in memory
             self.period += 1
 
@@ -190,11 +189,11 @@ class CurriculumLearningStrategy(BaseStrategy):
             self.learning_stage()
 
             # No longer improving
-            is_improving = self._filter(
-                stage=self.stage - 1)["is_improving"].any()
-            if self.stage > 1 and (not is_improving):
-                print("Stopped: no longer improving.")
-                break
+            # is_improving = self._filter(
+            #     stage=self.stage - 1)["is_improving"].any()
+            # if self.stage > 1 and (not is_improving):
+            #     print("Stopped: no longer improving.")
+            #     break
             # Past specified maximum
             if self.max_stages > 0 and self.stage >= self.max_stages:
                 print("Stopped: reached max_stages specification.")
