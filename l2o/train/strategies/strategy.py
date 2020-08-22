@@ -185,14 +185,18 @@ class BaseStrategy:
     def _load_network(self, *args, **kwargs):
         """Helper function to load network weights."""
         path = self._path(*args, **kwargs)
-        self.learner.network.load_weights(path)
+        checkpoint = tf.train.Checkpoint(
+            optimizer=self.optimizer, model=self.learner.network)
+        checkpoint.restore(path)
         print("Loaded weights: {}".format(path))
 
     def _save_network(self, *args, **kwargs):
         """Helper function to save network weights."""
         path = self._path(*args, **kwargs)
         _makedir(os.path.dirname(path))
-        self.learner.save(path)
+        checkpoint = tf.train.Checkpoint(
+            optimizer=self.optimizer, model=self.learner.network)
+        checkpoint.save(file_prefix=path)
         print("Saved weights: {}".format(path))
 
     def _run_training_loop(self, problems, **kwargs):

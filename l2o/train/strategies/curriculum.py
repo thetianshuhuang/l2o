@@ -110,7 +110,7 @@ class CurriculumLearningStrategy(BaseStrategy):
         # First period
         if self.period == 0:
             # First stage -> best loss is np.inf & don't load
-            if self.period == 0:
+            if self.stage == 0:
                 print("First training run; weights initialized from scratch.")
                 return np.inf
             # Not the first -> validate previous best
@@ -131,7 +131,8 @@ class CurriculumLearningStrategy(BaseStrategy):
         # Not the first period -> get most recent
         else:
             self._load_network(self.stage, self.period - 1)
-            return self._lookup(self.stage, self.period - 1)["validation_loss"]
+            return self._lookup(
+                stage=self.stage, period=self.period - 1)["validation_loss"]
 
     def learning_stage(self):
         """Learn for a single stage.
@@ -174,7 +175,7 @@ class CurriculumLearningStrategy(BaseStrategy):
             # Add to summary
             self._append(
                 results, stage=self.stage, period=self.period,
-                is_improving=is_improving, p_teacher=p_teacher,
+                is_improving=True, p_teacher=p_teacher,
                 unroll_len=unroll_len, validation_len=validation_len)
             # Finally increment in memory
             self.period += 1
