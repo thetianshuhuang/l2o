@@ -154,11 +154,20 @@ class CurriculumLearningStrategy(BaseStrategy):
         print(header)
         print("-" * len(header) + "\n")
 
+        # Global improvement
         best_loss = self._get_best_loss()
+        is_improving = True
+
+        # Local improvement
+        if self.period == 0:
+            previous_loss = -np.nan
+        else:
+            previous_loss = self._lookup(
+                stage=self.stage, period=self.period - 1)["validation_loss"]
+        is_locally_improving = True
 
         # Train for at least ``min_periods`` or until we stop improving
-        is_improving = True
-        while (self.period < self.min_periods) or (is_improving):
+        while (self.period < self.min_periods) or is_locally_improving:
             # Learn
             p_teacher = self._get_p_teacher()
             unroll_len = self.unroll_schedule(self.stage)
@@ -173,10 +182,13 @@ class CurriculumLearningStrategy(BaseStrategy):
                 {"unroll_len": lambda: validation_len, "p_teacher": 0,
                  "epochs": self.epoch_schedule(self.stage + 1)})
 
-            # Check for improvement
+            # Check for global improvement
             is_improving = results.validation_loss < best_loss
             if is_improving:
                 best_loss = results.validation_loss
+            # Check for local improvement
+            is_locally_improving = results.validation_loss < previous_loss
+            previous_loss = results.validation_loss
 
             # Save optimizer
             self._save_network(self.stage, self.period)

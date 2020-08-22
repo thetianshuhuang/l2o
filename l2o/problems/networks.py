@@ -194,6 +194,9 @@ def conv_classifier(
     TypeError
         Dataset does not have a fixed input dimension.
     """
+    if isinstance(activation, str):
+        activation = tf.keras.activations.get(activation)
+
     def _preprocess(img):
         shape = img.shape.as_list()
         return tf.cast(tf.reshape(img, shape[:-1] + []), tf.float32) / 255.
