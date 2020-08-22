@@ -87,58 +87,51 @@ class CurriculumLearningStrategy(BaseStrategy):
         self.period += 1
 
         # Not improving, and past minimum periods
-        last_row = self._lookup(stage=self.stage, period=self.period - 1)
-        if not last_row["is_improving"] and self.period >= self.min_periods:
-            self.stage += 1
-            self.period = 0
+        if self.period >= self.min_periods:
+            last1 = self._lookup(stage=self.stage, period=self.period - 1)
+            last2 = self._lookup(stage=self.stage, period=self.period - 2)
+            if last1["validation_loss"] > last2["validation_loss"]:
+                self.stage += 1
+                self.period = 0
 
     def _start(self):
         """Start new optimization."""
         self.stage = 0
         self.period = 0
 
-    def _get_best_loss(self):
-        """Get the current validation loss baseline."""
-        # First stage
-        if self.stage == 0:
-            # First period -> best_loss is np.inf & don't load
-            if self.period == 0:
-                print("First training run; weights initialized from scratch.")
-                return np.inf
-            # Not the first -> resume from most recent, use previous best loss
-            else:
-                self._load_network(self.stage, self.period - 1)
-                return self._filter(stage=self.stage)["validation_loss"].min()
-        # Not first stage
-        else:
-            # Find best validation loss from previous period
-            row_idx = self._filter(
-                stage=self.stage - 1)["validation_loss"].idxmin()
-            period_idx = self.summary["period"][row_idx]
-            # Load & Validate
-            self._load_network(self.stage - 1, period_idx)
-            print("Validating Best L2O from Stage {}:".format(self.stage - 1))
-            _, best_previous = self._run_training_loop(
-                self.validation_problems,
-                unroll_len=lambda: self.unroll_schedule(self.stage + 1),
-                epochs=self.epoch_schedule(self.stage + 1),
-                validation=False, p_teacher=0)
-
-            # First period -> use previous best
-            if self.period == 0:
-                return best_previous
-            # Not the first -> resume from most recent
-            else:
-                self._load_network(self.stage, self.period - 1)
-                return min(
-                    best_previous,
-                    self._filter(stage=self.stage)["validation_loss"].min())
-
     def _get_p_teacher(self):
         """Helper function to compute p_teacher."""
         base = self.annealing_schedule(
             self.stage * self.min_periods + self.period)
         return self.annealing_floor + (1 - self.annealing_floor) * base
+
+    def _get_previous_loss(self):
+        """Get the current validation loss baseline."""
+        # First period
+        if self.period == 0:
+            # First stage -> best loss is np.inf & don't load
+            if self.period == 0:
+                print("First training run; weights initialized from scratch.")
+                return np.inf
+            # Not the first -> validate previous best
+            else:
+                row_idx = self._filter(
+                    stage=self.stage - 1)["validation_loss"].idxmin()
+                period_idx = self.summary["period"][row_idx]
+                # Load & Validate
+                self._load_network(self.stage - 1, period_idx)
+                print("Validating Best L2O from Stage {}:".format(
+                    self.stage - 1))
+                _, best_previous = self._run_training_loop(
+                    self.validation_problems,
+                    unroll_len=lambda: self.unroll_schedule(self.stage + 1),
+                    epochs=self.epoch_schedule(self.stage + 1),
+                    validation=False, p_teacher=0)
+                return best_previous
+        # Not the first period -> get most recent
+        else:
+            self._load_network(self.stage, self.period - 1)
+            return self._lookup(self.stage, self.period - 1)["validation_loss"]
 
     def learning_stage(self):
         """Learn for a single stage.
@@ -154,19 +147,9 @@ class CurriculumLearningStrategy(BaseStrategy):
         print(header)
         print("-" * len(header) + "\n")
 
-        # Global improvement
-        best_loss = self._get_best_loss()
-        is_improving = True
-
-        # Local improvement
-        if self.period == 0:
-            previous_loss = -np.nan
-        else:
-            previous_loss = self._lookup(
-                stage=self.stage, period=self.period - 1)["validation_loss"]
-        is_locally_improving = True
-
         # Train for at least ``min_periods`` or until we stop improving
+        previous_loss = self._get_previous_loss()
+        is_locally_improving = True
         while (self.period < self.min_periods) or is_locally_improving:
             # Learn
             p_teacher = self._get_p_teacher()
@@ -182,10 +165,6 @@ class CurriculumLearningStrategy(BaseStrategy):
                 {"unroll_len": lambda: validation_len, "p_teacher": 0,
                  "epochs": self.epoch_schedule(self.stage + 1)})
 
-            # Check for global improvement
-            is_improving = results.validation_loss < best_loss
-            if is_improving:
-                best_loss = results.validation_loss
             # Check for local improvement
             is_locally_improving = results.validation_loss < previous_loss
             previous_loss = results.validation_loss
