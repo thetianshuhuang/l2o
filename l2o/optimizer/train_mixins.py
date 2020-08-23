@@ -12,7 +12,7 @@ MetaIteration = collections.namedtuple(
     "MetaIteration", [
         "problem", "optimizer",
         "unroll_len", "weights",
-        "teachers", "imitation_optimizer", "strategy", "p_teacher",
+        "teachers", "strategy", "p_teacher",
         "validation", "seed", "persistent", "imitation_threshold"
     ])
 
@@ -77,52 +77,30 @@ class TrainingMixin:
             This is because non-primitive objects are interpreted as
             ``UnknownArgument`` by tensorflow.
         """
+        # Weights are just placeholders
         kwargs = dict(
-            unroll=meta.unroll_len, problem=meta.problem,
-            is_batched=is_batched, seed=meta.seed)
-        kwargs_meta = dict(noise_stddev=meta.problem.noise_stddev)
-        kwargs_imitation = dict(teachers=meta.teachers, strategy=meta.strategy)
+            unroll=meta.unroll, problem=meta.problem, is_batched=is_batched,
+            seed=meta.seed, noise_stddev=meta.problem.noise_stddev,
+            meta_loss_weight=tf.constant(0.5),
+            imitation_loss_weight=tf.constant(0.5),
+            teachers=meta.teachers, strategy=meta.strategy)
         args = (meta.weights, data, unroll_state)
 
-        # P(meta learning) > 0
-        if meta.p_teacher < 1:
-            if meta.validation:
-                cf_meta = self.meta_loss.get_concrete_function(
-                    *args, **kwargs, **kwargs_meta)
-            else:
-                cf_meta = self.meta_step.get_concrete_function(
-                    *args, opt=meta.optimizer, **kwargs, **kwargs_meta)
+        if meta.validation:
+            return self.abstract_loss.get_concrete_function(*args, **kwargs)
         else:
-            cf_meta = None
-        # Teachers are not empty and P(imitation learning) > threshold
-        if(len(meta.teachers) > 0
-                and meta.p_teacher > meta.imitation_threshold):
-            if meta.validation:
-                cf_imitation = self.imitation_loss.get_concrete_function(
-                    *args, **kwargs, **kwargs_imitation)
-            else:
-                cf_imitation = self.imitation_step.get_concrete_function(
-                    *args, opt=meta.optimizer, **kwargs, **kwargs_imitation)
-        else:
-            cf_imitation = None
-
-        return cf_meta, cf_imitation
+            return self.abstract_step.get_concrete_function(
+                *args, opt=meta.optimizer, **kwargs)
 
     def _meta_step(self, meta, concrete_step, data, unroll_state):
         """Helper function to run for a single step."""
-        cf_meta, cf_imitation = concrete_step
-        # Only imitation learning or only meta learning
-        if cf_meta is None:
-            is_imitation = True
-        elif cf_imitation is None:
-            is_imitation = False
-        # Randomly select meta or imitation learning
-        else:
-            is_imitation = np.random.uniform(0, 1) < meta.p_teacher
+        is_imitation = np.random.uniform(0, 1) < meta.p_teacher
+        w_meta, w_imit = (0.0, 1.0) if is_imitation else (1.0, 0.0)
 
-        concrete_function = cf_imitation if is_imitation else cf_meta
-        loss, unroll_state = concrete_function(
-            meta.weights, data, unroll_state)
+        loss, unroll_state = concrete_step(
+            meta.weights, data, unroll_state,
+            meta_loss_weight=tf.constant(w_meta),
+            imitation_loss_weight=tf.constant(w_imit))
         return loss, unroll_state, is_imitation
 
     def _train_full(self, meta, repeat=1):
@@ -285,11 +263,6 @@ class TrainingMixin:
             Callable that generates unroll weights from an unroll size.
         teachers : tf.keras.optimizers.Optimizer[]
             If passed, runs imitation learning instead against ``teacher``.
-        imitation_optimizer : tf.keras.optimizers.Optimizer
-            Separate optimizer to use on imitation loss updates if present.
-            This may benefit optimization by keeping separate optimizer
-            states for imitation and meta learning, as those losses may have
-            vastly different gradient magnitudes.
         strategy : str or Callable (float[] -> float)
             Imitation learning multi-teacher loss strategy. Suggested:
               - "mean" or ``tf.math.reduce_mean``: classic mean loss.
@@ -330,10 +303,6 @@ class TrainingMixin:
             Logged imitation loss and meta loss for all problems;
             arranged in the same order as ``problems``.
         """
-        # No imitation optimizer -> use same optimizer for both
-        if imitation_optimizer is None:
-            imitation_optimizer = optimizer
-
         results = []
 
         # Deserialize
@@ -359,8 +328,8 @@ class TrainingMixin:
 
             meta = MetaIteration(
                 problem, optimizer, unroll, unroll_weights(unroll), teachers,
-                imitation_optimizer, strategy, p_teacher, validation, seed,
-                persistent, imitation_threshold)
+                strategy, p_teacher, validation, seed, persistent,
+                imitation_threshold)
 
             if hasattr(problem, "get_dataset"):
                 results.append(

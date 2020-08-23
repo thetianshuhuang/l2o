@@ -38,7 +38,6 @@ LOSS = {
         "training": {
             "unroll_weights": "mean",
             "teachers": [],
-            "imitation_optimizer": None,
             "strategy": "mean",
             "p_teacher": 0,
             "epochs": 1,
@@ -62,7 +61,6 @@ LOSS = {
                 },
             ],
             "p_teacher": 1,
-            "imitation_optimizer": None,
             "strategy": "mean",
             "epochs": 1,
             "depth": 0,

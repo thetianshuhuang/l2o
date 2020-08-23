@@ -1,8 +1,8 @@
-"""Optimization Step Methods."""
+"""L2O Optimization Step."""
 import tensorflow as tf
 
 
-class StepMixin:
+class ConcreteLossMixin:
     """Optimization Step Mixin."""
 
     def _base_step(self, opt, callable):
@@ -33,3 +33,28 @@ class StepMixin:
         opt.apply_gradients(zip(grads, self.network.trainable_variables))
 
         return loss, unroll_state
+
+    @tf.function
+    def abstract_step(
+            self, weights, data, unroll_state,
+            unroll=20, problem=None, is_batched=False,
+            teachers=[], meta_loss_weight=0.0, imitation_loss_weight=1.0,
+            strategy=tf.math.reduce_mean, opt=None, seed=None):
+        """Wraps imitation_loss to compute meta-gradients inside graph mode.
+
+        See ``abstract_loss`` for docstring and ``_base_step`` for internal
+        mechanism.
+
+        NOTE: each argument is meticulously manually iterated below due to a
+        tensorflow bug (as of 2.3.0rc1) related to *args and **kwargs in
+        @tf.function.
+        """
+        def loss_wrapper():
+            return self.abstract_loss(
+                weights, data, unroll_state,
+                unroll=unroll, problem=problem, is_batched=is_batched,
+                teachers=teachers, meta_loss_weight=meta_loss_weight,
+                imitation_loss_weight=imitation_loss_weight,
+                strategy=strategy, seed=seed)
+
+        return self._base_step(opt, loss_wrapper)

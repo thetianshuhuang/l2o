@@ -2,8 +2,7 @@
 import tensorflow as tf
 
 from .state_mixins import StateMixin
-from .meta_mixins import MetaLossMixin
-from .imitation_mixins import ImitationLossMixin
+from .loss_mixin import LossMixin
 from .train_mixins import TrainingMixin
 from .step_mixins import StepMixin
 
