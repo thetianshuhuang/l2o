@@ -184,7 +184,7 @@ class LossMixin:
             unroll_state.params, problem, data, unroll, is_batched)
         unroll_state, scale = self._make_random_scale(
             unroll_state, parameter_scale_spread)
-        problem.reset(values=unroll_state=params)
+        problem.reset(values=unroll_state.params)
 
         def get_objective(params, batch_):
             return problem.objective(

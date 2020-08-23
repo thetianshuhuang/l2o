@@ -77,7 +77,7 @@ STRATEGY = {
         "strategy_constructor": "Simple",
         "strategy": {
             "epochs_per_period": 10,
-            "validaton_seed": 12345,
+            "validation_seed": 12345,
             "num_periods": 100,
             "unroll_distribution": 200,
             "annealing_schedule": 0.1,
