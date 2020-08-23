@@ -84,10 +84,10 @@ class LossMixin:
                     problem.objective(params, [d[i] for d in data])
                     for i in range(unroll)])
             else:
-                return tf.tile([problem.objective(params, data)], unroll)
+                return tf.tile([problem.objective(params, data)], [unroll])
         # Not scale_objective -> just use 1. as denominator
         else:
-            return tf.tile([1.], unroll)
+            return tf.tile([1.], [unroll])
 
     def _max_obj(self, init_obj, current_obj):
         """Helper to check for exceeding maximum objective limits."""

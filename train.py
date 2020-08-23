@@ -23,15 +23,15 @@ directory = args.pop_get("--directory", default="weights")
 # Pick up flags first
 initialize_only = args.pop_check("--initialize")
 
+# Select strategy
+strategy = args.pop_get("--strategy", "curriculum")
+
 # Build overrides
 presets = args.pop_get("--presets", "")
 overrides = []
 for p in presets.split(','):
     overrides += get_preset(p)
 overrides += args.to_overrides()
-
-# Select strategy
-strategy = args.pop_get("--strategy", "curriculum")
 
 # Build strategy
 default = get_default(loss="imitation", strategy=strategy, network="rnnprop")

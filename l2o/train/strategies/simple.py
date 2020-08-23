@@ -40,11 +40,13 @@ class SimpleStrategy(BaseStrategy):
             self, *args, num_periods=100,
             unroll_distribution=lambda: np.random.geometric(0.05),
             annealing_schedule=lambda i: np.exp(i * -0.5),
-            validation_unroll=50, name="SimpleStrategy", **kwargs):
+            validation_repeat=1, validation_unroll=50, name="SimpleStrategy",
+            **kwargs):
 
         super().__init__(*args, name=name, **kwargs)
         self.num_periods = num_periods
         self.validation_unroll = validation_unroll
+        self.validation_repeat = validation_repeat
 
         self.unroll_distribution = to_integer_distribution(
             unroll_distribution, name="unroll")
@@ -77,7 +79,7 @@ class SimpleStrategy(BaseStrategy):
                 {"unroll_len": self.unroll_distribution,
                  "p_teacher": p_teacher},
                 {"unroll_len": lambda: self.validation_unroll,
-                 "p_teacher": 0})
+                 "p_teacher": 0, "repeat": self.validation_repeat})
 
             self._save_network(self.period)
             self._append(results, period=self.period)

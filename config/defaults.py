@@ -81,7 +81,8 @@ STRATEGY = {
             "num_periods": 100,
             "unroll_distribution": 200,
             "annealing_schedule": 0.1,
-            "validation_unroll": 200
+            "validation_unroll": 200,
+            "validation_repeat": 1,
         }
     },
     "curriculum": {
