@@ -30,9 +30,11 @@ for p in presets.split(','):
     overrides += get_preset(p)
 overrides += args.to_overrides()
 
+# Select strategy
+strategy = args.pop_get("--strategy", "curriculum")
+
 # Build strategy
-default = get_default(
-    loss="imitation", strategy="curriculum", network="rnnprop")
+default = get_default(loss="imitation", strategy=strategy, network="rnnprop")
 trainer = l2o.train.build(
     default, overrides, directory=directory, saved_config=True, strict=True)
 

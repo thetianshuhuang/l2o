@@ -44,7 +44,6 @@ LOSS = {
             "depth": 0,
             "repeat": 1,
             "persistent": False,
-            "imitation_threshold": 0.01,
             "parameter_scale_spread": 3.0,
         },
     },
@@ -63,11 +62,10 @@ LOSS = {
             ],
             "p_teacher": 1,
             "strategy": "mean",
-            "epochs": 1,
+            "epochs": 5,
             "depth": 0,
             "repeat": 1,
             "persistent": False,
-            "imitation_threshold": 0.01,
             "parameter_scale_spread": 3.0,
         }
     }
@@ -81,9 +79,9 @@ STRATEGY = {
             "epochs_per_period": 10,
             "validaton_seed": 12345,
             "num_periods": 100,
-            "unroll_distribution": 0.05,
+            "unroll_distribution": 200,
             "annealing_schedule": 0.1,
-            "validation_unroll": 50
+            "validation_unroll": 200
         }
     },
     "curriculum": {

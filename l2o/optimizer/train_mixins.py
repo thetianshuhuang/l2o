@@ -218,8 +218,6 @@ class TrainingMixin:
                 if not meta.persistent:
                     for t in meta.teachers:
                         reset_optimizer(t)
-                # Sync with student
-                meta.problem.reset(values=unroll_state.params)
 
                 # Data dimensions are ``[unroll, batch] + [data]``
                 batch_stacked = [

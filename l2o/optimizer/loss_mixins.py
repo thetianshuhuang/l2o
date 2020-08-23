@@ -116,8 +116,9 @@ class LossMixin:
         strategy(imitation_loss(teachers)) + meta_loss_weight * meta_loss()
         ```
 
-        The problem must be built in persistent mode for the teacher to use,
-        and the caller is responsible for resetting the problem when necessary.
+        NOTE: The problem must be built in persistent mode for the teacher to
+        use. This method will modify the persistent-mode teacher variables
+        owned by the problem.
 
         By decorating as a @tf.function, the for loop is wrapped into a
         tf.while_loop. See `https://www.tensorflow.org/guide/function`.
@@ -183,6 +184,7 @@ class LossMixin:
             unroll_state.params, problem, data, unroll, is_batched)
         unroll_state, scale = self._make_random_scale(
             unroll_state, parameter_scale_spread)
+        problem.reset(values=unroll_state=params)
 
         def get_objective(params, batch_):
             return problem.objective(
