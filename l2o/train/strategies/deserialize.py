@@ -76,6 +76,6 @@ def deserialize_problem(p):
 def deserialize_problems(pset, default=None):
     """Helper function to _deserialize_problem over a list."""
     if pset is not None:
-        return [_deserialize_problem(p) for p in pset]
+        return [deserialize_problem(p) for p in pset]
     else:
         return default

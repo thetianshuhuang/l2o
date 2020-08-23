@@ -9,7 +9,7 @@ import pandas as pd
 
 from l2o import problems
 from l2o.evaluate import evaluate
-from l2o.train.strategies import deserialize_problems
+from .deserialize import deserialize_problems
 
 
 TrainingPeriod = collections.namedtuple(
