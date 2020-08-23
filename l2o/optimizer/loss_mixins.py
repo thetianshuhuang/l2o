@@ -181,20 +181,21 @@ class LossMixin:
             problem, unroll_state, seed=seed)
         init_obj = self._compute_init_obj(
             unroll_state.params, problem, data, unroll, is_batched)
-        unroll_state, scale = self._make_random_scale(unroll_state, spread)
+        unroll_state, scale = self._make_random_scale(
+            unroll_state, parameter_scale_spread)
+
+        def get_objective(params, batch_):
+            return problem.objective(
+                [p * s for p, s in zip(params, scale)], batch_)
 
         loss = 0.
         for i in tf.range(unroll):
             batch = [dim[i] for dim in data] if is_batched else data
 
-            def get_objective(params):
-                return problem.objective(
-                    [p * s for p, s in zip(params, scale)], batch)
-
             # Run learner
             with tf.GradientTape() as tape:
                 tape.watch(unroll_state.params)
-                current_obj = get_objective(unroll_state.params)
+                current_obj = get_objective(unroll_state.params, batch)
             grads = gradient_scale * tape.gradient(
                 current_obj, unroll_state.params)
             unroll_state = self._train_apply_gradients(unroll_state, grads)
@@ -208,7 +209,7 @@ class LossMixin:
                 trainables = problem.trainable_variables
                 for teacher, var_set in zip(teachers, trainables):
                     teacher.minimize(
-                        lambda: get_objective(var_set), var_set)
+                        lambda: get_objective(var_set, batch), var_set)
                 # Loss for each teacher is l2 between parameters
                 # Loss for multi-teacher is determined by the ``strategy``
                 il_loss = strategy([

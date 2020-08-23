@@ -1,5 +1,7 @@
 """Optimization State Computation and Management."""
 import collections
+import tensorflow as tf
+
 
 UnrollState = collections.namedtuple(
     "UnrollState", ['params', 'states', 'global_state'])
@@ -43,6 +45,11 @@ class StateMixin:
         unroll_state : UnrollState
             Unroll state to initialize from. If any elements are None, fetches
             from the appropriate ``.get_`` method.
+
+        Keyword Args
+        ------------
+        seed : int or None
+            Random seed to use for random state initialization.
 
         Returns
         -------
@@ -98,4 +105,4 @@ class StateMixin:
                 params_new, unroll_state.states, unroll_state.global_state)
         else:
             scale = [tf.ones_like(p) for p in unroll_state.params]
-        return unroll_State, scale
+        return unroll_state, scale

@@ -36,7 +36,7 @@ class StepMixin:
 
     @tf.function
     def abstract_step(
-            self, weights, data, unroll_state, **kwargs):
+            self, weights, data, unroll_state, opt=None, **kwargs):
         """Wraps imitation_loss to compute meta-gradients inside graph mode.
 
         See ``abstract_loss`` for docstring and ``_base_step`` for internal

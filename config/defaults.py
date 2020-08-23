@@ -18,6 +18,7 @@ BASE = {
     "loss_args": {
         "use_log_objective": True,
         "scale_objective": True,
+        "parameter_scale_spread": 3,
         "obj_train_max_multiplier": -1,
         "use_numerator_epsilon": True,
         "epsilon": 1e-10
