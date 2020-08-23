@@ -81,7 +81,6 @@ class TrainingMixin:
         kwargs = dict(
             unroll=meta.unroll_len, problem=meta.problem,
             is_batched=is_batched, seed=meta.seed,
-            noise_stddev=meta.problem.noise_stddev,
             meta_loss_weight=tf.constant(0.5),
             imitation_loss_weight=tf.constant(0.5),
             teachers=meta.teachers, strategy=meta.strategy)
