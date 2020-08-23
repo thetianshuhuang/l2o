@@ -5,7 +5,7 @@ import tensorflow as tf
 class LossMixin:
     """Loss Computation Mixin."""
 
-    def _scale_objective(self, objective, initial_obj):
+    def _scale_meta_objective(self, objective, initial_obj):
         """Normalizes the objective based on the initial objective value.
 
         This function is not a @tf.function since it should be wrapped by
@@ -101,10 +101,12 @@ class LossMixin:
         else:
             return not tf.math.is_finite(current_obj)
 
+    @tf.function
     def abstract_loss(
             self, weights, data, unroll_state,
             unroll=20, problem=None, is_batched=False,
             teachers=[], meta_loss_weight=0.0, imitation_loss_weight=1.0,
+            parameter_scale_spread=0.0,
             strategy=tf.math.reduce_mean,
             seed=None):
         """Get abstract imitation learning and meta learning loss.
@@ -161,6 +163,10 @@ class LossMixin:
             Imitation learning multi-teacher loss strategy. Suggested:
               - ``tf.math.reduce_mean``: classic multi-teacher mean loss.
               - ``tf.math.reduce_max``: minimax loss.
+        parameter_scale_spread : float
+            Each parameter is randomly scaled by a factor sampled from a
+            log uniform distribution exp(Unif([-L, L])). If the spread is 0,
+            this is equivalent to a constant scale of 1.
         seed : int or None
             Seed to use for intializing parameters.
 
@@ -173,19 +179,24 @@ class LossMixin:
         """
         unroll_state, state_mask = self._get_state(
             problem, unroll_state, seed=seed)
-        if meta_loss_weight > 0.0:
-            init_obj = self._compute_init_obj(
-                unroll_state.params, problem, data, unroll, is_batched)
+        init_obj = self._compute_init_obj(
+            unroll_state.params, problem, data, unroll, is_batched)
+        unroll_state, scale = self._make_random_scale(unroll_state, spread)
 
         loss = 0.
         for i in tf.range(unroll):
             batch = [dim[i] for dim in data] if is_batched else data
 
+            def get_objective(params):
+                return problem.objective(
+                    [p * s for p, s in zip(params, scale)], batch)
+
             # Run learner
             with tf.GradientTape() as tape:
                 tape.watch(unroll_state.params)
-                current_obj = problem.objective(unroll_state.params, batch)
-            grads = tape.gradient(current_obj, unroll_state.params)
+                current_obj = get_objective(unroll_state.params)
+            grads = gradient_scale * tape.gradient(
+                current_obj, unroll_state.params)
             unroll_state = self._train_apply_gradients(unroll_state, grads)
             # Check for exploding loss
             if self._max_obj(init_obj[i], current_obj):
@@ -197,7 +208,7 @@ class LossMixin:
                 trainables = problem.trainable_variables
                 for teacher, var_set in zip(teachers, trainables):
                     teacher.minimize(
-                        lambda: problem.objective(var_set, batch), var_set)
+                        lambda: get_objective(var_set), var_set)
                 # Loss for each teacher is l2 between parameters
                 # Loss for multi-teacher is determined by the ``strategy``
                 il_loss = strategy([
