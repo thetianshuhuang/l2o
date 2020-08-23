@@ -196,8 +196,7 @@ class LossMixin:
             with tf.GradientTape() as tape:
                 tape.watch(unroll_state.params)
                 current_obj = get_objective(unroll_state.params, batch)
-            grads = gradient_scale * tape.gradient(
-                current_obj, unroll_state.params)
+            grads = tape.gradient(current_obj, unroll_state.params)
             unroll_state = self._train_apply_gradients(unroll_state, grads)
             # Check for exploding loss
             if self._max_obj(init_obj[i], current_obj):

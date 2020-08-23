@@ -13,7 +13,7 @@ MetaIteration = collections.namedtuple(
         "problem", "optimizer",
         "unroll_len", "weights",
         "teachers", "strategy", "p_teacher",
-        "validation", "seed", "persistent", "imitation_threshold"
+        "validation", "seed", "persistent", "parameter_scale_spread"
     ])
 
 
@@ -83,7 +83,8 @@ class TrainingMixin:
             is_batched=is_batched, seed=meta.seed,
             meta_loss_weight=tf.constant(0.5),
             imitation_loss_weight=tf.constant(0.5),
-            teachers=meta.teachers, strategy=meta.strategy)
+            teachers=meta.teachers, strategy=meta.strategy,
+            parameter_scale_spread=meta.parameter_scale_spread)
         args = (meta.weights, data, unroll_state)
 
         if meta.validation:
@@ -244,7 +245,7 @@ class TrainingMixin:
             unroll_len=lambda: 20, unroll_weights="sum",
             teachers=[], strategy="mean", p_teacher=0,
             epochs=1, depth=0, repeat=1, persistent=False,
-            validation=False, seed=None, imitation_threshold=0.01):
+            validation=False, seed=None, parameter_scale_spread=0.0):
         """Run meta-training.
 
         Parameters
@@ -291,10 +292,10 @@ class TrainingMixin:
             Random seed to use for model initializations. If None, no specific
             seed is used. Should be set to None to reduce overfitting during
             training, but fixed during validation.
-        imitation_threshold : float
-            Cutoff threshold for imitation learning probability. If p_teacher
-            is less than imitation_threshold, it is treated as zero, which
-            prevents the concrete function graph from being built.
+        parameter_scale_spread : float
+            Each parameter is randomly scaled by a factor sampled from a
+            log uniform distribution exp(Unif([-L, L])). If the spread is 0,
+            this is equivalent to a constant scale of 1.
 
         Returns
         -------
@@ -328,7 +329,7 @@ class TrainingMixin:
             meta = MetaIteration(
                 problem, optimizer, unroll, unroll_weights(unroll), teachers,
                 strategy, p_teacher, validation, seed, persistent,
-                imitation_threshold)
+                parameter_scale_spread)
 
             if hasattr(problem, "get_dataset"):
                 results.append(
