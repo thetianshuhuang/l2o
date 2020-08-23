@@ -79,8 +79,9 @@ class TrainingMixin:
         """
         # Weights are just placeholders
         kwargs = dict(
-            unroll=meta.unroll, problem=meta.problem, is_batched=is_batched,
-            seed=meta.seed, noise_stddev=meta.problem.noise_stddev,
+            unroll=meta.unroll_len, problem=meta.problem,
+            is_batched=is_batched, seed=meta.seed,
+            noise_stddev=meta.problem.noise_stddev,
             meta_loss_weight=tf.constant(0.5),
             imitation_loss_weight=tf.constant(0.5),
             teachers=meta.teachers, strategy=meta.strategy)
@@ -242,8 +243,7 @@ class TrainingMixin:
     def train(
             self, problems, optimizer,
             unroll_len=lambda: 20, unroll_weights="sum",
-            teachers=[], imitation_optimizer=None,
-            strategy="mean", p_teacher=0,
+            teachers=[], strategy="mean", p_teacher=0,
             epochs=1, depth=0, repeat=1, persistent=False,
             validation=False, seed=None, imitation_threshold=0.01):
         """Run meta-training.

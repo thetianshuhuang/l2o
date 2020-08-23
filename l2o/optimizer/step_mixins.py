@@ -2,7 +2,7 @@
 import tensorflow as tf
 
 
-class ConcreteLossMixin:
+class StepMixin:
     """Optimization Step Mixin."""
 
     def _base_step(self, opt, callable):
