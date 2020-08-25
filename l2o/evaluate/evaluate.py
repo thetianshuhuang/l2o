@@ -4,6 +4,7 @@ import json
 import time
 
 import tensorflow as tf
+import numpy as np
 
 from l2o.problems import load_images
 from . import models
@@ -99,4 +100,4 @@ def evaluate(
         **results.history, epoch_time=time_tracking.times,
         batch_loss=batch_tracking.loss, batch_accuracy=batch_tracking.accuracy)
     # numpy-ify lists
-    return {k: np.array(v, dtype=np.float32) for k, v in results}
+    return {k: np.array(v, dtype=np.float32) for k, v in results.items()}

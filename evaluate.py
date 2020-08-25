@@ -29,7 +29,7 @@ elif isinstance(strategy, l2o.train.SimpleStrategy):
     period = sys.argv[2].split(",")
 
     if len(period) == 1:
-        strategy.evaluate(int(period[0]))
+        strategy.evaluate(int(period[0]), repeat=10)
     else:
         for p in range(int(period[0]), int(period[1])):
-            strategy.evaluate(p)
+            strategy.evaluate(p, repeat=10)

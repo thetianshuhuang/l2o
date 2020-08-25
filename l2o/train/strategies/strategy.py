@@ -165,7 +165,7 @@ class BaseStrategy:
         path = self._path(*args, **kwargs)
         checkpoint = tf.train.Checkpoint(
             optimizer=self.optimizer, model=self.learner.network)
-        checkpoint.read(path)
+        checkpoint.read(path).expect_partial()
         print("Loaded weights: {}".format(path))
 
     def _save_network(self, *args, **kwargs):
