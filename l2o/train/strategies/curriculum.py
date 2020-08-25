@@ -76,7 +76,7 @@ class CurriculumLearningStrategy(BaseStrategy):
         """Get saved model file path."""
         return os.path.join(
             self.directory,
-            "stage_{}".format(stage), "period_{}".format(period))
+            "stage_{}".format(int(stage)), "period_{}".format(int(period)))
 
     def _resume(self):
         """Resume current optimization."""

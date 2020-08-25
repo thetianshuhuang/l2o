@@ -55,7 +55,7 @@ class SimpleStrategy(BaseStrategy):
 
     def _path(self, period):
         """Get saved model file path."""
-        return os.path.join(self.directory, "period_{}".format(period))
+        return os.path.join(self.directory, "period_{}".format(int(period)))
 
     def _resume(self):
         """Resume current optimization."""

@@ -26,7 +26,7 @@ if isinstance(strategy, l2o.train.CurriculumLearningStrategy):
             strategy.evaluate(stage, period)
 
 elif isinstance(strategy, l2o.train.SimpleStrategy):
-    period = sys.argv[3].split(",")
+    period = sys.argv[2].split(",")
 
     if len(period) == 1:
         strategy.evaluate(int(period[0]))
