@@ -31,4 +31,5 @@ elif isinstance(strategy, l2o.train.SimpleStrategy):
     if len(period) == 1:
         strategy.evaluate(int(period[0]))
     else:
-        strategy.evaluate(range(int(period[0]), int(period[1])))
+        for p in range(int(period[0]), int(period[1])):
+            strategy.evaluate(p)

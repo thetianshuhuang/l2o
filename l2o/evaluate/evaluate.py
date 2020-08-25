@@ -25,7 +25,7 @@ class EpochTimeTracker(tf.keras.callbacks.Callback):
 class BatchTracker(tf.keras.callbacks.Callback):
     """Callback to track loss and accuracy on a per-batch basis."""
 
-    def on_train_begin(self):
+    def on_train_begin(self, logs=None):
         """Called at the beginning of training."""
         self.loss = []
         self.accuracy = []
