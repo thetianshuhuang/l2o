@@ -153,7 +153,7 @@ class TrainingMixin:
         return losses.get("imitation"), losses.get("meta")
 
     def _train_batch(
-            self, meta, epochs=1, repeat=1, depth=1, persistent=False):
+            self, meta, epochs=1, repeat=1, persistent=False):
         """Minibatch training.
 
         Parameters
@@ -169,8 +169,6 @@ class TrainingMixin:
             Number of times to repeat. Will reset at the end of every repeat.
         persistent : bool
             Keeps a persistent optimizer?
-        depth : int
-            Optimization depth.
 
         Returns
         -------
@@ -208,21 +206,12 @@ class TrainingMixin:
                     global_state=persistent, seed=seed)
             # New dataset using seed for each epoch.
             dataset = meta.problem.get_dataset(meta.unroll_len, seed=seed)
-            for j, batch in enumerate(dataset):
-                # Every ``depth`` iterations, reset parameters
-                if depth > 0 and (j + 1) % depth == 0:
-                    unroll_state = self._reset_params(
-                        unroll_state, meta.problem, seed=seed)
-
+            for batch in dataset:
                 # State (i.e. momentum) needs to be reset
                 if not meta.persistent:
                     for t in meta.teachers:
                         reset_optimizer(t)
 
-                # Data dimensions are ``[unroll, batch] + [data]``
-                batch_stacked = [
-                    tf.stack(tf.split(dim, num_or_size_splits=meta.unroll_len))
-                    for dim in batch]
                 # Only create concrete loss on first iteration
                 if concrete_step is None:
                     concrete_step = self._make_cf(
@@ -230,7 +219,7 @@ class TrainingMixin:
 
                 # The actual step
                 loss, unroll_state, is_imitation = self._meta_step(
-                    meta, concrete_step, batch_stacked, unroll_state)
+                    meta, concrete_step, batch, unroll_state)
 
                 pbar.add(1, values=[("loss", loss)])
                 losses.add(
@@ -242,7 +231,7 @@ class TrainingMixin:
             self, problems, optimizer,
             unroll_len=lambda: 20, unroll_weights="sum",
             teachers=[], strategy="mean", p_teacher=0,
-            epochs=1, depth=0, repeat=1, persistent=False,
+            epochs=1, repeat=1, persistent=False,
             validation=False, seed=None, parameter_scale_spread=0.0):
         """Run meta-training.
 
@@ -271,12 +260,6 @@ class TrainingMixin:
             teachers is empty.
         epochs : int
             Number of epochs to run if batched
-        depth : int
-            Optimization depth, in meta-iterations, before the parameters
-            should be reinitialized. If 0, is treated as infinity (no resets).
-            A larger optimization depth allows more opportunities to train
-            on more refined optimization. Only operates when not in persistent
-            mode.
         repeat : int
             Number of repetitions to run using the same graph if full batched.
         persistent : bool

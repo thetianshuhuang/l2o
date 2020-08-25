@@ -178,6 +178,12 @@ class LossMixin:
             [1] Final (params, state, global_state) tuple. None values in are
                 returned as None values.
         """
+        # Split data; data dimensions are ``[unroll, batch] + [data]``
+        data = [
+            tf.stack(tf.split(dim, num_or_size_splits=meta.unroll_len))
+            for dim in data]
+
+        # Initialize state information, persistent scaling, etc
         unroll_state, state_mask = self._get_state(
             problem, unroll_state, seed=seed)
         init_obj = self._compute_init_obj(

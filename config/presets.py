@@ -22,7 +22,7 @@ OVERRIDE_PRESETS = {
     ],
     "simple_comparison": [
         (["training", "epochs"], 50),
-        (["training", "repeat"], 5)
+        (["training", "repeat"], 5),
         (["strategy", "unroll_distribution"], 200),
         (["strategy", "epochs_per_period"], 1),
         (["strategy", "annealing_schedule"], 0.05),

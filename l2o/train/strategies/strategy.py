@@ -248,7 +248,7 @@ class BaseStrategy:
         """Actual training method."""
         raise NotImplementedError()
 
-    def evaluate(self, *args, save=True, **kwargs):
+    def evaluate(self, *args, repeat=1, save=True, **kwargs):
         """Evaluate L2O.
 
         Parameters
@@ -261,19 +261,23 @@ class BaseStrategy:
 
         Keyword Args
         ------------
+        repeat : int
+            Number of times to repeat the evaluation.
         save : bool
-            Save as .json with the same base name as the weights file?
+            Save as .npz with the same base name as the weights file?
 
         Returns
         -------
         dict
-            Training results. Can be ignored if save=True.
+            Training results. Can be ignored if save=True. Each key has a shape
+            of (repeat, epochs) or (repeat, steps), so an individual trajectory
+            should be read as ```results[key][index]```.
         """
         self._load_network(*args)
-        results = evaluate(self.learner, **kwargs)
+        results = [evaluate(self.learner, **kwargs) for _ in range(repeat)]
+        results = {k: np.stack([d[k] for d in results]) for k in results[0]}
 
         if save:
-            with open(self._path(*args) + '.json', 'w') as f:
-                json.dump(results, f)
+            np.savez(self._path(*args) + '.npz', **results)
 
         return results
