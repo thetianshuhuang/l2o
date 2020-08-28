@@ -217,7 +217,7 @@ class TrainingMixin:
                 # Only create concrete loss on first iteration
                 if concrete_step is None:
                     concrete_step = self._make_cf(
-                        meta, batch_stacked, unroll_state, is_batched=True)
+                        meta, batch, unroll_state, is_batched=True)
 
                 # The actual step
                 loss, unroll_state, is_imitation = self._meta_step(
@@ -321,8 +321,7 @@ class TrainingMixin:
 
             if hasattr(problem, "get_dataset"):
                 results.append(
-                    self._train_batch(
-                        meta, repeat=repeat, epochs=epochs, depth=depth))
+                    self._train_batch(meta, repeat=repeat, epochs=epochs))
             elif hasattr(problem, "get_internal"):
                 results.append(
                     self._train_full(meta, repeat=repeat))

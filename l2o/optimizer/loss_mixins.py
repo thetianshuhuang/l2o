@@ -180,8 +180,7 @@ class LossMixin:
         """
         # Split data; data dimensions are ``[unroll, batch] + [data]``
         data = [
-            tf.stack(tf.split(dim, num_or_size_splits=meta.unroll_len))
-            for dim in data]
+            tf.stack(tf.split(dim, num_or_size_splits=unroll)) for dim in data]
 
         # Initialize state information, persistent scaling, etc
         unroll_state, state_mask = self._get_state(
