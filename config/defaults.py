@@ -44,6 +44,7 @@ LOSS = {
             "repeat": 1,
             "persistent": False,
             "parameter_scale_spread": 3.0,
+            "il_mode": "switch",
         },
     },
     "imitation": {
@@ -65,6 +66,7 @@ LOSS = {
             "repeat": 1,
             "persistent": False,
             "parameter_scale_spread": 3.0,
+            "il_mode": "switch"
         }
     }
 }

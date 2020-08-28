@@ -189,7 +189,7 @@ class LossMixin:
         init_obj = self._compute_init_obj(
             unroll_state.params, problem, data, unroll, is_batched)
         unroll_state, scale = self._make_random_scale(
-            unroll_state, parameter_scale_spread)
+            unroll_state, parameter_scale_spread, seed=seed)
         problem.reset(values=unroll_state.params)
 
         def get_objective(params, batch_):

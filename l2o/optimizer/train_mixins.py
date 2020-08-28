@@ -10,10 +10,9 @@ from .utils import reset_optimizer
 
 MetaIteration = collections.namedtuple(
     "MetaIteration", [
-        "problem", "optimizer",
-        "unroll_len", "weights",
-        "teachers", "strategy", "p_teacher",
-        "validation", "seed", "persistent", "parameter_scale_spread"
+        "problem", "optimizer", "unroll_len", "weights",
+        "teachers", "strategy", "p_teacher", "validation", "seed",
+        "persistent", "parameter_scale_spread", "il_mode"
     ])
 
 
@@ -95,8 +94,11 @@ class TrainingMixin:
 
     def _meta_step(self, meta, concrete_step, data, unroll_state):
         """Helper function to run for a single step."""
-        is_imitation = np.random.uniform(0, 1) < meta.p_teacher
-        w_meta, w_imit = (0.0, 1.0) if is_imitation else (1.0, 0.0)
+        if meta.il_mode == 'switch':
+            is_imitation = np.random.uniform(0, 1) < meta.p_teacher
+            w_meta, w_imit = (0.0, 1.0) if is_imitation else (1.0, 0.0)
+        if meta.il_mode == 'sum':
+            w_meta, w_imit = (1.0, p_teacher)
 
         loss, unroll_state = concrete_step(
             meta.weights, data, unroll_state,
@@ -232,7 +234,8 @@ class TrainingMixin:
             unroll_len=lambda: 20, unroll_weights="sum",
             teachers=[], strategy="mean", p_teacher=0,
             epochs=1, repeat=1, persistent=False,
-            validation=False, seed=None, parameter_scale_spread=0.0):
+            validation=False, seed=None, parameter_scale_spread=0.0,
+            il_mode="switch"):
         """Run meta-training.
 
         Parameters
@@ -256,8 +259,8 @@ class TrainingMixin:
               - "max" or ``tf.math.reduce_max``: minimax loss.
             Can also implement a custom multi-teacher strategy.
         p_teacher : float
-            Probability of choosing imitation learning. Cannot be >0 if
-            teachers is empty.
+            Probability of choosing imitation learning or imitation learning
+            proportional constant. Cannot be >0 if teachers is empty.
         epochs : int
             Number of epochs to run if batched
         repeat : int
@@ -277,6 +280,10 @@ class TrainingMixin:
             Each parameter is randomly scaled by a factor sampled from a
             log uniform distribution exp(Unif([-L, L])). If the spread is 0,
             this is equivalent to a constant scale of 1.
+        il_mode : str
+            Designates the imitation learning mode. Possible options:
+            - 'switch': loss = IL w.p. p_teacher, ML w.p. 1 - p_teacher
+            - 'sum': loss = p_teacher * IL + ML
 
         Returns
         -------
@@ -310,7 +317,7 @@ class TrainingMixin:
             meta = MetaIteration(
                 problem, optimizer, unroll, unroll_weights(unroll), teachers,
                 strategy, p_teacher, validation, seed, persistent,
-                parameter_scale_spread)
+                parameter_scale_spread, il_mode)
 
             if hasattr(problem, "get_dataset"):
                 results.append(

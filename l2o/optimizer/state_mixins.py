@@ -94,11 +94,11 @@ class StateMixin:
             problem.get_parameters(seed=seed),
             unroll_state.states, unroll_state.global_state)
 
-    def _make_random_scale(self, unroll_state, spread):
+    def _make_random_scale(self, unroll_state, spread, seed=None):
         """Create random scale, and scale parameters accordingly."""
         if spread > 0.0:
             scale = [
-                tf.exp(tf.random.uniform(tf.shape(p)))
+                tf.exp(tf.random.uniform(tf.shape(p), seed=seed))
                 for p in unroll_state.params]
             params_new = [p / s for p, s in zip(unroll_state.params, scale)]
             unroll_state = UnrollState(
