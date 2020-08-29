@@ -98,12 +98,13 @@ class TrainingMixin:
             is_imitation = np.random.uniform(0, 1) < meta.p_teacher
             w_meta, w_imit = (0.0, 1.0) if is_imitation else (1.0, 0.0)
         if meta.il_mode == 'sum':
-            w_meta, w_imit = (1.0, p_teacher)
+            is_imitation = False
+            w_meta, w_imit = (1.0, meta.p_teacher)
 
         loss, unroll_state = concrete_step(
             meta.weights, data, unroll_state,
-            meta_loss_weight=tf.constant(w_meta),
-            imitation_loss_weight=tf.constant(w_imit))
+            meta_loss_weight=tf.constant(w_meta, dtype=tf.float32),
+            imitation_loss_weight=tf.constant(w_imit, dtype=tf.float32))
         return loss, unroll_state, is_imitation
 
     def _train_full(self, meta, repeat=1):
