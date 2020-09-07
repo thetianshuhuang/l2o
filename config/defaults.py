@@ -177,6 +177,26 @@ NETWORK = {
             "bias_initializer": "zeros",
             "unit_forget_bias": True,
         }
+    },
+    "choice": {
+        "constructor": "Choice",
+        "network": {
+            # RNNProp
+            "layers": [20, 20],
+            "beta_1": 0.9,
+            "beta_2": 0.999,
+            "alpha": 0.1,
+            "epsilon": 1e-10,
+            "name": "ChoiceOptimizer",
+            # LSTMCell Args
+            "activation": "tanh",
+            "recurrent_activation": "sigmoid",
+            "use_bias": True,
+            "kernel_initializer": "glorot_uniform",
+            "recurrent_initializer": "orthogonal",
+            "bias_initializer": "zeros",
+            "unit_forget_bias": True,
+        }
     }
 }
 
