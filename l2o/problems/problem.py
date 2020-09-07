@@ -29,6 +29,8 @@ class Problem:
             ]
             if hasattr(self, "get_internal"):
                 self.internal = self.get_internal()
+        else:
+            self.trainable_variables = []
 
     def reset(self, values=None, internal=None):
         """Reset problem.

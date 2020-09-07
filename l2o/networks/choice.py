@@ -10,6 +10,9 @@ from .moments import rms_momentum
 class ChoiceOptimizer(BaseCoordinateWiseNetwork):
     """L2O that chooses either Adam or RMSProp at each iteration.
 
+    Used to show that IL with two teachers does not result in the L2O
+    memorizing its teachers and simply recalling them each iteration.
+
     Keyword Args
     ------------
     layers : int[]
@@ -38,7 +41,7 @@ class ChoiceOptimizer(BaseCoordinateWiseNetwork):
         self.epsilon = epsilon
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
-        self.choice = Dense(2, input_shape=(layers[-1],), activation="softmax")
+        self.choice = Dense(2, input_shape=(layers[-1],))
 
     def call(self, param, inputs, states):
 
@@ -64,10 +67,17 @@ class ChoiceOptimizer(BaseCoordinateWiseNetwork):
             x, states_new[hidden_name] = layer(x, states[hidden_name])
 
         # Factor in softmax of Adam, RMSProp
-        opt_weights = self.choice(x)
-        update = tf.reshape(
-            opt_weights[:, 0] * m_tilde + opt_weights[:, 1] * g_tilde,
-            tf.shape(param))
+        opt_weights = tf.reshape(self.choice(x), [-1, 2])
+
+        # Manual softmax in order to add epsilon in denominator
+        opt_weights = (
+            tf.exp(opt_weights) / (
+                tf.reduce_sum(tf.exp(opt_weights), axis=0) + self.epsilon))
+
+        # Combine softmax
+        update = (
+            tf.reshape(opt_weights[:, 0], tf.shape(param)) * m_tilde
+            + tf.reshape(opt_weights[:, 1], tf.shape(param)) * g_tilde)
 
         return update, states_new
 
