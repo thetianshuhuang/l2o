@@ -30,7 +30,7 @@ class ChoiceOptimizer(BaseCoordinateWiseNetwork):
     """
 
     def __init__(
-            self, layers=(20, 20), beta_1=0.9, beta_2=0.999, alpha=0.1,
+            self, layers=(20, 20), beta_1=0.9, beta_2=0.999,
             learning_rate=0.001, epsilon=1e-10, name="ChoiceOptimizer",
             **kwargs):
 
@@ -38,7 +38,6 @@ class ChoiceOptimizer(BaseCoordinateWiseNetwork):
 
         self.beta_1 = beta_1
         self.beta_2 = beta_2
-        self.alpha = alpha
         self.epsilon = epsilon
         self.learning_rate = learning_rate
 
