@@ -31,7 +31,8 @@ class ChoiceOptimizer(BaseCoordinateWiseNetwork):
 
     def __init__(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.999, alpha=0.1,
-            epsilon=1e-10, name="ChoiceOptimizer", **kwargs):
+            learning_rate=0.001, epsilon=1e-10, name="ChoiceOptimizer",
+            **kwargs):
 
         super().__init__(name=name)
 
@@ -39,6 +40,7 @@ class ChoiceOptimizer(BaseCoordinateWiseNetwork):
         self.beta_2 = beta_2
         self.alpha = alpha
         self.epsilon = epsilon
+        self.learning_rate = learning_rate
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
         self.choice = Dense(2, input_shape=(layers[-1],))
@@ -54,6 +56,7 @@ class ChoiceOptimizer(BaseCoordinateWiseNetwork):
         m_hat = states_new["m"] / (1. - self.beta_1)
         v_hat = states_new["v"] / (1. - self.beta_2)
 
+        m_rmsprop = states_new["m"] / tf.sqrt(v_hat + self.epsilon)
         m_tilde = m_hat / tf.sqrt(v_hat + self.epsilon)
         g_tilde = inputs / tf.sqrt(v_hat + self.epsilon)
 
@@ -75,8 +78,8 @@ class ChoiceOptimizer(BaseCoordinateWiseNetwork):
                 tf.reduce_sum(tf.exp(opt_weights), axis=0) + self.epsilon))
 
         # Combine softmax
-        update = (
-            tf.reshape(opt_weights[:, 0], tf.shape(param)) * m_tilde
+        update = self.learning_rate * (
+            tf.reshape(opt_weights[:, 0], tf.shape(param)) * m_rmsprop
             + tf.reshape(opt_weights[:, 1], tf.shape(param)) * g_tilde)
 
         return update, states_new
