@@ -52,18 +52,15 @@ class ChoiceOptimizer(BaseCoordinateWiseNetwork):
         states_new["m"], states_new["v"] = rms_momentum(
             inputs, states["m"], states["v"],
             beta_1=self.beta_1, beta_2=self.beta_2)
+        m_rmsprop = states_new["m"] / tf.sqrt(states_new["v"] + self.epsilon)
         m_hat = states_new["m"] / (1. - self.beta_1)
         v_hat = states_new["v"] / (1. - self.beta_2)
-
-        m_rmsprop = states_new["m"] / tf.sqrt(v_hat + self.epsilon)
         m_tilde = m_hat / tf.sqrt(v_hat + self.epsilon)
         g_tilde = inputs / tf.sqrt(v_hat + self.epsilon)
 
         # Recurrent
         x = tf.concat([
-            tf.reshape(m_tilde, [-1, 1]),
-            tf.reshape(g_tilde, [-1, 1])
-        ], 1)
+            tf.reshape(m_tilde, [-1, 1]), tf.reshape(g_tilde, [-1, 1])], 1)
         for i, layer in enumerate(self.recurrent):
             hidden_name = "rnn_{}".format(i)
             x, states_new[hidden_name] = layer(x, states[hidden_name])
@@ -72,9 +69,8 @@ class ChoiceOptimizer(BaseCoordinateWiseNetwork):
         opt_weights = tf.reshape(self.choice(x), [-1, 2])
 
         # Manual softmax in order to add epsilon in denominator
-        opt_weights = (
-            tf.exp(opt_weights) / (
-                tf.reduce_sum(tf.exp(opt_weights), axis=0) + self.epsilon))
+        normalize = tf.reduce_sum(tf.exp(opt_weights), axis=1, keepdims=True)
+        opt_weights = tf.exp(opt_weights) / (normalize + self.epsilon)
 
         # Combine softmax
         update = self.learning_rate * (
