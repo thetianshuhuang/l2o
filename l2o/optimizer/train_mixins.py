@@ -6,6 +6,7 @@ import collections
 from tensorflow.keras.utils import Progbar
 
 from .utils import reset_optimizer
+from l2o.train.strategies.deserialize import get_optimizer
 
 
 MetaIteration = collections.namedtuple(
@@ -308,7 +309,7 @@ class TrainingMixin:
                 raise ValueError(
                     "Invalid reduce strategy: {}".format("reduce_" + strategy))
         # tf.keras.optimizers.get will pass through if already a optimizer
-        teachers = [tf.keras.optimizers.get(t) for t in teachers]
+        teachers = [get_optimizer(t) for t in teachers]
 
         for itr, spec in enumerate(problems):
             spec.print(itr)

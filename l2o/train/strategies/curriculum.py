@@ -1,6 +1,7 @@
 """Curriculum Learning Training Strategy."""
 import os
 import numpy as np
+import tensorflow as tf
 
 from .strategy import BaseStrategy
 from .deserialize import to_float_schedule, to_integer_schedule
