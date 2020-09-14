@@ -79,3 +79,28 @@ def deserialize_problems(pset, default=None):
         return [deserialize_problem(p) for p in pset]
     else:
         return default
+
+
+def get_optimizer(opt):
+    """Helper function to get optimizer using tf.keras.optimizers.get.
+
+    Also includes optimizers in tensorflow_addons.optimizers if available.
+    """
+    # Mainline keras optimizers
+    try:
+        return tf.keras.optimizers.get(optimizer)
+    # Not in tf.keras.optimizers -> try tensorflow_addons
+    except ValueError as e:
+        # In tensorflow_addons -> replicate tf.keras.optimizers.get behavior
+        try:
+            import tensorflow_addons as tfa
+            if isinstance(opt, str):
+                return getattr(tfa, opt)()
+            elif isinstance(opt, dict):
+                return getattr(tfa, opt['class_name'])(**opt['config'])
+        # tensorflow_addons not available -> raise original error.
+        except ModuleNotFoundError:
+            print(
+                "Warning: tensorflow_addons is not available. Only Keras "
+                "Optimizers were searched for a match.")
+            raise(e)

@@ -9,7 +9,7 @@ import pandas as pd
 
 from l2o import problems
 from l2o.evaluate import evaluate
-from .deserialize import deserialize_problems
+from .deserialize import deserialize_problems, get_optimizer
 
 
 TrainingPeriod = collections.namedtuple(
@@ -79,7 +79,7 @@ class BaseStrategy:
             validation_problems, default=self.problems)
 
         self.learner = learner
-        self.optimizer = tf.keras.optimizers.get(optimizer)
+        self.optimizer = get_optimizer(optimizer)
         self.train_args = train_args
 
         self.epochs_per_period = epochs_per_period
@@ -274,7 +274,11 @@ class BaseStrategy:
             should be read as ```results[key][index]```.
         """
         self._load_network(*args)
-        results = [evaluate(self.learner, **kwargs) for _ in range(repeat)]
+        results = []
+        for i in range(repeat):
+            print("Evaluation Training {}/{}".format(i + 1, repeat))
+            results.append(
+                evaluate(self.learner, **kwargs) for _ in range(repeat))
         results = {k: np.stack([d[k] for d in results]) for k in results[0]}
 
         if save:
