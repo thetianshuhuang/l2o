@@ -94,11 +94,11 @@ def get_optimizer(opt):
     except ValueError as e:
         # In tensorflow_addons -> replicate tf.keras.optimizers.get behavior
         try:
-            import tensorflow_addons as tfa
+            from tensorflow_addons import optimizers as tfa_opts
             if isinstance(opt, str):
-                return getattr(tfa, opt)()
+                return getattr(tfa_opts, opt)()
             elif isinstance(opt, dict):
-                return getattr(tfa, opt['class_name'])(**opt['config'])
+                return getattr(tfa_opts, opt['class_name'])(**opt['config'])
         # tensorflow_addons not available -> raise original error.
         except ModuleNotFoundError:
             print(
