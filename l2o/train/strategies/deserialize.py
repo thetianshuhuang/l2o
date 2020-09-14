@@ -1,5 +1,6 @@
 """Deserialization Helper Functions for Training Strategies."""
 import numpy as np
+import tensorflow as tf
 
 from l2o import problems
 
@@ -88,7 +89,7 @@ def get_optimizer(opt):
     """
     # Mainline keras optimizers
     try:
-        return tf.keras.optimizers.get(optimizer)
+        return tf.keras.optimizers.get(opt)
     # Not in tf.keras.optimizers -> try tensorflow_addons
     except ValueError as e:
         # In tensorflow_addons -> replicate tf.keras.optimizers.get behavior
