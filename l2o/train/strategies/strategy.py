@@ -278,7 +278,7 @@ class BaseStrategy:
         for i in range(repeat):
             print("Evaluation Training {}/{}".format(i + 1, repeat))
             results.append(
-                evaluate(self.learner, **kwargs) for _ in range(repeat))
+                [evaluate(self.learner, **kwargs) for _ in range(repeat)])
         results = {k: np.stack([d[k] for d in results]) for k in results[0]}
 
         if save:
