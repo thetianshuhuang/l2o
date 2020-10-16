@@ -195,6 +195,8 @@ class LossMixin:
             return problem.objective(
                 [p * s for p, s in zip(params, scale)], batch_)
 
+        log_array = tf.TensorArray(tf.float32, size=unroll)
+
         loss = 0.
         for i in tf.range(unroll):
             batch = [dim[i] for dim in data] if is_batched else data
@@ -218,12 +220,14 @@ class LossMixin:
                         lambda: get_objective(var_set, batch), var_set)
                 # Loss for each teacher is l2 between parameters
                 # Loss for multi-teacher is determined by the ``strategy``
-                il_loss = strategy([
+                teacher_loss = [
                     tf.add_n([
                         tf.nn.l2_loss(svar - tvar)
                         for svar, tvar in zip(unroll_state.params, var_set)
                     ]) for var_set in trainables
-                ])
+                ]
+                ta.write(i, tf.math.argmin(teacher_loss))
+                il_loss = strategy(teacher_loss)
                 if self.use_log_objective:
                     il_loss = tf.math.log(il_loss)
                 loss += weights[i] * imitation_loss_weight * il_loss
@@ -233,4 +237,4 @@ class LossMixin:
                     weights[i] * meta_loss_weight
                     * self._scale_meta_objective(current_obj, init_obj[i]))
 
-        return loss, self._mask_state(unroll_state, state_mask)
+        return loss, self._mask_state(unroll_state, state_mask), log_array

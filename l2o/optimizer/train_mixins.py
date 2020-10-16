@@ -102,11 +102,11 @@ class TrainingMixin:
             is_imitation = False
             w_meta, w_imit = (1.0, meta.p_teacher)
 
-        loss, unroll_state = concrete_step(
+        loss, unroll_state, tmp = concrete_step(
             meta.weights, data, unroll_state,
             meta_loss_weight=tf.constant(w_meta, dtype=tf.float32),
             imitation_loss_weight=tf.constant(w_imit, dtype=tf.float32))
-        return loss, unroll_state, is_imitation
+        return loss, unroll_state, is_imitation, tmp
 
     def _train_full(self, meta, repeat=1):
         """Full batch training.
@@ -148,7 +148,7 @@ class TrainingMixin:
             if concrete_step is None:
                 concrete_step = self._make_cf(meta, data, unroll_state)
 
-            loss, unroll_state, is_imitation = self._meta_step(
+            loss, unroll_state, is_imitation, tmp = self._meta_step(
                 meta, concrete_step, data, unroll_state)
 
             pbar.add(1, values=[("loss", loss)])
@@ -222,7 +222,7 @@ class TrainingMixin:
                         meta, batch, unroll_state, is_batched=True)
 
                 # The actual step
-                loss, unroll_state, is_imitation = self._meta_step(
+                loss, unroll_state, is_imitation, tmp = self._meta_step(
                     meta, concrete_step, batch, unroll_state)
 
                 pbar.add(1, values=[("loss", loss)])
