@@ -21,18 +21,19 @@ class StepMixin:
         # trainable_variables not yet built -> capture all variables
         if len(self.network.trainable_variables) <= 2:
             with tf.GradientTape() as tape:
-                loss, unroll_state, tmp = callable()
+                results = callable()
         # trainable_variables built -> capture only learner variables
         else:
             with tf.GradientTape(watch_accessed_variables=False) as tape:
                 tape.watch(self.network.trainable_variables)
-                loss, unroll_state, tmp = callable()
+                results = callable()
 
         # Gradients
-        grads = tape.gradient(loss, self.network.trainable_variables)
+        # Loss is results[0]
+        grads = tape.gradient(results[0], self.network.trainable_variables)
         opt.apply_gradients(zip(grads, self.network.trainable_variables))
 
-        return loss, unroll_state, tmp
+        return results
 
     @tf.function
     def abstract_step(

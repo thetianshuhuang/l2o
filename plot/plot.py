@@ -88,7 +88,8 @@ def plot_training(tests, axs, meta=True):
         axs[0].set_xticks(np.arange(2, 20, 2))
     else:
         axs.legend()
-        axs.set_xlabel("Epcoh")
+        axs.set_xlabel("Epoch")
+        axs.set_ylabel("Log Imitation Loss")
         axs.set_xticks(np.arange(2, 20, 2))
 
 
