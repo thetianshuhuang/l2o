@@ -41,12 +41,10 @@ def evaluate(
         opt, model="simple_conv", dataset="mnist", epochs=20, batch_size=32,
         activation=tf.nn.relu):
     """Evaluate L2O.
-
     Parameters
     ----------
     opt : tf.keras.optimizers.Optimizer
         Optimizer to evaluate.
-
     Keyword Args
     ------------
     model : str or callable(info, activation) -> tf.keras.Model
@@ -60,7 +58,6 @@ def evaluate(
         Batch size for dataset.
     activation : str or callable(tf.Tensor) -> tf.Tensor
         Activation functions.
-
     Returns
     -------
     dict

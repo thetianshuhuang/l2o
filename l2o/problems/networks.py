@@ -32,34 +32,47 @@ class Classifier(Problem):
         Batch size for dataset
     size : int
         Number of elements in this dataset, if known.
+
+    Attributes
+    ----------
+    batch_size : int
+        Replica-adjusted batch size (# samples per replica)
     """
 
     def __init__(
             self, model, loss, dataset, persistent=False,
-            shuffle_buffer=None, batch_size=32, size=None):
+            shuffle_buffer=None, batch_size=32, size=None, distribute=None):
 
+        self.dataset = dataset
         self.model = model
         self.loss = loss
-        self.dataset = dataset
 
         self.shuffle_buffer = shuffle_buffer
-        self.batch_size = batch_size
         self._size = size
 
-        super().__init__(persistent=persistent)
+        super().__init__(persistent=persistent, distribute=distribute)
+
+        if batch_size % self.distribute.num_replicas_in_sync != 0:
+            raise ValueError(
+                "Number of replicas must divide batch size. Received "
+                "batch_size={}, num_replicas_in_sync={}".format(
+                    batch_size, distribute.num_replicas_in_sync))
+        self.batch_size = int(
+            batch_size / self.distribute.num_replicas_in_sync)
 
     def size(self, unroll):
         """Get number of batches for this unroll duration."""
         return math.floor(self._size / (unroll * self.batch_size))
 
-    def get_dataset(self, unroll, seed=None):
+    def get_dataset(self, unroll, seed=None, distribute=None):
         """Get problem dataset."""
         dataset = self.dataset
         if self.shuffle_buffer is not None:
             dataset = self.dataset.shuffle(self.shuffle_buffer, seed=seed)
-        return dataset.batch(
-            self.batch_size * unroll, drop_remainder=True
-        ).prefetch(tf.data.experimental.AUTOTUNE)
+        return self.distribute.experimental_distribute_dataset(
+            dataset.batch(
+                self.batch_size * unroll, drop_remainder=True
+            ).prefetch(tf.data.experimental.AUTOTUNE))
 
     def get_parameters(self, seed=None):
         """Make variables corresponding to this problem."""
@@ -76,6 +89,19 @@ def load_images(dataset, split="train"):
 
     Note: shuffle_files MUST be false, since shuffling with seeds occurs later
     in the pipeline.
+
+    Suggested Datasets:
+
+    dataset       | shape     | k   | description
+    --------------+-----------+-----+------------------------------------------
+    cifar10       | 32x32x3   | 10  | images
+    emnist        | 28x28     | 10  | handwritten digits
+    fashion_mnist | 28x28     | 10  | images (clothing)
+    kmnist        | 28x28     | 10  | handwritten Japanese characters
+    mnist         | 28x28     | 10  | handwritten digits
+    cifar100      | 32x32x3   | 100 | images
+    omniglot      | 105x105x3 | 50  | handwritten characters
+    stl10         | 96x96x3   | 10  | images
 
     Parameters
     ----------
@@ -118,8 +144,9 @@ def _make_tfds(network, dataset="mnist", **kwargs):
 
     return Classifier(
         network(input_shape, labels),
-        tf.keras.losses.SparseCategoricalCrossentropy(), dataset,
-        size=info.splits['train'].num_examples, **kwargs)
+        tf.keras.losses.SparseCategoricalCrossentropy(
+            reduction=tf.keras.losses.Reduction.NONE),
+        dataset, size=info.splits['train'].num_examples, **kwargs)
 
 
 def mlp_classifier(

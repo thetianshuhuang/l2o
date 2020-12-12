@@ -1,4 +1,5 @@
 """Private helper functions copied from tensorflow source code."""
+
 # Copyright 2018 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,9 +23,15 @@ def _var_key(var):
     In graph mode the name is derived from the var shared name.
     In eager mode the name is derived from the var unique id.
     If distribution strategy exists, get the primary variable first.
-    Args:
-        var: the variable.
-    Returns:
+
+    Parameters
+    ----------
+    var : tf.Variable
+        the variable.
+
+    Returns
+    -------
+    object
         the unique name of the variable.
     """
     # Get the distributed variable if it exists.

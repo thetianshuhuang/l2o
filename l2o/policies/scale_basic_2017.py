@@ -5,10 +5,10 @@ import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
 
 from .moments import rms_scaling
-from .network import BaseCoordinateWiseNetwork
+from .architectures import BaseCoordinateWisePolicy
 
 
-class ScaleBasicOptimizer(BaseCoordinateWiseNetwork):
+class ScaleBasicOptimizer(BaseCoordinateWisePolicy):
     """Coordinatewise version.
 
     Described by code accompanying
@@ -29,12 +29,10 @@ class ScaleBasicOptimizer(BaseCoordinateWiseNetwork):
         Passed onto tf.keras.layers.LSTMCell
     """
 
-    def __init__(
-            self, layers=(20, 20), init_lr=(1., 1.),
-            name="ScaleBasicOptimizer", **kwargs):
+    default_name = "ScaleBasicOptimizer"
 
-        super().__init__(name=name)
-
+    def init_layers(self, layers=(20, 20), init_lr=(1., 1.), **kwargs):
+        """Initialize layers."""
         self.init_lr = init_lr
 
         self.recurrent = [
@@ -51,7 +49,8 @@ class ScaleBasicOptimizer(BaseCoordinateWiseNetwork):
             1, input_shape=(layers[-1],), activation="sigmoid",
             name="learning_rate_change")
 
-    def call(self, param, inputs, states):
+    def call(self, param, inputs, states, global_state):
+        """Network call override."""
         states_new = {}
 
         # Scaling
@@ -76,7 +75,7 @@ class ScaleBasicOptimizer(BaseCoordinateWiseNetwork):
         return update, states
 
     def get_initial_state(self, var):
-
+        """Get initial model state as a dictionary."""
         # RNN state
         batch_size = tf.size(var)
         rnn_state = {

@@ -3,11 +3,11 @@ import tensorflow as tf
 from tensorflow.keras.layers import GRUCell, Dense
 from scipy.special import logit
 
-from .network import BaseHierarchicalNetwork
+from .architectures import BaseHierarchicalPolicy
 from .moments import rms_momentum
 
 
-class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
+class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
     """Hierarchical optimizer.
 
     Described in
@@ -43,16 +43,15 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalNetwork):
         Passed onto tf.keras.layers.GRUCell
     """
 
-    def __init__(
+    default_name = "ScaleHierarchicalOptimizer"
+
+    def init_layers(
             self, param_units=10, tensor_units=5, global_units=5,
             init_lr=(1e-6, 1e-2), timescales=1, epsilon=1e-10,
             momentum_decay_bias_init=logit(0.9),
             variance_decay_bias_init=logit(0.999),
-            use_gradient_shortcut=True,
-            name="ScaleHierarchicalOptimizer", **kwargs):
-
-        super().__init__(name=name)
-
+            use_gradient_shortcut=True, **kwargs):
+        """Initialize layers."""
         assert(init_lr[0] > 0 and init_lr[1] > 0 and epsilon > 0)
         self.timescales = timescales
         self.init_lr = init_lr

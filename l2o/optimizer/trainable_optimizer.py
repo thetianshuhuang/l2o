@@ -1,18 +1,12 @@
 """Trainable optimizer base class extending tf.keras.optimizers.Optimizer."""
-import tensorflow as tf
 
-from .state_mixins import StateMixin
-from .loss_mixins import LossMixin
-from .train_mixins import TrainingMixin
-from .step_mixins import StepMixin
+import tensorflow as tf
 
 from .tf_utils import _var_key
 from .utils import wrap_variables, nested_assign
 
 
-class TrainableOptimizer(
-        StateMixin, LossMixin, StepMixin,
-        TrainingMixin, tf.keras.optimizers.Optimizer):
+class TrainableOptimizer(tf.keras.optimizers.Optimizer):
     """Trainable optimizer using keras' optimizer API.
 
     Parameters
@@ -26,43 +20,16 @@ class TrainableOptimizer(
         Optimizer name
     weights_file : str | None
         Optional filepath to load optimizer network weights from.
-    use_log_objective : bool
-        Whether this optimizer uses the logarithm of the objective when
-        computing the loss
-    scale_objective : bool
-        Whether the loss should be scaled by the initial value.
-    obj_train_max_multiplier : float
-        The maximum multiplier for the increase in the objective before
-        meta-training is stopped. If <= 0, meta-training is not stopped
-        early.
-    use_numerator_epsilon : bool
-        Whether to use epsilon in the numerator when scaling the
-        problem objective during meta-training.
-    epsilon : float
-        Epsilon value.
     """
 
-    def __init__(
-            self, network,
-            name="GenericTrainableOptimizer", weights_file=None,
-            use_log_objective=True, scale_objective=False,
-            obj_train_max_multiplier=-1,
-            use_numerator_epsilon=True, epsilon=1e-10):
+    def __init__(self, network, name="TrainableOptimizer", weights_file=None):
 
-        # Core
         super().__init__(name)
         self.name = name
         self.network = network
         if weights_file is not None:
             network.load_weights(weights_file)
         self._state_dict = {}
-
-        # Params
-        self.use_log_objective = use_log_objective
-        self.scale_objective = scale_objective
-        self.obj_train_max_multiplier = obj_train_max_multiplier
-        self.use_numerator_epsilon = use_numerator_epsilon
-        self.epsilon = epsilon
 
     def add_state(self, var, value):
         """Add state corresponding to a given variable for optimization.
@@ -181,13 +148,7 @@ class TrainableOptimizer(
 
     def get_config(self):
         """Serialize Configuration."""
-        return {
-            "use_log_objective": self.use_log_objective,
-            "obj_train_max_multiplier": self.obj_train_max_multiplier,
-            "use_numerator_epsilon": self.use_numerator_epsilon,
-            "epsilon": self.epsilon,
-            "scale_objective": self.scale_objective
-        }
+        return {}
 
     def variables(self):
         """Returns variables of this Optimizer based on the order created.

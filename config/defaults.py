@@ -1,26 +1,27 @@
-"""Default Settings."""
+"""Defaults."""
 
 from scipy.special import logit
 
 
+def get_default(strategy="simple", policy="DMOptimizer"):
+    """Get default configuration."""
+    return dict(**BASE, **STRATEGY[strategy], **POLICY[network])
+
+
+# ------------------------------ Base Arguments ----------------------------- #
+
 BASE = {
-    "problems": [
-        {
-            "target": "mlp_classifier",
-            "args": [],
-            "kwargs": {
-                "layers": [20], "dataset": "mnist", "activation": "sigmoid",
-                "shuffle_buffer": 16384, "batch_size": 64
-            }
-        },
-    ],
-    "validation_problems": None,
-    "loss_args": {
+    "training": {
         "use_log_objective": True,
         "scale_objective": True,
+        "parameter_scale_spread": 3.0,
+        "loss_reduce": "reduce_mean",
+        "il_mode": "switch",
+        "unroll_weight": "sum",
+        "teachers": [],
         "obj_train_max_multiplier": -1,
-        "use_numerator_epsilon": True,
-        "epsilon": 1e-10
+        "epsilon": 1e-10,
+        "step_callback": None
     },
     "optimizer": {
         "class_name": "Adam",
@@ -30,81 +31,45 @@ BASE = {
             "beta_2": 0.999
         }
     },
-}
-
-
-LOSS = {
-    "meta": {
-        "training": {
-            "unroll_weights": "mean",
-            "teachers": [],
-            "strategy": "mean",
-            "p_teacher": 0,
-            "epochs": 1,
-            "repeat": 1,
-            "persistent": False,
-            "parameter_scale_spread": 3.0,
-            "il_mode": "switch",
+    "problems": [
+        {
+            "target": "mlp_classifier",
+            "args": [],
+            "kwargs": {
+                "layers": [20], "dataset": "mnist", "activation": "sigmoid",
+                "shuffle_buffer": 16384, "batch_size": 64
+            }
         },
-    },
-    "imitation": {
-        "training": {
-            "unroll_weights": "mean",
-            "teachers": [
-                {
-                    "class_name": "Adam",
-                    "config": {
-                        "learning_rate": 0.001,
-                        "beta_1": 0.9,
-                        "beta_2": 0.999
-                    }
-                },
-            ],
-            "p_teacher": 1,
-            "strategy": "mean",
-            "epochs": 5,
-            "repeat": 1,
-            "persistent": False,
-            "parameter_scale_spread": 3.0,
-            "il_mode": "switch"
-        }
-    }
+    ]
 }
 
+# --------------------------------- Strategy -------------------------------- #
 
 STRATEGY = {
     "simple": {
-        "strategy_constructor": "Simple",
+        "strategy_constructor": "SimpleStrategy",
         "strategy": {
+            "validation_problems": None,
             "epochs_per_period": 10,
             "validation_seed": 12345,
             "num_periods": 100,
             "unroll_distribution": 200,
+            "epochs": 1,
+            "repeat": 1,
             "annealing_schedule": 0.1,
+            "validation_repeat": None,
             "validation_unroll": 200,
-            "validation_repeat": 1,
+            "name": "SimpleStrategy",
         }
-    },
-    "curriculum": {
-        "strategy_constructor": "CurriculumLearning",
-        "strategy": {
-            "epochs_per_period": 10,
-            "validation_seed": 12345,
-            "unroll_schedule": {"coefficient": 16, "base": 2},
-            "epoch_schedule": {"coefficient": 2, "base": 2},
-            "annealing_schedule": 0.1,
-            "annealing_floor": 0.0,
-            "min_periods": 10,
-            "max_stages": 3,
-        },
     }
 }
 
+# ------------------------ Learned Optimizer Network ------------------------ #
 
-NETWORK = {
+POLICY = {
     "scale_hierarchical": {
-        "constructor": "ScaleHierarchical",
-        "network": {
+        "policy_constructor": "ScaleHierarchicalOptimizer",
+        "policy": {
             # Scale network args
             "param_units": 20,
             "tensor_units": 10,
@@ -126,8 +91,8 @@ NETWORK = {
         }
     },
     "scale_basic": {
-        "constructor": "ScaleBasic",
-        "network": {
+        "policy_constructor": "ScaleBasicOptimizer",
+        "policy": {
             # Scale network args
             "layers": [20, 20],
             "init_lr": [1., 1.],
@@ -143,8 +108,8 @@ NETWORK = {
         }
     },
     "rnnprop": {
-        "constructor": "RNNProp",
-        "network": {
+        "policy_constructor": "RNNPropOptimizer",
+        "policy": {
             # RNNProp
             "layers": [20, 20],
             "beta_1": 0.9,
@@ -163,8 +128,8 @@ NETWORK = {
         }
     },
     "dmoptimizer": {
-        "constructor": "DM",
-        "network": {
+        "policy_constructor": "DMOptimizer",
+        "policy": {
             # DMOptimizer
             "layers": [20, 20],
             "name": "DMOptimizer",
@@ -179,8 +144,8 @@ NETWORK = {
         }
     },
     "choice": {
-        "constructor": "Choice",
-        "network": {
+        "policy_constructor": "ChoiceOptimizer",
+        "policy": {
             # RNNProp
             "layers": [20, 20],
             "beta_1": 0.9,
@@ -199,8 +164,3 @@ NETWORK = {
         }
     }
 }
-
-
-def get_default(loss="meta", strategy="simple", network="dmoptimizer"):
-    """Get default arguments."""
-    return dict(**BASE, **LOSS[loss], **STRATEGY[strategy], **NETWORK[network])

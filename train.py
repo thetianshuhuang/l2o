@@ -12,9 +12,16 @@ Optional flags:
 --presets=preset1,preset2,...: presets to load.
 """
 
-import l2o
-from config import get_default, ArgParser, get_preset
 import sys
+import tensorflow as tf
+
+import l2o
+from config import get_default, get_preset, ArgParser
+
+# System specific settings
+physical_devices = tf.config.list_physical_devices('GPU') 
+tf.config.experimental.set_memory_growth(physical_devices[0], True)
+tf.get_logger().setLevel('INFO')
 
 # Directory always required
 args = ArgParser(sys.argv[1:])
@@ -23,8 +30,10 @@ directory = args.pop_get("--directory", default="weights")
 # Pick up flags first
 initialize_only = args.pop_check("--initialize")
 
-# Select strategy
-strategy = args.pop_get("--strategy", "curriculum")
+# Default params
+strategy = args.pop_get("--strategy", "simple")
+network = args.pop_get("--network", "rnnprop")
+default = get_default(strategy=strategy, network=network)
 
 # Build overrides
 presets = args.pop_get("--presets", "")
@@ -33,11 +42,20 @@ for p in presets.split(','):
     overrides += get_preset(p)
 overrides += args.to_overrides()
 
-# Build strategy
-default = get_default(loss="imitation", strategy=strategy, network="rnnprop")
-trainer = l2o.train.build(
-    default, overrides, directory=directory, saved_config=True, strict=True)
+# TMP DISTRIBUTE
+gpus = tf.config.experimental.list_physical_devices('GPU')
+tf.config.experimental.set_virtual_device_configuration(
+    gpus[0], [
+        tf.config.experimental.VirtualDeviceConfiguration(memory_limit=512),
+        tf.config.experimental.VirtualDeviceConfiguration(memory_limit=512)])
+print(tf.config.experimental.list_logical_devices('GPU'))
+distribute = tf.distribute.MirroredStrategy()
 
-# Train if not --initialize
-if not initialize_only:
-    trainer.train()
+with distribute.scope():
+    # Build strategy
+    strategy = l2o.build(
+        default, overrides, directory=directory, strict=True)
+
+    # Train if not --initialize
+    if not initialize_only:
+        strategy.train()

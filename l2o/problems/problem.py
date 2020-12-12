@@ -16,21 +16,28 @@ class Problem:
     noise_stddev : float
         Normally distributed noise to add to gradients during training to
         simulate minibatch noise
+    distribute : None or tf.distribute.Strategy
+        Distributed training tensorflow strategy.
     """
 
-    def __init__(self, persistent=0, noise_stddev=0.0):
+    def __init__(self, persistent=0, noise_stddev=0.0, distribute=None):
 
         self.noise_stddev = noise_stddev
 
-        if persistent:
-            self.trainable_variables = [
-                [tf.Variable(v) for v in self.get_parameters()]
-                for _ in range(persistent)
-            ]
-            if hasattr(self, "get_internal"):
-                self.internal = self.get_internal()
-        else:
-            self.trainable_variables = []
+        if distribute is None:
+            distribute = tf.distribute.get_strategy()
+        self.distribute = distribute
+
+        with distribute.scope():
+            if persistent:
+                self.trainable_variables = [
+                    [tf.Variable(v) for v in self.get_parameters()]
+                    for _ in range(persistent)
+                ]
+                if hasattr(self, "get_internal"):
+                    self.internal = self.get_internal()
+            else:
+                self.trainable_variables = []
 
     def reset(self, values=None, internal=None):
         """Reset problem.
@@ -85,6 +92,18 @@ class Problem:
         -------
         tf.Tensor[]
             A list of tensors representing the parameters for this problem.
+        """
+        raise NotImplementedError()
+
+    def get_dataset(self, seed=None, distribute=None):
+        """Get problem dataset.
+
+        Parameters
+        ----------
+        seed : int
+            Random seed to intialize with.
+        distribute : None or tf.distribute.Strategy
+            Distributed training tensorflow strategy.
         """
         raise NotImplementedError()
 

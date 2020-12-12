@@ -3,11 +3,11 @@
 import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
 
-from .network import BaseCoordinateWiseNetwork
+from .architectures import BaseCoordinateWisePolicy
 from .moments import rms_momentum
 
 
-class ChoiceOptimizer(BaseCoordinateWiseNetwork):
+class ChoiceOptimizer(BaseCoordinateWisePolicy):
     """L2O that chooses either Adam or RMSProp at each iteration.
 
     Used to show that IL with two teachers does not result in the L2O
@@ -44,8 +44,8 @@ class ChoiceOptimizer(BaseCoordinateWiseNetwork):
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
         self.choice = Dense(2, input_shape=(layers[-1],))
 
-    def call(self, param, inputs, states):
-
+    def call(self, param, inputs, states, global_state):
+        """Network call override."""
         states_new = {}
 
         # Adam/RMSProp updates
@@ -80,7 +80,7 @@ class ChoiceOptimizer(BaseCoordinateWiseNetwork):
         return update, states_new
 
     def get_initial_state(self, var):
-
+        """Get initial model state as a dictionary."""
         # RNN state
         batch_size = tf.size(var)
         rnn_state = {

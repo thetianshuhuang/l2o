@@ -1,12 +1,10 @@
-"""L2O Network Training."""
-from .build import build, build_from_config
-from .strategies import (
-    BaseStrategy, SimpleStrategy, CurriculumLearningStrategy)
+"""Optimizer training methods."""
+
+from .optimizer_training import OptimizerTraining
+from .step_callbacks import BaseStepCallback, WhichTeacherCallback
 
 __all__ = [
-    "build",
-    "build_from_config",
-    "CurriculumLearningStrategy",
-    "SimpleStrategy",
-    "BaseStrategy"
+    "OptimizerTraining",
+    "BaseStepCallback",
+    "WhichTeacherCallback"
 ]

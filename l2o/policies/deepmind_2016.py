@@ -3,10 +3,10 @@
 import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
 
-from .network import BaseCoordinateWiseNetwork
+from .architectures import BaseCoordinateWisePolicy
 
 
-class DMOptimizer(BaseCoordinateWiseNetwork):
+class DMOptimizer(BaseCoordinateWisePolicy):
     """DMOptimizer algorithm.
 
     Described in
@@ -23,8 +23,10 @@ class DMOptimizer(BaseCoordinateWiseNetwork):
         Passed onto tf.keras.layers.LSTMCell
     """
 
-    def __init__(self, layers=(20, 20), name="DMOptimizer", **kwargs):
+    default_name = "DMOptimizer"
 
+    def init_layers(self, layers=(20, 20), **kwargs):
+        """Initialize layers."""
         super().__init__(name=name)
 
         self.recurrent = [
@@ -32,7 +34,8 @@ class DMOptimizer(BaseCoordinateWiseNetwork):
             for i, hsize in enumerate(layers)]
         self.delta = Dense(1, input_shape=(layers[-1],), name="delta")
 
-    def call(self, param, inputs, states):
+    def call(self, param, inputs, states, global_state):
+        """Network call override."""
         states_new = {}
 
         x = tf.reshape(inputs, [-1, 1])
@@ -44,6 +47,7 @@ class DMOptimizer(BaseCoordinateWiseNetwork):
         return tf.reshape(x, param.shape), states_new
 
     def get_initial_state(self, var):
+        """Get initial model state as a dictionary."""
         batch_size = tf.size(var)
         return {
             "lstm_{}".format(i): layer.get_initial_state(

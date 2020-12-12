@@ -3,11 +3,11 @@
 import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
 
-from .network import BaseCoordinateWiseNetwork
+from .architectures import BaseCoordinateWisePolicy
 from .moments import rms_momentum
 
 
-class RNNPropOptimizer(BaseCoordinateWiseNetwork):
+class RNNPropOptimizer(BaseCoordinateWisePolicy):
     """RNNProp algorithm.
 
     Described in
@@ -32,12 +32,12 @@ class RNNPropOptimizer(BaseCoordinateWiseNetwork):
         Passed onto tf.keras.layers.LSTMCell
     """
 
-    def __init__(
+    default_name = "RNNPropOptimizer"
+
+    def init_layers(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.9, alpha=0.1,
-            epsilon=1e-10, name="RNNPropOptimizer", **kwargs):
-
-        super().__init__(name=name)
-
+            epsilon=1e-10, **kwargs):
+        """Initialize layers."""
         self.beta_1 = beta_1
         self.beta_2 = beta_2
         self.alpha = alpha
@@ -46,7 +46,8 @@ class RNNPropOptimizer(BaseCoordinateWiseNetwork):
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
         self.delta = Dense(1, input_shape=(layers[-1],), activation="tanh")
 
-    def call(self, param, inputs, states):
+    def call(self, param, inputs, states, global_state):
+        """Policy call override."""
         states_new = {}
 
         # From table 1
@@ -74,7 +75,7 @@ class RNNPropOptimizer(BaseCoordinateWiseNetwork):
         return update, states_new
 
     def get_initial_state(self, var):
-
+        """Get initial model state as a dictionary."""
         # RNN state
         batch_size = tf.size(var)
         rnn_state = {

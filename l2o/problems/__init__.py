@@ -1,13 +1,13 @@
-"""L2O Model Training Problems."""
+"""Training problems."""
+
+from .networks import Classifier, load_images, mlp_classifier, conv_classifier
 from .problem import Problem, ProblemSpec
-from .well_behaved import Quadratic
-from .networks import mlp_classifier, conv_classifier, load_images
 
 __all__ = [
-    "Problem",
-    "ProblemSpec",
-    "Quadratic",
+    "Classifier",
     "load_images",
     "mlp_classifier",
-    "conv_classifier"
+    "conv_classifier",
+    "Problem",
+    "ProblemSpec"
 ]

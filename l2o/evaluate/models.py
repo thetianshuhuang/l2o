@@ -33,3 +33,11 @@ def deeper_mlp(info, activation=tf.nn.relu):
         tf.keras.layers.Dense(20, activation=activation),
         tf.keras.layers.Dense(10, activation="softmax")
     ])
+
+
+def debug_net(info, activation=tf.nn.relu):
+    """Debug Network."""
+    return tf.keras.Sequential([
+        tf.keras.layers.MaxPool2D(pool_size=(4, 4)),
+        tf.keras.layers.Dense(10, activation="softmax")
+    ])

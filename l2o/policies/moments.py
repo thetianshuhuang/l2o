@@ -71,4 +71,4 @@ def rms_scaling(grad, decay, ms, epsilon=1e-16):
     # else:
     ms = (1. - decay) * (tf.square(grad)) + decay * ms
 
-    return tf.math.asinh(grad / tf.sqrt(ms + epsilon)), ms
+    return grad / tf.sqrt(ms + epsilon), ms

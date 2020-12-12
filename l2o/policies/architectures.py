@@ -4,10 +4,43 @@ import tensorflow as tf
 from l2o.optimizer import CoordinateWiseOptimizer, HierarchicalOptimizer
 
 
-class BaseLearnToOptimizeNetwork(tf.keras.Model):
-    """Base L2O Class."""
+class BaseLearnToOptimizePolicy(tf.keras.Model):
+    """Base L2O Class.
 
-    def call(self, param, inputs, states):
+    Keyword Args
+    ------------
+    name : str or None
+        Defaults to name specified by the ``default_name`` attribute.
+    distribute : None or tf.distribute.Strategy
+        Distributed training tensorflow strategy.
+    kwargs : dict
+        Passed to ``init_layers``.
+    """
+
+    default_name = "LearnedOptimizer"
+
+    def __init__(self, name=None, distribute=None, **kwargs):
+
+        if name is None:
+            name = self.default_name
+        super().__init__(name)
+
+        self.config = kwargs
+
+        if distribute is None:
+            distribute = tf.distribute.get_strategy()
+        with distribute.scope():
+            self.init_layers(**kwargs)
+
+    def init_layers(self, **kwargs):
+        """Initialize layers."""
+        raise NotImplementedError()
+
+    def get_config(self):
+        """Get network config."""
+        return self.config
+
+    def call(self, param, inputs, states, global_state):
         """Network call override (handled by tf.keras.Model).
 
         Parameters
@@ -19,6 +52,9 @@ class BaseLearnToOptimizeNetwork(tf.keras.Model):
         states : object
             Nested structure containing current hidden states; encoded by
             .get_initial_state
+        global_state : object
+            Nested structure containing current global hidden state; can be
+            empty.
 
         Returns
         -------
@@ -66,27 +102,30 @@ class BaseLearnToOptimizeNetwork(tf.keras.Model):
         """
         raise NotImplementedError()
 
-
-class BaseCoordinateWiseNetwork(BaseLearnToOptimizeNetwork):
-    """Base Class for CoordinateWise L2O Networks."""
-
-    architecture = CoordinateWiseOptimizer
-
     def call_global(self, states, global_state):
-        """No action.
+        """By default, perform no action.
 
         Due to a tensorflow bug that attempts to convert parameters inside
-        nested structures that are None to tf.Tensor, returns "0." instead of
+        nested structures that are None to tf.Tensor, returns ``0.`` instead of
         ``None`` as it should be.
         """
         return 0.
 
     def get_initial_state_global(self):
-        """No global state."""
+        """By default, there is no global state.
+
+        See ```call_global``` for reason why we return 0.
+        """
         return 0.
 
 
-class BaseHierarchicalNetwork(BaseLearnToOptimizeNetwork):
+class BaseCoordinateWisePolicy(BaseLearnToOptimizeNetwork):
+    """Base Class for CoordinateWise L2O Networks."""
+
+    architecture = CoordinateWiseOptimizer
+
+
+class BaseHierarchicalPolicy(BaseLearnToOptimizeNetwork):
     """Base Class for Hierarchical L2O Models."""
 
     architecture = HierarchicalOptimizer

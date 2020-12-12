@@ -124,7 +124,7 @@ class Dense(Layer):
         return [kernel([self.input_shape, self.units]), bias([self.units])]
 
     def call(self, params, x):
-        x = tf.reshape(x, [x.shape[0], -1])
+        x = tf.reshape(x, [tf.shape(x)[0], -1])
         kernel, bias = params[self.in_idx:self.out_idx]
 
         if self.activation is None:
@@ -169,8 +169,8 @@ class Conv2D(Layer):
         kernel, bias = params[self.in_idx:self.out_idx]
 
         # Add on filter dimension if not present
-        if len(x.shape) == 3:
-            x = x.reshape(list(x.shape) + [1])
+        if len(tf.shape(x)) == 3:
+            x = x.reshape(list(tf.shape(x)) + [1])
 
         res = tf.nn.conv2d(x, kernel, [1, self.stride, self.stride, 1], "SAME")
         if self.activation is None:
@@ -216,10 +216,11 @@ class Sequential:
         """
         # Build seeds
         if seed is not None:
-            np.random.seed(seed)
-            seeds = [np.random.randint(0, 0x80000000) for _ in self.layers]
+            rng = np.random.default_rng(seed)
+            seeds = rng.integers(
+                0, 0x80000000, size=len(self.layers), dtype=np.uint32)
         else:
-            seeds = [None for _ in self.layers]
+            seeds = [None] * len(self.layers)
 
         # Build layers
         res = []

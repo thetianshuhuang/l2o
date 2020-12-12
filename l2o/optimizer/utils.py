@@ -1,4 +1,5 @@
 """Misc optimizer utilities."""
+
 import tensorflow as tf
 
 
@@ -53,17 +54,3 @@ def nested_assign(x, y):
     if isinstance(x, dict):
         for k in x:
             nested_assign(x[k], y[k])
-
-
-def reset_optimizer(opt):
-    """Reset tensorflow optimizer.
-
-    Parameters
-    ----------
-    opt : tf.keras.optimizers.Optimizer
-        Optimizer to reset; replaces all variables with 0. Note that non-zero
-        initializations are not respected since the variables do not store
-        their initial value.
-    """
-    for var in opt.variables():
-        var.assign(tf.zeros_like(var))

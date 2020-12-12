@@ -1,13 +1,11 @@
-"""Methods related to building optimizers and training strategy."""
+"""Build from saved config."""
 
 import os
-import sys
-
-import pprint
 import json
+import pprint
 
-from . import strategies
-from .. import networks
+import l2o
+from l2o.train import OptimizerTraining
 
 
 def override(config, path, value):
@@ -76,91 +74,64 @@ def deep_warn_equal(d1, d2, d1name, d2name, strict=False):
             print("Warning: " + wstring)
 
 
-def __check_and_save_config(config, directory, strict=True):
-    """Check configuration against saved config in specified directory."""
-    # Check saved config
+def build(config, overrides, directory="weights", strict=True):
+    """Build learner, training, and strategy.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration dictionary
+    overrides : (path, value)[]
+        Override list to pass to ``override``.
+
+    Keyword Args
+    ------------
+    directory : str
+        Directory to run inside / save to.
+    strict : bool
+        If True, raises exception if config.json is already present and does
+        not match ``config``.
+
+    Returns
+    -------
+    strategy.Strategy
+        Strategy built according to ``config`` and ``overrides``.
+    """
+    for path, value in overrides:
+        override(config, path, value)
+
+    # Check saved config or save config
     saved_config = os.path.join(directory, "config.json")
     if os.path.exists(saved_config):
         with open(saved_config) as f:
             config_old = json.load(f)
         deep_warn_equal(
             config, config_old, "config", saved_config, strict=strict)
+    else:
+        os.makedirs(directory, exist_ok=True)
+        with open(saved_config, 'w') as f:
+            json.dump(config, f, indent=4)
+        print("saved to <{}/config.json>.".format(directory))
 
-    # Show & save
     print("Configuration:")
     pprint.pprint(config)
-    with open(saved_config, 'w') as f:
-        json.dump(config, f, indent=4)
-    print("saved to <{}/config.json>.".format(directory))
 
+    # Build optimizer policy
+    policy_constructor = l2o.deserialize.generic(
+        config["policy_constructor"], l2o.policies, pass_cond=None,
+        message="learned optimizer model", default=l2o.policies.DMOptimizer)
+    policy = policy_constructor(**config["policy"])
 
-def build(
-        config, overrides, directory="weights",
-        saved_config=True, strict=True):
-    """Build learner and learning strategy.
+    # Build learner
+    learner = OptimizerTraining(
+        policy, config["optimizer"], **config["training"])
 
-    Parameters
-    ----------
-    config : dict
-        Configuration dictionary
-    overrides : list
-        Override list of (path: str[], value) to pass to ``override``.
-
-    Keyword Args
-    ------------
-    directory : str
-        Directory to run inside.
-    saved_config : bool
-        Check against saved configuration and save configuration to folder
-    strict : bool
-        If True, enforces strict equality between saved configuration and
-        specified configuration on resumed training.
-
-    Returns
-    -------
-    strategy.BaseStrategy
-        Initialized strategy with a ``train`` method.
-    """
-    for path, value in overrides:
-        override(config, path, value)
-
-    if not os.path.isdir(directory):
-        os.makedirs(directory)
-
-    # Check, show & save config
-    if saved_config:
-        __check_and_save_config(config, directory, strict=strict)
-
-    # Initialize network
-    if type(config["constructor"]) == str:
-        try:
-            nn = config["constructor"] + "Optimizer"
-            network = getattr(networks, nn)
-        except AttributeError:
-            raise ValueError("L2O algorithm does not exist: {}".format(nn))
-    else:
-        network = config["constructor"]
-    network = network(**config["network"])
-
-    # Initialize architecture (bound to ``architecture`` attribute)
-    learner = network.architecture(network, **config["loss_args"])
-
-    # Initialize strategy
-    if type(config["strategy_constructor"] == str):
-        try:
-            sn = config["strategy_constructor"] + "Strategy"
-            strategy = getattr(strategies, sn)
-        except AttributeError:
-            raise ValueError("Training strategy does not exist: {}".format(sn))
-    else:
-        strategy = config["strategy_constructor"]
-    strategy = strategy(
-        learner,
-        optimizer=config["optimizer"], train_args=config["training"],
-        problems=config["problems"],
-        validation_problems=config.get("validation_problems"),
-        directory=directory,
-        **config["strategy"])
+    # Build strategy
+    strategy_constructor = l2o.deserialize.generic(
+        config["strategy_constructor"], l2o.strategy, pass_cond=None,
+        message="meta learning strategy", default=l2o.strategy.SimpleStrategy)
+    strategy = strategy_constructor(
+        learner, config["problems"], directory=directory, **config["strategy"])
 
     return strategy
 
@@ -176,5 +147,4 @@ def build_from_config(directory):
     with open(os.path.join(directory, "config.json")) as x:
         config = json.load(x)
 
-    return build(
-        config, [], directory=directory, saved_config=False, strict=False)
+    return build(config, [], directory=directory, strict=False)
