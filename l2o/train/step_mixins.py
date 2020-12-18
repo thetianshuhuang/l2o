@@ -5,64 +5,69 @@ import tensorflow as tf
 class StepMixin:
     """Outer Optimization Step Mixin."""
 
-    def _base_step(self, callable):
-        """Run a single step.
+    def _summarize(self, meta_loss, imitation_loss, params, callback_states):
+        """Aggregate loss and summary statistics."""
+        summary = {
+            "meta_loss": self.distribute.reduce(
+                tf.distribute.ReduceOp.MEAN, meta_loss, axis=None),
+            "imitation_loss": self.distribute.reduce(
+                tf.distribute.ReduceOp.MEAN, imitation_loss, axis=None)
+        }
+        for st, cb in zip(callback_states, self.step_callbacks):
+            summary.update(cb.summarize(st, self.distribute))
 
-        In addition to the standard GradientTape -> gradient -> apply_gradients
-        paradigam, additional logic is included to detect 'first time'
-        execution of the keras model ``self.network``.
-
-        This is because ``trainable_variables`` is not defined beforehand,
-        so ``watch_accessed_variables`` needs to be set to True in order to
-        capture them as they are created. However, this is still not the
-        default in order to maintain efficiency by ignoring non-trainable
-        variables.
-        """
-
-        # trainable_variables not yet built -> capture all variables
-        if len(self.network.trainable_variables) <= 2:
-            with tf.GradientTape() as tape:
-                results = callable()
-        # trainable_variables built -> capture only learner variables
-        else:
-            with tf.GradientTape(watch_accessed_variables=False) as tape:
-                tape.watch(self.network.trainable_variables)
-                results = callable()
-
-        grads = tape.gradient(results[0], self.network.trainable_variables)
-        self.optimizer.apply_gradients(
-            zip(grads, self.network.trainable_variables))
-
-        return results
+        return params, summary
 
     @tf.function
-    def abstract_step(self, data, params, opt=None, **kwargs):
-        """Wraps imitation_loss to compute meta-gradients inside graph mode.
+    def abstract_train_step(
+            self, data, params,
+            meta_loss_weight=0.0, imitation_loss_weight=1.0, **kwargs):
+        """Single outer step.
 
-        See ``abstract_loss`` for docstring and ``_base_step`` for internal
-        mechanism.
+        Wraps abstract_loss to compute outer gradients inside outer-parallel
+        graph; see ``abstract_loss`` for docstring.
+
+        Keyword Args
+        ------------
+        meta_loss_weight : float
+            Weight applied to meta loss. If 0, meta loss is not computed.
+        imitation_loss_weight : float
+            Weight applied to imitation loss. If 0, imitation loss is not
+            computed.
         """
+        def _inner(data, params):
+            """Distribute function.
 
-        def _tmp(data, params):
-            # trainable_variables not yet built -> capture all variables
-            # if len(self.network.trainable_variables) <= 2:
+            Since ``data`` and ``params`` contain per-replica tensor values,
+            they must be explicitly passed as parameters; then, since
+            ``kwargs`` only contains bound constants, they are captured by
+            closure instead of passed through ``distribute.run``.
+            """
+            # Since the problem and teachers do not contain any variables,
+            # we do not need to ``tape.watch`` for efficiency.`
             with tf.GradientTape() as tape:
                 results = self.abstract_loss(data, params, **kwargs)
-            # trainable_variables built -> capture only learner variables
-            # else:
-            #     with tf.GradientTape(watch_accessed_variables=False) as tape:
-            #         tape.watch(self.network.trainable_variables)
-            #         results = self.abstract_loss(data, params, **kwargs)
+                loss = (
+                    meta_loss_weight * results[0]
+                    + imitation_loss_weight * results[1])
+            grads = tape.gradient(loss, self.network.trainable_variables)
+            self.optimizer.apply_gradients(
+                zip(grads, self.network.trainable_variables))
 
-            grads = tape.gradient(results[0], self.network.trainable_variables)
-            return grads, results
+            return results
 
-        grads, results = self.distribute.run(_tmp, args=(data, params))
+        return self._summarize(
+            *self.distribute.run(_inner, args=(data, params)))
 
-        self.optimizer.apply_gradients(
-            zip(grads, self.network.trainable_variables))
+    @tf.function
+    def abstract_valid_step(self, data, params, **kwargs):
+        """Single outer step (validation mode)."""
 
-        return results
+        def _inner(data, params):
+            return self.abstract_loss(data, params, **kwargs)
+
+        return self._summarize(
+            *self.distribute.run(_inner, args=(data, params)))
 
     def make_concrete_step(self, meta, data, params):
         """Get a concrete @tf.function instance for abstract_step.
@@ -93,16 +98,13 @@ class StepMixin:
         tf.Graph
             Concrete function created with the specified problem inputs.
         """
-        # Weights are just placeholders
-        kwargs = dict(
-            unroll=meta.unroll_len,
-            problem=meta.problem,
-            seed=meta.seed,
-            meta_loss_weight=tf.constant(0.5),
-            imitation_loss_weight=tf.constant(0.5))
-        args = (data, params)
-
         if meta.validation:
-            return self.abstract_loss.get_concrete_function(*args, **kwargs)
+            return self.abstract_valid_step.get_concrete_function(
+                data, params, unroll=meta.unroll_len, problem=meta.problem,
+                seed=meta.seed)
         else:
-            return self.abstract_step.get_concrete_function(*args, **kwargs)
+            # NOTE: weights are just placeholders
+            return self.abstract_train_step.get_concrete_function(
+                data, params, unroll=meta.unroll_len, problem=meta.problem,
+                seed=meta.seed, meta_loss_weight=tf.constant(0.5),
+                imitation_loss_weight=tf.constant(0.5))

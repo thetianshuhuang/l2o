@@ -119,14 +119,14 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         return 0.
 
 
-class BaseCoordinateWisePolicy(BaseLearnToOptimizeNetwork):
-    """Base Class for CoordinateWise L2O Networks."""
+class BaseCoordinateWisePolicy(BaseLearnToOptimizePolicy):
+    """Base Class for CoordinateWise L2O Policies."""
 
     architecture = CoordinateWiseOptimizer
 
 
-class BaseHierarchicalPolicy(BaseLearnToOptimizeNetwork):
-    """Base Class for Hierarchical L2O Models."""
+class BaseHierarchicalPolicy(BaseLearnToOptimizePolicy):
+    """Base Class for Hierarchical L2O Policies."""
 
     architecture = HierarchicalOptimizer
 

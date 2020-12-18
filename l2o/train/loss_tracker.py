@@ -5,16 +5,10 @@ import numpy as np
 
 
 class LossTracker:
-    """Helper object to hold training loss.
+    """Helper object to hold training loss."""
 
-    Parameters
-    ----------
-    keys : str[]
-        List of data keys to track.
-    """
-
-    def __init__(self, keys):
-        self.data = {k: [] for k in keys}
+    def __init__(self):
+        self.data = {}
 
     def to_numpy(self, x):
         """Convert to numpy object.
@@ -42,27 +36,28 @@ class LossTracker:
             key, value pairs to append to data dictionary.
         """
         for k, v in data.items():
-            assert(k in self.data)
+            if k not in self.data:
+                self.data[k] = []
             self.data[k].append(self.to_numpy(v))
 
-    def summarize(self, use_mean=[]):
+    def summarize(self, stack_stats=[], mean_stats=[]):
         """Summarize data.
 
         Parameters
         ----------
-        use_mean : str[]
-            List of entries where mean should be taken.
+        stack_stats : str[]
+            List of stats to reduce with np.stack.
+        mean_stats : str[]
+            List of stats to reduce with np.mean.
 
         Returns
         -------
         dict
-            {key: value} or {key: np.mean(value)} depending on whether key is
-            in use_mean.
+            {key: np.stack(value)} or {key: np.mean(value)} depending on
+            whether key is in stack_stats or mean_stats. Statistics can be
+            reduced with both ``stack`` and ``mean``.
         """
-        def _apply(k, v):
-            if k in use_mean:
-                return np.mean(v) if len(v) > 0 else 0
-            else:
-                return v
+        stack = {k: np.stack(self.data[k]) for k in stack_stats}
+        mean = {k: np.mean(self.data[k]) for k in mean_stats}
 
-        return {k: _apply(k, v) for k, v in self.data.items()}
+        return {**stack, **mean}

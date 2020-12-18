@@ -21,7 +21,7 @@ from config import get_default, get_preset, ArgParser
 # System specific settings
 physical_devices = tf.config.list_physical_devices('GPU') 
 tf.config.experimental.set_memory_growth(physical_devices[0], True)
-tf.get_logger().setLevel('INFO')
+tf.get_logger().setLevel('WARN')
 
 # Directory always required
 args = ArgParser(sys.argv[1:])
@@ -32,8 +32,8 @@ initialize_only = args.pop_check("--initialize")
 
 # Default params
 strategy = args.pop_get("--strategy", "simple")
-network = args.pop_get("--network", "rnnprop")
-default = get_default(strategy=strategy, network=network)
+policy = args.pop_get("--policy", "rnnprop")
+default = get_default(strategy=strategy, policy=policy)
 
 # Build overrides
 presets = args.pop_get("--presets", "")

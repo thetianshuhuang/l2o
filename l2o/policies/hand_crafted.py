@@ -3,7 +3,7 @@
 import tensorflow as tf
 
 from .architectures import BaseCoordinateWisePolicy
-from .momoents import rms_momentum, rms_scaling
+from .moments import rms_momentum, rms_scaling
 
 
 class AdamOptimizer(BaseCoordinateWisePolicy):
@@ -13,7 +13,7 @@ class AdamOptimizer(BaseCoordinateWisePolicy):
             self, learning_rate=0.001, beta_1=0.9,
             beta_2=0.999, epsilon=1e-07):
         """Save hyperparameters (Adam has no layers)."""
-        self.learning_rate = learning_Rate
+        self.learning_rate = learning_rate
         self.beta_1 = beta_1
         self.beta_2 = beta_2
         self.epsilon = epsilon
@@ -28,7 +28,6 @@ class AdamOptimizer(BaseCoordinateWisePolicy):
         v_hat = states_new["v"] / (1. - self.beta_2)
 
         update = self.learning_rate * m_hat / tf.sqrt(v_hat + self.epsilon)
-
         return update, states_new
 
     def get_initial_state(self, var):

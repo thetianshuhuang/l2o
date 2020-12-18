@@ -2,6 +2,9 @@
 
 import tensorflow as tf
 
+from l2o import policies
+from .generic import generic
+
 
 def optimizer(opt):
     """Helper function to get optimizer using tf.keras.optimizers.get.
@@ -26,3 +29,13 @@ def optimizer(opt):
                 "Warning: tensorflow_addons is not available. Only Keras "
                 "Optimizers were searched for a match.")
             raise(e)
+
+
+def policy(opt):
+    """Helper function to get optimizer policy from l2o.policies."""
+    constructor = generic(
+        opt["class_name"] + "Optimizer", policies,
+        pass_cond=lambda x: isinstance(x, policies.BaseLearnToOptimizePolicy),
+        message="gradient optimization policy", default=None)
+
+    return constructor(**opt["config"])

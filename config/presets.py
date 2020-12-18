@@ -2,14 +2,18 @@
 
 
 OVERRIDE_PRESETS = {
+    "teacher_sgd": [(
+        ["training", "teachers", "*"],
+        {"class_name": "SGD", "config": {"learning_rate": 0.01}}
+    )],
     "teacher_adam": [(
         ["training", "teachers", "*"],
-        {"class_name": "adam",
+        {"class_name": "Adam",
          "config": {"learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999}}
     )],
     "teacher_rmsprop": [(
         ["training", "teachers", "*"],
-        {"class_name": "rmsprop",
+        {"class_name": "RMSProp",
          "config": {"learning_rate": 0.001, "rho": 0.9}}
     )],
     "teacher_radam": [(
@@ -58,10 +62,21 @@ OVERRIDE_PRESETS = {
             "validation_unroll": 20,
             "name": "SimpleDebugStrategy",
         }
-    )]
+    )],
+    "log_teachers": [
+        (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
+        (["training", "stack_stats", "*"], "teacher_counts")
+    ]
 }
 
 
 def get_preset(name):
     """Get preset override by name."""
-    return OVERRIDE_PRESETS.get(name, [])
+    res = OVERRIDE_PRESETS.get(name)
+
+    if res is None:
+        raise Exception(
+            "Invalid preset: {}.\nValid presets are:\n  - ".format(name) +
+            "\n  - ".join(OVERRIDE_PRESETS.keys()))
+    else:
+        return res

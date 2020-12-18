@@ -6,7 +6,7 @@ import collections
 from tensorflow.keras.utils import Progbar
 
 from .loss_tracker import LossTracker
-from .utils import reset_optimizer, make_seeds, regen_optimizer_vars
+from .utils import make_seeds
 
 
 MetaIteration = collections.namedtuple(
@@ -28,18 +28,14 @@ class TrainingMixin:
             w_meta, w_imit = (1.0, meta.p_teacher)
 
         # Graph mode this function only
-        loss, params, summary = concrete_step(
+        params, summary = concrete_step(
             data, params,
             meta_loss_weight=tf.constant(w_meta, dtype=tf.float32),
             imitation_loss_weight=tf.constant(w_imit, dtype=tf.float32))
 
-        # Track loss separately depending on mode.
-        if self.il_mode == 'switch' and is_imitation:
-            summary["imitation"] = loss
-        else:
-            summary["meta"] = loss
-
-        return loss, params, summary
+        summary["meta_loss_weight"] = w_meta
+        summary["imitation_loss_weight"] = w_imit
+        return params, summary
 
     def _train(self, meta, epochs=1, repeat=1):
         """Main outer training loop.
@@ -68,36 +64,29 @@ class TrainingMixin:
         # Single progress bar
         size = meta.problem.size(meta.unroll_len)
         pbar = Progbar(size * epochs * repeat, unit_name='step')
-        losses = LossTracker(self.tracked_statistics)
-
-        # See docstring for why this is necessary
-        regen_optimizer_vars(self.teachers, meta.problem.trainable_variables)
+        losses = LossTracker()
 
         seeds = make_seeds(meta.seed, epochs * repeat)
         for i, seed in enumerate(seeds):
             # Get new state for each repeat
             if i % epochs == 0:
-                def _get_p():
-                    return meta.problem.get_parameters(seed=seed)
-                params = self.distribute.run(_get_p)
+                params = meta.problem.get_parameters(seed=seed)
             # New dataset using seed for each epoch.
             dataset = meta.problem.get_dataset(meta.unroll_len, seed=seed)
-
             for batch in dataset:
-                # State (i.e. momentum) needs to be reset
-                for t in self.teachers:
-                    reset_optimizer(t)
                 # Only create concrete loss on first iteration
                 if step is None:
                     step = self.make_concrete_step(meta, batch, params)
 
                 # The actual step
-                loss, params, summary = self._meta_step(
-                    meta, step, batch, params)
-                losses.append(summary)
-                pbar.add(1, values=[("loss", loss)])
+                if meta.validation:
+                    params, stats = step(batch, params)
+                else:
+                    params, stats = self._meta_step(meta, step, batch, params)
+                losses.append(stats)
+                pbar.add(1, values=[(k, stats[k]) for k in self.pbar_values])
 
-        return losses.summarize(use_mean=self.scalar_statistics)
+        return losses.summarize(self.stack_stats, self.mean_stats)
 
     def train(
             self, problems, unroll_len=lambda: 20, p_teacher=0,
@@ -132,24 +121,22 @@ class TrainingMixin:
         -------
         dict
             Dictionary containing summary data, with keys:
-            "meta": float
+            "meta_loss": float
                 Mean meta loss for all problems.
-            "imitation": float
+            "imitation_loss": float
                 Mean imitation loss for all problems.
             k: float or np.array
                 Other keys specified by self.step_callback; empty by default.
                 Shape depends on whether ``k`` is in ``use_mean``.
         """
-        results = LossTracker(self.tracked_statistics)
+        results = LossTracker()
         for itr, spec in enumerate(problems):
             spec.print(itr)
-            problem = spec.build(
-                persistent=len(self.teachers), distribute=self.distribute)
+            problem = spec.build()
 
-            unroll = unroll_len()
             meta = MetaIteration(
-                problem, unroll, p_teacher, validation, seed)
+                problem, unroll_len(), p_teacher, validation, seed)
 
             results.append(self._train(meta, repeat=repeat, epochs=epochs))
 
-        return results.summarize(use_mean=self.scalar_statistics)
+        return results.summarize(self.stack_stats, self.mean_stats)

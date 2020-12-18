@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 
 
+# NOTE: Currently Unused
 def reset_optimizer(opt):
     """Reset tensorflow optimizer.
 
@@ -35,6 +36,7 @@ def make_seeds(seed, n):
         return rng.integers(0, 0x80000000, size=n, dtype=np.uint32)
 
 
+# NOTE: Currently Unused
 def regen_optimizer_vars(optimizers, trainable_variables):
     """Force optimizers to generate hidden state variables.
 

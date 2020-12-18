@@ -5,7 +5,7 @@ from scipy.special import logit
 
 def get_default(strategy="simple", policy="DMOptimizer"):
     """Get default configuration."""
-    return dict(**BASE, **STRATEGY[strategy], **POLICY[network])
+    return dict(**BASE, **STRATEGY[strategy], **POLICY[policy])
 
 
 # ------------------------------ Base Arguments ----------------------------- #
@@ -21,7 +21,10 @@ BASE = {
         "teachers": [],
         "obj_train_max_multiplier": -1,
         "epsilon": 1e-10,
-        "step_callback": None
+        "step_callbacks": [],
+        "pbar_values": ["meta_loss", "imitation_loss"],
+        "mean_stats": ["meta_loss", "imitation_loss"],
+        "stack_stats": []
     },
     "optimizer": {
         "class_name": "Adam",

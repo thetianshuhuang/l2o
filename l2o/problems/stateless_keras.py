@@ -11,6 +11,17 @@ import numpy as np
 import math
 
 
+@tf.function
+def _randint():
+    """Get random integer.
+
+    Needs to be @tf.function decorated because of some odd behavior in
+    tf.random.uniform when this is called by other @tf.functions.
+    """
+    return tf.random.uniform(
+        shape=[], minval=tf.int32.min, maxval=tf.int32.max, dtype=tf.int32)
+
+
 class Layer:
     """Base layer class."""
 
@@ -75,9 +86,12 @@ class Layer:
         seeds, which needs to be handled.
         """
         res = []
+        tf.random.set_seed(seed)
         for initializer in args:
+            # Accepts seed
             try:
-                res.append(initializer(seed=seed))
+                res.append(initializer(seed=_randint()))
+            # Doesn't take a seed
             except TypeError:
                 res.append(initializer())
         return res
@@ -165,7 +179,6 @@ class Conv2D(Layer):
         return [kernel(kernel_shape), bias(self.output_dim)]
 
     def call(self, params, x):
-
         kernel, bias = params[self.in_idx:self.out_idx]
 
         # Add on filter dimension if not present
@@ -214,18 +227,10 @@ class Sequential:
         tf.Tensor[]
             Initialized model parameters.
         """
-        # Build seeds
-        if seed is not None:
-            rng = np.random.default_rng(seed)
-            seeds = rng.integers(
-                0, 0x80000000, size=len(self.layers), dtype=np.uint32)
-        else:
-            seeds = [None] * len(self.layers)
-
-        # Build layers
         res = []
-        for s, layer in zip(seeds, self.layers):
-            res += layer.get_parameters(seed=s)
+        tf.random.set_seed(seed)
+        for layer in self.layers:
+            res += layer.get_parameters(seed=_randint())
         return res
 
     def call(self, params, x):
@@ -246,5 +251,4 @@ class Sequential:
         """
         for layer in self.layers:
             x = layer.call(params, x)
-
         return x

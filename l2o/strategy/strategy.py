@@ -2,6 +2,7 @@
 
 import os
 import pandas as pd
+import numpy as np
 import tensorflow as tf
 
 from l2o.train.loss_tracker import LossTracker
@@ -72,7 +73,7 @@ class BaseStrategy:
         except FileNotFoundError:
             columns = dict(
                 validation=float, **self.metadata_columns,
-                **{k: float for k in self.learner.scalar_statistics})
+                **{k: float for k in self.learner.mean_stats})
             self.summary = pd.DataFrame({
                 k: pd.Series([], dtype=v) for k, v in columns.items()})
             self._start()
@@ -119,19 +120,17 @@ class BaseStrategy:
         """
         # Save scalar summary values
         new_row = dict(
-            validation=validation_stats["meta"],
-            **metadata,
-            **{k: training_stats[k] for k in self.learner.scalar_statistics})
+            validation=validation_stats["meta_loss"], **metadata,
+            **{k: training_stats[k] for k in self.learner.mean_stats})
         self.summary = self.summary.append(new_row, ignore_index=True)
         self.summary.to_csv(
             os.path.join(self.directory, "summary.csv"), index=False)
 
         # Save other values
-        save_np = {
-            k: v for k, v in training_stats.items()
-            if k not in self.learner.scalar_statistics
-        }
-        if len(save_np) > 0:
+        if len(self.learner.stack_stats) > 0:
+            save_np = {
+                k: training_stats[k] for k in self.learner.stack_stats
+            }
             np.savez(
                 os.path.join(self._path(**metadata), "log.npz"), **save_np)
 
@@ -155,7 +154,7 @@ class BaseStrategy:
             ``validation_seed`` are forced.
         metadata : dict
             Strategy metadata for this training period.
-        
+
         Keyword Args
         ------------
         eval_file : str or None
@@ -166,13 +165,13 @@ class BaseStrategy:
         """
         # Train for ``epochs_per_period`` meta-epochs
         print("Training:")
-        training_stats = LossTracker(self.learner.tracked_statistics)
+        training_stats = LossTracker()
         for i in range(self.epochs_per_period):
             print("Meta-Epoch {}/{}".format(i + 1, self.epochs_per_period))
             training_stats.append(self.learner.train(
                 self.problems, validation=False, **train_args))
         training_stats = training_stats.summarize(
-            use_mean=self.learner.scalar_statistics)
+            self.learner.stack_stats, self.learner.mean_stats)
 
         # Compute validation loss
         print("Validating:")
@@ -182,8 +181,8 @@ class BaseStrategy:
 
         # Save, append data, and print info
         print("imitation: {} | meta: {} | validation: {}".format(
-            training_stats["imitation"], training_stats["meta"],
-            validation_stats["meta"]))
+            training_stats["imitation_loss"], training_stats["meta_loss"],
+            validation_stats["meta_loss"]))
         self._save_network(**metadata)
         self._append(training_stats, validation_stats, metadata)
 

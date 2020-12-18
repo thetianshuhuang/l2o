@@ -1,6 +1,6 @@
 """Training problems."""
 
-from .networks import Classifier, load_images, mlp_classifier, conv_classifier
+from .networks import load_images, mlp_classifier, conv_classifier
 from .problem import Problem, ProblemSpec
 
 __all__ = [

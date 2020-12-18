@@ -8,14 +8,13 @@ class BaseStepCallback:
 
     Parameters
     ----------
-    unroll : int
-        Unroll length; used to prepare buffers.
-    n_teachers : int
-        Number of teachers.
+    keys : dict
+        Keys are the names of statistic names that will be logged.
+        Values are callables that reduce a list of values to a single value:
+        np.stack, np.mean, np.sum, etc.
     """
 
-    key_names = []
-    use_mean = []
+    keys = {}
 
     def __init__(self, unroll, n_teachers):
         pass
@@ -51,24 +50,25 @@ def is_callback(x):
     return isinstance(x, BaseStepCallback)
 
 
-class WhichTeacherCallback:
+class WhichTeacherCountCallback(BaseStepCallback):
     """Callback to track which teacher is used at each iteration."""
 
-    key_names = ["teacher_counts"]
+    def __init__(self, parent):
+        self.n_teachers = len(parent.teachers)
 
-    def __init__(self, unroll, n_teachers):
-        self.indices = tf.TensorArray(tf.uint8, size=unroll)
-        self.n_teachers = n_teachers
+    def get_state(self, unroll):
+        """Get initial state."""
+        return tf.zeros([self.n_teachers], dtype=tf.int32)
 
-    def on_step_end(self, index, current_obj, teacher_loss):
-        """Log argmax teacher loss."""
-        self.indices.write(
-            index, tf.math.argmax(teacher_loss, output_type=tf.uint8))
+    def on_step_end(self, state, index, current_obj, teacher_loss):
+        """Count argmax teacher loss."""
+        indicator = tf.math.equal(
+            tf.range(self.n_teachers),
+            tf.math.argmax(teacher_loss, output_type=tf.dtypes.int32))
+        return state + tf.cast(indicator, tf.int32)
 
-    def summarize(self):
-        """Aggregate teacher argmax into a single array of counts."""
-        stacked = self.indices.stack()
-        return {"teacher_counts": [
-            tf.reduce_sum(tf.equal(stacked, i))
-            for i in range(self.n_teachers)
-        ]}
+    def summarize(self, state, distribute):
+        """Generate summary."""
+        reduced = distribute.reduce(
+            tf.distribute.ReduceOp.SUM, state, axis=None)
+        return {"teacher_counts": reduced}

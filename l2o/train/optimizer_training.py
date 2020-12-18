@@ -8,7 +8,7 @@ from .loss_mixins import LossMixin
 from .step_mixins import StepMixin
 from .train_mixins import TrainingMixin
 
-from . import step_callbacks
+from . import step_callbacks as step_callbacks_module
 from .step_callbacks import BaseStepCallback, is_callback
 
 from l2o import deserialize
@@ -66,13 +66,18 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin):
         early.
     epsilon : float
         Epsilon value.
-    step_callback : str or BaseStepCallback or None
-        Called at the end of every inner step; can be used to log inner step
-        data. Does nothing by default.
+    step_callbacks : str[] or BaseStepCallback[]
+        List of callbacks called at the end of every inner step; can be used to
+        log inner step data. Does nothing by default.
         Behavior by type:
         - str : Uses corresponding class from train/step_callbacks.
         - BaseStepCallback : Uses ``step_callback``.
-        - None: Uses ``BaseStepCallback`` (does nothing).
+    mean_stats : str[]
+        Statistics to reduce with reduce_mean and log in summary.csv.
+    stack_stats : str[]
+        Statistics to stack (np.stack) and save to a .npz file.
+    pbar_values : str[]
+        List of values to monitor in progress bar.
     distribute : None or tf.distribute.Strategy
         Distributed training tensorflow strategy.
         If None, uses ``tf.distribute.get_strategy()``.
@@ -81,10 +86,12 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin):
     def __init__(
             self, network, optimizer, name="OptimizerTraining",
             use_log_objective=True, scale_objective=False,
-            parameter_scale_spread=3.0, loss_reduce=tf.math.reduce_mean,
+            parameter_scale_spread=3.0, loss_reduce=tf.math.reduce_max,
             il_mode='switch', unroll_weight="sum", teachers=[],
-            obj_train_max_multiplier=-1, epsilon=1e-10, step_callback=None,
-            distribute=None):
+            obj_train_max_multiplier=-1, epsilon=1e-10, step_callbacks=[],
+            pbar_values=["meta_loss", "imitation_loss"],
+            mean_stats=["meta_loss", "imitation_loss"],
+            stack_stats=[], distribute=None):
 
         # Core
         if distribute is None:
@@ -112,20 +119,22 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin):
             message="reduce function", default=tf.math.reduce_max)
         self.il_mode = il_mode
         self.unroll_weight = deserialize.weights(unroll_weight)
-        self.teachers = [deserialize.optimizer(t) for t in teachers]
+        self.teachers = [deserialize.policy(t) for t in teachers]
 
         # Numerical stability
         self.obj_train_max_multiplier = obj_train_max_multiplier
         self.epsilon = epsilon
 
         # Tracking
-        self.step_callback = deserialize.generic(
-            step_callback, step_callbacks, pass_cond=is_callback,
-            message="inner step callback", default=BaseStepCallback)
-        self.tracked_statistics = (
-            ["imitation", "meta"] + self.step_callback.key_names)
-        self.scalar_statistics = (
-            ["imitation", "meta"] + self.step_callback.use_mean)
+        self.step_callbacks = [
+            deserialize.generic(
+                cb, step_callbacks_module, pass_cond=is_callback,
+                message="inner step callback", default=BaseStepCallback
+            )(self) for cb in step_callbacks
+        ]
+        self.mean_stats = mean_stats
+        self.stack_stats = stack_stats
+        self.pbar_values = pbar_values
 
     def __str__(self):
         """As string -> <TrainableOptimizerName:NetworkName>."""

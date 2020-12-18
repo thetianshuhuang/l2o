@@ -1,87 +1,10 @@
 """NN based training problems."""
 
-import math
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
 from .problem import Problem
 from .stateless_keras import Dense, Sequential, Conv2D
-
-
-class Classifier(Problem):
-    """Generic classifier problem.
-
-    Parameters
-    ----------
-    model : object
-        Core model (i.e. classifier or regression). Must have
-        ``get_parameters`` and ``call`` methods.
-    loss : callable (tf.Tensor, tf.Tensor -> tf.Tensor)
-        Computes loss from model output and ground truth. Dataset should have
-        input as the first array and output as the second.
-    dataset : tf.data.Dataset
-        Tensorflow dataset to use
-
-    Keyword Args
-    ------------
-    shuffle_buffer : int
-        Shuffle buffer size for dataset shuffling (see tf.data.Dataset). If
-        None, then the dataset is not shuffled. Does nothing if no dataset
-        is associated with this problem.
-    batch_size : int
-        Batch size for dataset
-    size : int
-        Number of elements in this dataset, if known.
-
-    Attributes
-    ----------
-    batch_size : int
-        Replica-adjusted batch size (# samples per replica)
-    """
-
-    def __init__(
-            self, model, loss, dataset, persistent=False,
-            shuffle_buffer=None, batch_size=32, size=None, distribute=None):
-
-        self.dataset = dataset
-        self.model = model
-        self.loss = loss
-
-        self.shuffle_buffer = shuffle_buffer
-        self._size = size
-
-        super().__init__(persistent=persistent, distribute=distribute)
-
-        if batch_size % self.distribute.num_replicas_in_sync != 0:
-            raise ValueError(
-                "Number of replicas must divide batch size. Received "
-                "batch_size={}, num_replicas_in_sync={}".format(
-                    batch_size, distribute.num_replicas_in_sync))
-        self.batch_size = int(
-            batch_size / self.distribute.num_replicas_in_sync)
-
-    def size(self, unroll):
-        """Get number of batches for this unroll duration."""
-        return math.floor(self._size / (unroll * self.batch_size))
-
-    def get_dataset(self, unroll, seed=None, distribute=None):
-        """Get problem dataset."""
-        dataset = self.dataset
-        if self.shuffle_buffer is not None:
-            dataset = self.dataset.shuffle(self.shuffle_buffer, seed=seed)
-        return self.distribute.experimental_distribute_dataset(
-            dataset.batch(
-                self.batch_size * unroll, drop_remainder=True
-            ).prefetch(tf.data.experimental.AUTOTUNE))
-
-    def get_parameters(self, seed=None):
-        """Make variables corresponding to this problem."""
-        return self.model.get_parameters(seed=seed)
-
-    def objective(self, parameters, data):
-        """Objective function."""
-        x, y = data
-        return self.loss(y, self.model.call(parameters, x))
 
 
 def load_images(dataset, split="train"):
@@ -91,17 +14,18 @@ def load_images(dataset, split="train"):
     in the pipeline.
 
     Suggested Datasets:
-
-    dataset       | shape     | k   | description
-    --------------+-----------+-----+------------------------------------------
-    cifar10       | 32x32x3   | 10  | images
-    emnist        | 28x28     | 10  | handwritten digits
-    fashion_mnist | 28x28     | 10  | images (clothing)
-    kmnist        | 28x28     | 10  | handwritten Japanese characters
-    mnist         | 28x28     | 10  | handwritten digits
-    cifar100      | 32x32x3   | 100 | images
-    omniglot      | 105x105x3 | 50  | handwritten characters
-    stl10         | 96x96x3   | 10  | images
+    +---------------+-----------+-----+---------------------------------------+
+    | dataset       | shape     | k   | description                           |
+    +---------------+-----------+-----+---------------------------------------+
+    | cifar10       | 32x32x3   | 10  | images                                |
+    | emnist        | 28x28     | 10  | handwritten digits                    |
+    | fashion_mnist | 28x28     | 10  | images (clothing)                     |
+    | kmnist        | 28x28     | 10  | handwritten Japanese characters       |
+    | mnist         | 28x28     | 10  | handwritten digits                    |
+    | cifar100      | 32x32x3   | 100 | images                                |
+    | omniglot      | 105x105x3 | 50  | handwritten characters                |
+    | stl10         | 96x96x3   | 10  | images                                |
+    +---------------+-----------+-----+---------------------------------------+
 
     Parameters
     ----------
@@ -142,11 +66,11 @@ def _make_tfds(network, dataset="mnist", **kwargs):
     if None in input_shape:
         raise TypeError("Dataset does not have fixed input dimension.")
 
-    return Classifier(
-        network(input_shape, labels),
+    return Problem(
+        network(input_shape, labels), dataset,
         tf.keras.losses.SparseCategoricalCrossentropy(
             reduction=tf.keras.losses.Reduction.NONE),
-        dataset, size=info.splits['train'].num_examples, **kwargs)
+        size=info.splits['train'].num_examples, **kwargs)
 
 
 def mlp_classifier(

@@ -23,6 +23,11 @@ def create_random_parameter_scaling(params, spread, seed=None):
         log uniform distribution exp(Unif([-L, L])). If the spread is 0,
         this is equivalent to a constant scale of 1.
 
+    Keyword Args
+    ------------
+    seed : int or None
+        Random seed to create scaling from.
+
     Returns
     -------
     (tf.Tensor[], callable(tf.Tensor[]) -> tf.Tensor[])
