@@ -21,7 +21,7 @@ results*
 checkpoint
 *.data*
 *.index
-weights*
+weights/*
 results*
 *.npz
 *.json
