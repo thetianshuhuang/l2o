@@ -2,7 +2,8 @@
 
 Run with
 ```
-python train.py directory \
+python train.py
+    --directory=weights
     --path/to/param1=param1_value
     --path/to/param2=param2_value ...
 ```
@@ -12,20 +13,21 @@ Optional flags:
 --presets=preset1,preset2,...: presets to load.
 """
 
+import os
 import sys
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 
 import l2o
-from config import get_default, get_preset, ArgParser
+from config import get_default, get_preset, ArgParser, create_distribute
 
-# System specific settings
-physical_devices = tf.config.list_physical_devices('GPU') 
-tf.config.experimental.set_memory_growth(physical_devices[0], True)
-tf.get_logger().setLevel('WARN')
-
-# Directory always required
+# Directory
 args = ArgParser(sys.argv[1:])
 directory = args.pop_get("--directory", default="weights")
+
+# Distribute
+vgpus = int(args.pop_get("--vgpu", default=1))
+distribute = create_distribute(vgpus=vgpus)
 
 # Pick up flags first
 initialize_only = args.pop_check("--initialize")
@@ -41,15 +43,6 @@ overrides = []
 for p in presets.split(','):
     overrides += get_preset(p)
 overrides += args.to_overrides()
-
-# TMP DISTRIBUTE
-gpus = tf.config.experimental.list_physical_devices('GPU')
-tf.config.experimental.set_virtual_device_configuration(
-    gpus[0], [
-        tf.config.experimental.VirtualDeviceConfiguration(memory_limit=512),
-        tf.config.experimental.VirtualDeviceConfiguration(memory_limit=512)])
-print(tf.config.experimental.list_logical_devices('GPU'))
-distribute = tf.distribute.MirroredStrategy()
 
 with distribute.scope():
     # Build strategy

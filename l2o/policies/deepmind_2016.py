@@ -27,8 +27,6 @@ class DMOptimizer(BaseCoordinateWisePolicy):
 
     def init_layers(self, layers=(20, 20), **kwargs):
         """Initialize layers."""
-        super().__init__(name=name)
-
         self.recurrent = [
             LSTMCell(hsize, name="recurrent_{}".format(i), **kwargs)
             for i, hsize in enumerate(layers)]

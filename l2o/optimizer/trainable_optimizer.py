@@ -156,7 +156,3 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
         Override of base method to use _state_dict instead of _weights.
         """
         return tf.nest.flatten(self._state_dict)
-
-    def reset(self):
-        """Reset optimizer state."""
-        self._state_dict = {}

@@ -47,6 +47,26 @@ OVERRIDE_PRESETS = {
             "name": "SimpleStrategy"
         }
     )],
+    "train_conv": [(
+        ["problems"],
+        [{
+            "target": "conv_classifier",
+            "args": [],
+            "kwargs": {
+                "layers": [
+                    [3, 8, 1],
+                    [3, 16, 2],
+                    [3, 16, 1],
+                    [3, 16, 2],
+                    [3, 16, 1],
+                ],
+                "activation": "relu",
+                "dataset": "mnist",
+                "batch_size": 64,
+                "shuffle_buffer": 16384,
+            }
+        }]
+    )],
     "debug": [(
         ["strategy"],
         {
@@ -72,11 +92,9 @@ OVERRIDE_PRESETS = {
 
 def get_preset(name):
     """Get preset override by name."""
-    res = OVERRIDE_PRESETS.get(name)
-
-    if res is None:
-        raise Exception(
+    try:
+        return OVERRIDE_PRESETS[name]
+    except KeyError:
+        raise KeyError(
             "Invalid preset: {}.\nValid presets are:\n  - ".format(name) +
             "\n  - ".join(OVERRIDE_PRESETS.keys()))
-    else:
-        return res

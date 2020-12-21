@@ -3,36 +3,29 @@
 import tensorflow as tf
 
 
-def simple_conv(info, activation=tf.nn.relu):
-    """Simple convnet."""
-    return tf.keras.Sequential([
+def conv_classifier(
+        info, activation=tf.nn.relu, layers=[[3, 16, 2], [3, 16, 2]]):
+    """Convolutional classifier (identical to conv_classifier problem)."""
+    layers = [
         tf.keras.layers.Conv2D(
-            32, 5, activation=activation,
-            input_shape=info.features['image'].shape),
-        tf.keras.layers.Conv2D(
-            32, 3, strides=(2, 2), activation=tf.nn.relu),
+            units, size, activation=activation,
+            strides=(stride, stride))
+        for size, units, stride in layers
+    ]
+    return tf.keras.Sequential(layers + [
         tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(10, activation="softmax")
+        tf.keras.layers.Dense(
+            info.features['label'].num_classes, activation="softmax")
     ])
 
 
-def simple_mlp(info, activation=tf.nn.relu):
-    """Simple MLP."""
-    return tf.keras.Sequential([
-        tf.keras.layers.Flatten(input_shape=info.features['image'].shape),
-        tf.keras.layers.Dense(20, activation=tf.nn.relu),
-        tf.keras.layers.Dense(10, activation="softmax")
-    ])
-
-
-def deeper_mlp(info, activation=tf.nn.relu):
-    """Deeper MLP."""
-    return tf.keras.Sequential([
-        tf.keras.layers.Flatten(input_shape=info.features['image'].shape),
-        tf.keras.layers.Dense(128, activation=activation),
-        tf.keras.layers.Dense(20, activation=activation),
-        tf.keras.layers.Dense(10, activation="softmax")
-    ])
+def mlp_classifier(info, activation=tf.nn.relu, layers=[32]):
+    """MLP classifier (identical to mlp_classifier problem)."""
+    return tf.keras.Sequential(
+        [tf.keras.layers.Flatten(input_shape=info.features['image']).shape]
+        + [tf.keras.layers.Dense(u) for u in layers]
+        + [tf.keras.layers.Dense(10, activation="softmax")]
+    )
 
 
 def debug_net(info, activation=tf.nn.relu):

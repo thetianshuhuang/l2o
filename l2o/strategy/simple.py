@@ -84,7 +84,6 @@ class SimpleStrategy(BaseStrategy):
 
     def _resume(self):
         """Resume current optimization."""
-        self._load_network(period=self.summary["period"].max())
         self.period = self.summary["period"].max() + 1
 
     def _start(self):
@@ -93,6 +92,9 @@ class SimpleStrategy(BaseStrategy):
 
     def train(self):
         """Start or resume training."""
+        if self.period > 0:
+            self._load_network(period=self.period - 1)
+
         while self.period < self.num_periods:
 
             p_teacher = self.annealing_schedule(self.period)

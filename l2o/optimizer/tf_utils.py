@@ -15,6 +15,7 @@
 # limitations under the License.
 # ==============================================================================
 # Excerpt from ``tensorflow/python/keras/optimizer_v2/optimizer_v2.py``
+# Modified _distributed_container() -> _distributed_container.
 
 
 def _var_key(var):
@@ -36,7 +37,7 @@ def _var_key(var):
     """
     # Get the distributed variable if it exists.
     if hasattr(var, "_distributed_container"):
-        var = var._distributed_container()
+        var = var._distributed_container
     if var._in_graph_mode:
         return var._shared_name
     return var._unique_id

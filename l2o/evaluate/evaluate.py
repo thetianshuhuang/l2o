@@ -7,6 +7,7 @@ import tensorflow as tf
 import numpy as np
 
 from l2o.problems import load_images
+from l2o import deserialize
 from . import models
 
 
@@ -38,26 +39,29 @@ class BatchTracker(tf.keras.callbacks.Callback):
 
 
 def evaluate(
-        opt, model="simple_conv", dataset="mnist", epochs=20, batch_size=32,
-        activation=tf.nn.relu):
+        opt, config={}, target="conv_classifier", dataset="mnist", epochs=20,
+        batch_size=32):
     """Evaluate L2O.
+
     Parameters
     ----------
     opt : tf.keras.optimizers.Optimizer
         Optimizer to evaluate.
+
     Keyword Args
     ------------
-    model : str or callable(info, activation) -> tf.keras.Model
-        Callable or name of callable in l2o.evaluate.models that fetches model
-        to train.
+    config : dict
+        Problem configuration; passed to ``target``.
+    target : str or callable(info, **config) -> tf.keras.Model
+        Callable or name of callable in l2o.evaluate.models that creates
+        model to train.
     dataset : str
         Dataset name for problems.load_images.
     epochs : int
         Number of epochs to train for
     batch_size : int
         Batch size for dataset.
-    activation : str or callable(tf.Tensor) -> tf.Tensor
-        Activation functions.
+
     Returns
     -------
     dict
@@ -70,9 +74,10 @@ def evaluate(
     ds_train, info_train = load_images(dataset, split="train")
     ds_val, info_val = load_images(dataset, split="test")
 
-    if type(model) == str:
-        model = getattr(models, model)
-    model = model(info_train, activation=activation)
+    model = deserialize.generic(
+        target, models, pass_cond=None,
+        message="training model", default="simple_conv")
+    model = model(info_train, **config)
 
     model.compile(
         opt,

@@ -21,24 +21,30 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
         Momentum decay constant (table 1)
     beta_2 : float
         Variance decay constant (table 1)
+    learning_rate : float
+        Learning rate multiplier
     epsilon : float
         Denominator epsilon for normalization operation in case input is 0.
+    hardness : float
+        If hardness=0.0, uses standard softmax. Otherwise, uses gumbel-softmax
+        with temperature = 1/hardness.
     name : str
         Name of optimizer network.
     **kwargs : dict
         Passed onto tf.keras.layers.LSTMCell
     """
 
-    def __init__(
+    default_name = "ChoiceOptimizer"
+
+    def init_layers(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.999,
-            learning_rate=0.001, epsilon=1e-10, name="ChoiceOptimizer",
-            **kwargs):
-
-        super().__init__(name=name)
-
+            learning_rate=0.001, epsilon=1e-10, hardness=0.0, **kwargs):
+        """Initialize layers."""
         self.beta_1 = beta_1
         self.beta_2 = beta_2
         self.epsilon = epsilon
+        self.hardness = hardness
+
         self.learning_rate = learning_rate
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
@@ -68,9 +74,18 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
         # Factor in softmax of Adam, RMSProp
         opt_weights = tf.reshape(self.choice(x), [-1, 2])
 
-        # Manual softmax in order to add epsilon in denominator
-        normalize = tf.reduce_sum(tf.exp(opt_weights), axis=1, keepdims=True)
-        opt_weights = tf.exp(opt_weights) / (normalize + self.epsilon)
+        # Apply gumbel-softmax
+        if self.hardness > 0.0:
+            gumbels = -tf.math.log(-tf.math.log(
+                tf.random.uniform(tf.shape(opt_weights))))
+            z = tf.math.exp((opt_weights + gumbels) * self.hardness)
+            opt_weights = z / tf.tile(tf.reshape(
+                tf.math.reduce_sum(z, axis=1), [-1, 1]), [1, 2])
+        else:
+            # Manual softmax in order to add epsilon in denominator
+            normalize = tf.reduce_sum(
+                tf.exp(opt_weights), axis=1, keepdims=True)
+            opt_weights = tf.exp(opt_weights) / (normalize + self.epsilon)
 
         # Combine softmax
         update = self.learning_rate * (

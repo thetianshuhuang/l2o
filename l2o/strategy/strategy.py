@@ -31,9 +31,6 @@ class BaseStrategy:
         Seed for optimizee initialization during validation
     directory : str
         Directory to save weights and other data to
-    distribute : None or tf.distribute.Strategy
-        Distributed training tensorflow strategy.
-        If None, uses ``tf.distribute.get_strategy()``.
     name : str
         Strategy name.
 
@@ -50,7 +47,7 @@ class BaseStrategy:
     def __init__(
             self, learner, problems, validation_problems=None,
             epochs_per_period=10, validation_seed=12345, directory="weights",
-            distribute=None, name="BaseStrategy"):
+            name="BaseStrategy"):
 
         self.learner = learner
 
@@ -61,10 +58,6 @@ class BaseStrategy:
         self.epochs_per_period = epochs_per_period
         self.validation_seed = validation_seed
         self.directory = directory
-
-        if distribute is None:
-            distribute = tf.distribute.get_strategy()
-        self.distribute = distribute
 
         try:
             self.summary = pd.read_csv(

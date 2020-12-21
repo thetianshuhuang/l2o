@@ -7,14 +7,15 @@ class StepMixin:
 
     def _summarize(self, meta_loss, imitation_loss, params, callback_states):
         """Aggregate loss and summary statistics."""
+        distribute = tf.distribute.get_strategy()
         summary = {
-            "meta_loss": self.distribute.reduce(
+            "meta_loss": distribute.reduce(
                 tf.distribute.ReduceOp.MEAN, meta_loss, axis=None),
-            "imitation_loss": self.distribute.reduce(
+            "imitation_loss": distribute.reduce(
                 tf.distribute.ReduceOp.MEAN, imitation_loss, axis=None)
         }
         for st, cb in zip(callback_states, self.step_callbacks):
-            summary.update(cb.summarize(st, self.distribute))
+            summary.update(cb.summarize(st, distribute))
 
         return params, summary
 
@@ -56,8 +57,9 @@ class StepMixin:
 
             return results
 
+        distribute = tf.distribute.get_strategy()
         return self._summarize(
-            *self.distribute.run(_inner, args=(data, params)))
+            *distribute.run(_inner, args=(data, params)))
 
     @tf.function
     def abstract_valid_step(self, data, params, **kwargs):
@@ -66,8 +68,9 @@ class StepMixin:
         def _inner(data, params):
             return self.abstract_loss(data, params, **kwargs)
 
+        distribute = tf.distribute.get_strategy()
         return self._summarize(
-            *self.distribute.run(_inner, args=(data, params)))
+            *distribute.run(_inner, args=(data, params)))
 
     def make_concrete_step(self, meta, data, params):
         """Get a concrete @tf.function instance for abstract_step.

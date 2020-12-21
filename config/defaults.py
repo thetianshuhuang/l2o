@@ -155,6 +155,7 @@ POLICY = {
             "beta_2": 0.999,
             "learning_rate": 0.001,
             "epsilon": 1e-10,
+            "hardness": 0.0,
             "name": "ChoiceOptimizer",
             # LSTMCell Args
             "activation": "tanh",

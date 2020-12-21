@@ -111,7 +111,7 @@ def build(config, overrides, directory="weights", strict=True):
         os.makedirs(directory, exist_ok=True)
         with open(saved_config, 'w') as f:
             json.dump(config, f, indent=4)
-        print("saved to <{}/config.json>.".format(directory))
+        print("Config saved to <{}/config.json>.".format(directory))
 
     print("Configuration:")
     pprint.pprint(config)

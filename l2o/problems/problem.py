@@ -48,6 +48,11 @@ class Problem:
         self._size = size
         self.batch_size = batch_size
 
+    def __adjusted_size(self, unroll):
+        """Get adjusted batch size."""
+        distribute = tf.distribute.get_strategy()
+        return unroll * self.batch_size * distribute.num_replicas_in_sync
+
     def size(self, unroll):
         """Get number of batches for this unroll duration.
 
@@ -61,7 +66,8 @@ class Problem:
         int
             Number of batches. Use for progress bar size.
         """
-        return math.floor(self._size / (unroll * self.batch_size))
+        distribute = tf.distribute.get_strategy()
+        return math.floor(self._size / self.__adjusted_size(unroll))
 
     @tf.function
     def _get_parameters(self, distribute, seed=None):
@@ -70,26 +76,23 @@ class Problem:
             return self.model.get_parameters(seed=seed)
         return distribute.run(_inner)
 
-    def get_parameters(self, seed=None, distribute=None):
+    def get_parameters(self, seed=None):
         """Make variables corresponding to this problem.
 
         Keyword Args
         ------------
         seed : int
             Random seed to intialize with.
-        distribute : None or tf.distribute.Strategy
-            Distributed training tensorflow strategy. Uses ``get_strategy()``
-            if None.
+
         Returns
         -------
         tf.Tensor[]
             A list of tensors representing the parameters for this problem.
         """
-        if distribute is None:
-            distribute = tf.distribute.get_strategy()
+        distribute = tf.distribute.get_strategy()
         return self._get_parameters(distribute, seed=seed)
 
-    def get_dataset(self, unroll, seed=None, distribute=None):
+    def get_dataset(self, unroll, seed=None):
         """Get problem dataset.
 
         Parameters
@@ -101,17 +104,14 @@ class Problem:
         ------------
         seed : int
             Random seed to intialize with.
-        distribute : None or tf.distribute.Strategy
-            Distributed training tensorflow strategy.
         """
         dataset = self.dataset
         if self.shuffle_buffer is not None:
             dataset = self.dataset.shuffle(self.shuffle_buffer, seed=seed)
-        if distribute is None:
-            distribute = tf.distribute.get_strategy()
+        distribute = tf.distribute.get_strategy()
         return distribute.experimental_distribute_dataset(
             dataset
-            .batch(self.batch_size * unroll, drop_remainder=True)
+            .batch(self.__adjusted_size(unroll), drop_remainder=True)
             .prefetch(tf.data.experimental.AUTOTUNE))
 
     def objective(self, parameters, data):

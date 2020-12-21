@@ -7,69 +7,94 @@ UnrollState = collections.namedtuple(
     "UnrollState", ["params", "states", "global_state"])
 
 
-def create_state(params, policy):
-    """Abstracted unroll state for training loop inner optimization.
+class UnrollStateManager:
+    """Unroll state -- sort of.
 
-    Since tensorflow's behavior related to objects in tf.function is quite
-    broken, UnrollState is implemented just like a class -- just not as one.
-
-    Furthermore, class attributes can only contain tensors, not bound methods
-    since tensorflow's loop logic is also super scuffed and tries to interpret
-    all variables that *might* be states as tensors.
+    Since tensorflow's behavior related to objects in loops is quite
+    broken, UnrollState is implemented with what should be class attributes
+    awkwardly stored externally. These attributes must be supplied on each
+    method call.
 
     Parameters
     ----------
-    params : object
-        Nested structure of tensors describing initial problems state.
     policy : l2o.policies.BaseLearnToOptimizePolicy
         Optimization gradient policy to apply.
-    """
-    return UnrollState(
-        params=params,
-        states=[policy.get_initial_state(p) for p in params],
-        global_state=policy.get_initial_state_global())
-
-
-def advance_state(unroll_state, batch, get_objective, transform, policy):
-    """Advance this state by a single inner step.
-
-    Parameters
-    ----------
-    unroll_state : UnrollState
-        Unroll state data.
-    batch : object
-        Nested structure containing data batch.
     get_objective : callable(params, batch) -> float
         Computes objective value from current parameters and data batch.
     transform : callable(tf.Tensor[]) -> tf.Tensor[]
         Parameter transformation prior to objective function call.
-    policy : l2o.policies.BaseLearnToOptimizePolicy
-        Optimization gradient policy to apply.
-
-    Returns
-    -------
-    float
-        Objective value.
+    learner_mask : bool[]
+        Mask indicating which parameters should be trained on, and which
+        should use the reference optimizer (policy_ref).
     """
-    # 1. objective <- get_objective(params, batch)
-    with tf.GradientTape() as tape:
-        tape.watch(unroll_state.params)
-        objective = get_objective(transform(unroll_state.params), batch)
-    # 2. grads <- gradient(objective, params)
-    grads = tape.gradient(objective, unroll_state.params)
-    # 3. delta p, state <- policy(params, grads, local state, global state)
-    dparams, states_new = list(map(list, zip(*[
-        policy.call(*z, unroll_state.global_state)
-        for z in zip(unroll_state.params, grads, unroll_state.states)
-    ])))
-    # 4. p <- p - delta p
-    params_new = [p - d for p, d in zip(unroll_state.params, dparams)]
-    # 5. global_state <- global_policy(local states, global state)
-    global_state_new = policy.call_global(
-        states_new, unroll_state.global_state)
 
-    return objective, UnrollState(
-        params=params_new, states=states_new, global_state=global_state_new)
+    def __init__(self, policy, get_objective, transform, learner_mask):
+        self.policy = policy
+        self.get_objective = get_objective
+        self.transform = transform
+        self.mask = learner_mask
+
+    def create_state(self, params):
+        """Abstracted unroll state for training loop inner optimization.
+
+        Parameters
+        ----------
+        params : object
+            Nested structure of tensors describing initial problems state.
+        """
+        states = [
+            (self.policy if mask else self.policy_ref).get_initial_state(p)
+            for p, mask in zip(params, self.mask)]
+        return UnrollState(
+            params=params, states=states,
+            global_state=self.policy.get_initial_state_global())
+
+    def advance_param(self, args, mask, global_state):
+        """Advance a single parameter, depending on mask."""
+        if mask:
+            return self.policy.call(*args, global_state)
+        else:
+            return self.policy_ref.call(*args)
+
+    def advance_state(self, unroll_state, batch):
+        """Advance this state by a single inner step.
+
+        Parameters
+        ----------
+        unroll_state : UnrollState
+            Unroll state data.
+        batch : object
+            Nested structure containing data batch.
+
+        Returns
+        -------
+        float
+            Objective value.
+        """
+        # 1. objective <- get_objective(params, batch)
+        with tf.GradientTape() as tape:
+            tape.watch(unroll_state.params)
+            objective = self.get_objective(
+                self.transform(unroll_state.params), batch)
+        # 2. grads <- gradient(objective, params)
+        grads = tape.gradient(objective, unroll_state.params)
+        # 3. delta p, state <- policy(params, grads, local, global)
+        dparams, states_new = list(map(list, zip(*[
+            self.advance_param(args, mask, unroll_state.global_state)
+            for mask, args in zip(
+                self.mask,
+                zip(unroll_state.params, grads, unroll_state.states))
+        ])))
+        # 4. p <- p - delta p
+        params_new = [p - d for p, d in zip(unroll_state.params, dparams)]
+        # 5. global_state <- global_policy(local states, global state)
+        global_state_new = self.policy.call_global(
+            [s for s, mask in zip(states_new, self.mask) if mask],
+            unroll_state.global_state)
+
+        return objective, UnrollState(
+            params=params_new, states=states_new,
+            global_state=global_state_new)
 
 
 def state_distance(s1, s2):

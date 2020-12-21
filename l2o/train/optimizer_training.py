@@ -78,9 +78,6 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin):
         Statistics to stack (np.stack) and save to a .npz file.
     pbar_values : str[]
         List of values to monitor in progress bar.
-    distribute : None or tf.distribute.Strategy
-        Distributed training tensorflow strategy.
-        If None, uses ``tf.distribute.get_strategy()``.
     """
 
     def __init__(
@@ -91,13 +88,9 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin):
             obj_train_max_multiplier=-1, epsilon=1e-10, step_callbacks=[],
             pbar_values=["meta_loss", "imitation_loss"],
             mean_stats=["meta_loss", "imitation_loss"],
-            stack_stats=[], distribute=None):
+            stack_stats=[]):
 
         # Core
-        if distribute is None:
-            distribute = tf.distribute.get_strategy()
-        self.distribute = distribute
-
         self.name = name
         self.network = network
         self.optimizer = deserialize.optimizer(optimizer)

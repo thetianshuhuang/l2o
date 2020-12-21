@@ -4,7 +4,7 @@ import collections
 import tensorflow as tf
 
 from .random_scaling import create_random_parameter_scaling
-from .unroll_state import create_state, advance_state, state_distance
+from .unroll_state import UnrollStateManager, state_distance
 
 
 class LossMixin:
@@ -86,11 +86,19 @@ class LossMixin:
         tf.while_loop. See `https://www.tensorflow.org/guide/function`.
 
         The following rules must be followed:
-         -  No variable creation. Variable creation is only allowed in eager
+        (1) No variable creation. Variable creation is only allowed in eager
             mode.
-         -  No ``tf.Variable``s may be assigned, since this stops gradients.
+        (2) No ``tf.Variable``s may be assigned, since this stops gradients.
             This precludes the use of tf.keras.Model in training problems, as
             well as usage of the ``_create_slots`` system.
+        (3) Loop variables must be homogenous. In other words, local objects
+            containing tensors which are modified each iteration must ONLY
+            contain tensors that are modified each iteration.
+        (4) Lists and tuples are not compatible. Objects which start as lists
+            must remain as lists.
+        (5) As a corollary of (3) and (4), non-tensors (bound python objects)
+            must be stored in separate objects. This leads to the awkward
+            ``list(map(list, zip(*[])))`` list[] -> list[] paradigm.
 
         Parameters
         ----------
@@ -117,8 +125,7 @@ class LossMixin:
         """
         # Split data; data dimensions are ``[unroll, batch] + [data]``
         data = [
-            tf.stack(tf.split(dim, num_or_size_splits=unroll))
-            for dim in data]
+            tf.stack(tf.split(dim, num_or_size_splits=unroll)) for dim in data]
 
         # Calculate initial objective values for scaling (pre-transform params)
         init_obj = self._compute_init_obj(params, problem, data, unroll)
@@ -128,7 +135,13 @@ class LossMixin:
             params, spread=self.parameter_scale_spread, seed=seed)
         # Make states: [trained policy, teacher policy #1, ...]
         policies = [self.network, *self.teachers]
-        unroll_states = [create_state(params, policy) for policy in policies]
+
+        def mgr_constructor(p):
+            return UnrollStateManager(
+                p, problem.objective, transform, [True for _ in params])
+
+        policy_managers = [mgr_constructor(p) for p in policies]
+        unroll_states = [p.create_state(params) for p in policy_managers]
 
         meta_loss = 0.
         imitation_loss = 0.
@@ -139,8 +152,8 @@ class LossMixin:
 
             # Advance by one step
             losses, unroll_states = list(map(list, zip(*[
-                advance_state(st, batch, problem.objective, transform, pol)
-                for st, pol in zip(unroll_states, policies)
+                mgr.advance_state(st, batch)
+                for st, mgr in zip(unroll_states, policy_managers)
             ])))
 
             # Add meta loss
@@ -159,5 +172,5 @@ class LossMixin:
                 cb.on_step_end(st, i, losses[0], teacher_loss)
                 for st, cb in zip(callback_states, self.step_callbacks)]
 
-        params = transform(unroll_states[1].params)
+        params = transform(unroll_states[0].params)
         return meta_loss, imitation_loss, params, callback_states
