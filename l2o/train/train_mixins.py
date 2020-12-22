@@ -69,7 +69,7 @@ class TrainingMixin:
         losses = LossTracker()
 
         seeds = make_seeds(meta.seed, epochs * repeat)
-        dataset = meta.problem.get_dataset(meta.unroll_len, seed=seed)
+        dataset = meta.problem.get_dataset(meta.unroll_len, seed=meta.seed)
         for i, seed in enumerate(seeds):
             # Get new state for each repeat
             if i % epochs == 0:
