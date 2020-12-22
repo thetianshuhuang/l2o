@@ -13,7 +13,7 @@ class Problem:
         Core model (i.e. classifier or regression). Must have
         ``get_parameters`` and ``call`` methods.
     dataset : tf.data.Dataset
-        Tensorflow dataset to use
+        Dataset to use.
     loss : callable (tf.Tensor, tf.Tensor -> tf.Tensor)
         Computes loss from model output and ground truth. Dataset should have
         input as the first array and output as the second.
@@ -45,6 +45,7 @@ class Problem:
             shuffle_buffer=None, batch_size=32, size=None, config=None):
 
         self.dataset = dataset
+        
         self.model = model
         self.loss = loss
 
@@ -80,27 +81,6 @@ class Problem:
             Namedtuple; indexes with (unroll_len, validation).        
         """
         self.step[(meta.unroll_len, meta.validation)] = step
-
-    def __adjusted_size(self, unroll):
-        """Get adjusted batch size."""
-        distribute = tf.distribute.get_strategy()
-        return unroll * self.batch_size * distribute.num_replicas_in_sync
-
-    def size(self, unroll):
-        """Get number of batches for this unroll duration.
-
-        Parameters
-        ----------
-        unroll : int
-            Unroll duration
-
-        Returns
-        -------
-        int
-            Number of batches. Use for progress bar size.
-        """
-        distribute = tf.distribute.get_strategy()
-        return math.floor(self._size / self.__adjusted_size(unroll))
 
     @tf.function
     def _get_parameters(self, distribute, seed=None):
@@ -138,15 +118,18 @@ class Problem:
         seed : int
             Random seed to intialize with.
         """
-        dataset = self.dataset
-        if self.shuffle_buffer is not None:
-            dataset = self.dataset.shuffle(
-                self.shuffle_buffer, seed=seed, reshuffle_each_iteration=True)
         distribute = tf.distribute.get_strategy()
-        return distribute.experimental_distribute_dataset(
-            dataset
-            .batch(self.__adjusted_size(unroll), drop_remainder=True)
-            .prefetch(tf.data.experimental.AUTOTUNE))
+        ds = distribute.experimental_distribute_dataset(
+            self.dataset.batch(self._size, drop_remainder=True))
+
+        for batch in ds:
+            return batch
+
+    def get_batch(self, data, idx):
+        """Get slice of dataset."""
+        start = idx * self.batch_size
+        end = start + self.batch_size
+        return [dim[start:end] for dim in data]
 
     def objective(self, parameters, data):
         """Objective function.

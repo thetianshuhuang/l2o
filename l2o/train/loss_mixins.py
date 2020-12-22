@@ -30,38 +30,6 @@ class LossMixin:
         else:
             return 0.0
 
-    def _compute_init_obj(self, params, problem, data, unroll):
-        """Compute initial objective value.
-
-        Parameters
-        ----------
-        params : tf.Tensor[]
-            Initial problem parameters
-        problem : problems.Problem
-            Training problem
-        data : tf.TensorArray[] or tf.Tensor[]
-            List of TensorArrays containing training batches or list of tensors
-            containing full batch data
-        unroll : tf.Tensor()
-            0-dimension tensor containing unroll size
-
-        Returns
-        -------
-        float or tf.Tensor
-            If full batch, returns the initial objective value. If batched,
-            returns the initial objective value for each batch.
-        """
-        # scale_objective -> need to compute initial values
-        if self.scale_objective:
-            # When batched, use initial values for each batch
-            return tf.stack([
-                problem.objective(params, [dim[i] for dim in data])
-                for i in range(unroll)
-            ])
-        # Not scale_objective -> just use 1. as denominator
-        else:
-            return tf.tile([1.], [unroll])
-
     def _max_obj(self, init_obj, current_obj):
         """Helper to check for exceeding maximum objective limits."""
         # obj_train_max_multiplier * init_obj
@@ -102,8 +70,8 @@ class LossMixin:
 
         Parameters
         ----------
-        data : object
-            Nested structure containing data tensors.
+        data : tf.Tensor[]
+            List of data tensors.
         params : tf.Tensor[]
             Initial problem parameter values.
 
@@ -123,32 +91,27 @@ class LossMixin:
             [1] Final problem parameters.
             [2] Summary statistics collected by self.step_callback if present.
         """
-        # Split data; data dimensions are ``[unroll, batch] + [data]``
-        data = [
-            tf.stack(tf.split(dim, num_or_size_splits=unroll)) for dim in data]
-
-        # Calculate initial objective values for scaling (pre-transform params)
-        init_obj = self._compute_init_obj(params, problem, data, unroll)
-
         # Make random scaling
-        params, transform = create_random_parameter_scaling(
+        params_scale, transform = create_random_parameter_scaling(
             params, spread=self.parameter_scale_spread, seed=seed)
         # Make states: [trained policy, teacher policy #1, ...]
         policies = [self.network, *self.teachers]
 
         def mgr_constructor(p):
             return UnrollStateManager(
-                p, problem.objective, transform, [True for _ in params])
+                p, problem.objective, transform, [True for _ in params_scale])
 
         policy_managers = [mgr_constructor(p) for p in policies]
-        unroll_states = [p.create_state(params) for p in policy_managers]
+        unroll_states = [p.create_state(params_scale) for p in policy_managers]
 
         meta_loss = 0.
         imitation_loss = 0.
         callback_states = [cb.get_state(unroll) for cb in self.step_callbacks]
+
+        indices = tf.random.shuffle(tf.range(unroll))
         for i in tf.range(unroll):
             weight = self.unroll_weight(i, unroll)
-            batch = [dim[i] for dim in data]
+            batch = problem.get_batch(data, indices[i])
 
             # Advance by one step
             losses, unroll_states = list(map(list, zip(*[
@@ -156,11 +119,17 @@ class LossMixin:
                 for st, mgr in zip(unroll_states, policy_managers)
             ])))
 
+            # Scale objective
+            if self.scale_objective:
+                init_obj = 1.
+            else:
+                init_obj = problem.objective(params, batch)
+
             # Add meta loss
-            if self._max_obj(init_obj[i], losses[0]):
+            if self._max_obj(init_obj, losses[0]):
                 break
             meta_loss += (
-                weight * self._scale_meta_objective(losses[0], init_obj[i]))
+                weight * self._scale_meta_objective(losses[0], init_obj))
 
             # Add imitation loss
             teacher_loss = [

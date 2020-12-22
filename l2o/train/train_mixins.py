@@ -64,8 +64,7 @@ class TrainingMixin:
         params = None
 
         # Single progress bar
-        size = meta.problem.size(meta.unroll_len)
-        pbar = Progbar(size * epochs * repeat, unit_name='step')
+        pbar = Progbar(epochs * repeat, unit_name='step')
         losses = LossTracker()
 
         seeds = make_seeds(meta.seed, epochs * repeat)
@@ -74,19 +73,18 @@ class TrainingMixin:
             # Get new state for each repeat
             if i % epochs == 0:
                 params = meta.problem.get_parameters(seed=seed)
-            # Dataset is reused; reshuffle_each_iteration is enabled
-            for batch in dataset:
-                # Only create concrete loss on first iteration
-                if step is None:
-                    step = self.make_concrete_step(meta, batch, params)
 
-                # The actual step
-                if meta.validation:
-                    params, stats = step(batch, params)
-                else:
-                    params, stats = self._meta_step(meta, step, batch, params)
-                losses.append(stats)
-                pbar.add(1, values=[(k, stats[k]) for k in self.pbar_values])
+            # Only create concrete loss on first iteration
+            if step is None:
+                step = self.make_concrete_step(meta, dataset, params)
+
+            # The actual step
+            if meta.validation:
+                params, stats = step(dataset, params)
+            else:
+                params, stats = self._meta_step(meta, step, dataset, params)
+            losses.append(stats)
+            pbar.add(1, values=[(k, stats[k]) for k in self.pbar_values])
 
         meta.problem.save_step(step, meta)
         return losses.summarize(self.stack_stats, self.mean_stats)
