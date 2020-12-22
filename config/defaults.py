@@ -16,7 +16,7 @@ BASE = {
         "scale_objective": True,
         "parameter_scale_spread": 3.0,
         "loss_reduce": "reduce_mean",
-        "il_mode": "switch",
+        "il_mode": "sum",
         "unroll_weight": "sum",
         "teachers": [],
         "obj_train_max_multiplier": -1,

@@ -1,5 +1,7 @@
 """Outer Optimization Step."""
+
 import tensorflow as tf
+import time
 
 
 class StepMixin:
@@ -101,13 +103,22 @@ class StepMixin:
         tf.Graph
             Concrete function created with the specified problem inputs.
         """
+
+        # time it
+        start = time.time()
+
         if meta.validation:
-            return self.abstract_valid_step.get_concrete_function(
+            step = self.abstract_valid_step.get_concrete_function(
                 data, params, unroll=meta.unroll_len, problem=meta.problem,
                 seed=meta.seed)
         else:
             # NOTE: weights are just placeholders
-            return self.abstract_train_step.get_concrete_function(
+            step = self.abstract_train_step.get_concrete_function(
                 data, params, unroll=meta.unroll_len, problem=meta.problem,
                 seed=meta.seed, meta_loss_weight=tf.constant(0.5),
                 imitation_loss_weight=tf.constant(0.5))
+
+        print("[{:.2f}s] Built concrete step: unroll={}, validation={}".format(
+            time.time() - start, meta.unroll_len, meta.validation))
+
+        return step

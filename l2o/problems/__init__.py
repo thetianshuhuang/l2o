@@ -1,7 +1,7 @@
 """Training problems."""
 
 from .networks import load_images, mlp_classifier, conv_classifier
-from .problem import Problem, ProblemSpec
+from .problem import Problem
 
 __all__ = [
     "Classifier",
@@ -9,5 +9,4 @@ __all__ = [
     "mlp_classifier",
     "conv_classifier",
     "Problem",
-    "ProblemSpec"
 ]

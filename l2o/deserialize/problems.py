@@ -4,15 +4,15 @@ import l2o
 
 
 def _deserialize_problem(p):
-    """Helper function to deserialize a problem into a ProblemSpec."""
-    if isinstance(p, l2o.problems.ProblemSpec):
+    """Helper function to deserialize a problem dict into a Problem."""
+    if isinstance(p, l2o.problems.Problem):
         return p
     else:
         try:
             target = p['target']
             if type(target) == str:
                 target = getattr(l2o.problems, target)
-            return l2o.problems.ProblemSpec(target, p['args'], p['kwargs'])
+            return target(*p['args'], config=p, **p['kwargs'])
         except Exception as e:
             raise TypeError(
                 "Problem could not be deserialized: {}\n{}".format(p, e))

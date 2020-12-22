@@ -1,4 +1,5 @@
 """Outer Optimizer Training."""
+
 import tensorflow as tf
 import numpy as np
 import collections
@@ -58,7 +59,8 @@ class TrainingMixin:
             Mean training loss for this meta-iteration
         """
         # concrete_step, params will be assigned on first iteration.
-        step = None
+        # concrete_step is cached.
+        step = meta.problem.get_step(meta)
         params = None
 
         # Single progress bar
@@ -86,6 +88,7 @@ class TrainingMixin:
                 losses.append(stats)
                 pbar.add(1, values=[(k, stats[k]) for k in self.pbar_values])
 
+        meta.problem.save_step(step, meta)
         return losses.summarize(self.stack_stats, self.mean_stats)
 
     def train(
@@ -95,8 +98,8 @@ class TrainingMixin:
 
         Parameters
         ----------
-        problems : problem.ProblemSpec[]
-            List of problem specifications to build and run
+        problems : problem.Problem[]
+            List of problems to build and run
 
         Keyword Args
         ------------
@@ -130,13 +133,12 @@ class TrainingMixin:
                 Shape depends on whether ``k`` is in ``use_mean``.
         """
         results = LossTracker()
-        for itr, spec in enumerate(problems):
-            spec.print(itr)
-            problem = spec.build()
+        for itr, problem in enumerate(problems):
+
+            print("[#{}] {}".format(itr, problem.config))
 
             meta = MetaIteration(
                 problem, unroll_len(), p_teacher, validation, seed)
-
             results.append(self._train(meta, repeat=repeat, epochs=epochs))
 
         return results.summarize(self.stack_stats, self.mean_stats)

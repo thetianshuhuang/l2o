@@ -28,17 +28,21 @@ class Problem:
         Batch size for dataset
     size : int
         Number of elements in this dataset, if known.
+    config : dict
+        Configuration dictionary (for tracking and info).
 
     Attributes
     ----------
     batch_size : int
         Replica-adjusted batch size (# samples per replica)
-
+    step : dict[(unroll, validation)] -> tf.Graph
+        Concrete step for outer training; cached here per-problem due to long
+        build times (>60s).
     """
 
     def __init__(
             self, model, dataset, loss,
-            shuffle_buffer=None, batch_size=32, size=None):
+            shuffle_buffer=None, batch_size=32, size=None, config=None):
 
         self.dataset = dataset
         self.model = model
@@ -47,6 +51,35 @@ class Problem:
         self.shuffle_buffer = shuffle_buffer
         self._size = size
         self.batch_size = batch_size
+
+        self.config = config
+
+        self.step = {}
+
+    def get_step(self, meta):
+        """Get concrete step for given metaiteration settings.
+
+        Parameters
+        ----------
+        meta : MetaIteration
+            Namedtuple; indexes with (unroll_len, validation).
+        """
+        try:
+            return self.step[(meta.unroll_len, meta.validation)]
+        except KeyError:
+            return None
+
+    def save_step(self, step, meta):
+        """Save concrete step.
+
+        Parameters
+        ----------
+        step : tf.Graph
+            Concrete function for this problem.
+        meta : MetaIteration
+            Namedtuple; indexes with (unroll_len, validation).        
+        """
+        self.step[(meta.unroll_len, meta.validation)] = step
 
     def __adjusted_size(self, unroll):
         """Get adjusted batch size."""
@@ -135,39 +168,3 @@ class Problem:
         """
         x, y = data
         return tf.reduce_mean(self.loss(y, self.model.call(parameters, x)))
-
-
-class ProblemSpec:
-    """Simple class used for storing problem specifications.
-
-    Parameters
-    ----------
-    target : target (*args, **kwargs -> problem)
-        Callable used to create problem
-    args : []
-        Array of arguments
-    kwargs : {}
-        Dictionary of keyword args
-    """
-
-    def __init__(
-            self, target, args, kwargs):
-
-        self.target = target
-        self.args = args
-        self.kwargs = kwargs
-
-    def build(self, *args, **kwargs):
-        """Initialize this problem.
-
-        Returns
-        -------
-        problem.Problem
-            Class referenced by ``callable``
-        """
-        return self.target(*self.args, *args, **self.kwargs, **kwargs)
-
-    def print(self, itr):
-        """Print problem information."""
-        print("[#{}] {}, args={}, kwargs={}".format(
-            itr, self.target.__name__, self.args, self.kwargs))

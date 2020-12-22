@@ -39,7 +39,7 @@ OVERRIDE_PRESETS = {
             "validation_seed": 12345,
             "num_periods": 100,
             "unroll_distribution": 200,
-            "epochs": 50,
+            "epochs": 200,
             "repeat": 5,
             "annealing_schedule": 0.5,
             "validation_repeat": 1,
@@ -96,5 +96,5 @@ def get_preset(name):
         return OVERRIDE_PRESETS[name]
     except KeyError:
         raise KeyError(
-            "Invalid preset: {}.\nValid presets are:\n  - ".format(name) +
-            "\n  - ".join(OVERRIDE_PRESETS.keys()))
+            "Invalid preset: {}.\nValid presets are:\n  - ".format(name)
+            + "\n  - ".join(OVERRIDE_PRESETS.keys()))

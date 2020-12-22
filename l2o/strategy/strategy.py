@@ -17,12 +17,12 @@ class BaseStrategy:
     ----------
     learner : train.OptimizerTraining
         Optimizer training wrapper.
-    problems : problems.ProblemSpec[]
+    problems : problems.Problem[]
         List of problem specifications to train on.
 
     Keyword Args
     ------------
-    validation_problems : problems.ProblemSpec[] or None.
+    validation_problems : problems.Problem[] or None.
         List of problems to validate with. If None, validates on the training
         problem set.
     epochs_per_period : int
