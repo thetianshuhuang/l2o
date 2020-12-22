@@ -140,7 +140,8 @@ class Problem:
         """
         dataset = self.dataset
         if self.shuffle_buffer is not None:
-            dataset = self.dataset.shuffle(self.shuffle_buffer, seed=seed)
+            dataset = self.dataset.shuffle(
+                self.shuffle_buffer, seed=seed, reshuffle_each_iteration=True)
         distribute = tf.distribute.get_strategy()
         return distribute.experimental_distribute_dataset(
             dataset

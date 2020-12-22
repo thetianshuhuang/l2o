@@ -69,12 +69,12 @@ class TrainingMixin:
         losses = LossTracker()
 
         seeds = make_seeds(meta.seed, epochs * repeat)
+        dataset = meta.problem.get_dataset(meta.unroll_len, seed=seed)
         for i, seed in enumerate(seeds):
             # Get new state for each repeat
             if i % epochs == 0:
                 params = meta.problem.get_parameters(seed=seed)
-            # New dataset using seed for each epoch.
-            dataset = meta.problem.get_dataset(meta.unroll_len, seed=seed)
+            # Dataset is reused; reshuffle_each_iteration is enabled
             for batch in dataset:
                 # Only create concrete loss on first iteration
                 if step is None:
