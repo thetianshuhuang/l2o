@@ -154,8 +154,7 @@ class Problem:
             self._adjusted_size(unroll) * length / self._size))
         if self.shuffle_buffer is not None:
             dataset = dataset.shuffle(
-                self.shuffle_buffer, seed=seed,
-                reshuffle_each_iteration=True)
+                self.shuffle_buffer, seed=seed, reshuffle_each_iteration=True)
         return distribute.experimental_distribute_dataset(
             dataset
             .batch(self._adjusted_size(unroll), drop_remainder=True)

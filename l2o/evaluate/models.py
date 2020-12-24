@@ -12,17 +12,18 @@ def conv_classifier(
             strides=(stride, stride))
         for size, units, stride in layers
     ]
-    return tf.keras.Sequential(layers + [
-        tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(
-            info.features['label'].num_classes, activation="softmax")
-    ])
+    return tf.keras.Sequential(
+        [tf.keras.layers.Input(shape=info.features['image'])] + layers + [
+            tf.keras.layers.Flatten(),
+            tf.keras.layers.Dense(
+                info.features['label'].num_classes, activation="softmax")
+        ])
 
 
 def mlp_classifier(info, activation=tf.nn.relu, layers=[32]):
     """MLP classifier (identical to mlp_classifier problem)."""
     return tf.keras.Sequential(
-        [tf.keras.layers.Flatten(input_shape=info.features['image']).shape]
+        [tf.keras.layers.Flatten(input_shape=info.features['image'])]
         + [tf.keras.layers.Dense(u) for u in layers]
         + [tf.keras.layers.Dense(10, activation="softmax")]
     )
@@ -31,6 +32,7 @@ def mlp_classifier(info, activation=tf.nn.relu, layers=[32]):
 def debug_net(info, activation=tf.nn.relu):
     """Debug Network."""
     return tf.keras.Sequential([
+        tf.keras.layers.Input(shape=info.features['image']),
         tf.keras.layers.MaxPool2D(pool_size=(4, 4)),
         tf.keras.layers.Dense(10, activation="softmax")
     ])

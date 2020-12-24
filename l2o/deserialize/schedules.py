@@ -19,17 +19,22 @@ def integer_distribution(x, name="undefined"):
 
 def float_schedule(x, name="undefined"):
     """Deserializes a floating point schedule."""
-    if type(x) == float:
-        return lambda i: np.exp(i * -np.abs(x))
-    elif type(x) in (list, tuple):
-        return x.__getitem__
+    if isinstance(x, dict):
+        if x["type"] == "constant":
+            return lambda i: x["value"]
+        elif x["type"] == "list":
+            return x["values"].__getitem__
+        elif x["type"] == "exponential":
+            return lambda i: np.exp(i * -np.abs(x["alpha"]))
+        else:
+            return ValueError("Invalid float schedule: {}".format(str(x)))
     elif callable(x):
         return x
     elif type(x) == str:
         return eval(x)
     else:
         raise TypeError(
-            "Unrecognized {}_schedule type; must be float, list "
+            "Unrecognized {}_schedule type; must be dict, list "
             "or callable(int) -> float".format(name))
 
 
