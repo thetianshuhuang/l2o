@@ -4,14 +4,14 @@ import tensorflow as tf
 
 
 def conv_classifier(
-        info, activation=tf.nn.relu, layers=[[3, 16, 2], [3, 16, 2]]):
+        info, activation=tf.nn.relu, layers=[[16, 3, 1], 2, [32, 5, 1], 2]):
     """Convolutional classifier (identical to conv_classifier problem)."""
 
     def _deserialize(args):
         if isinstance(args, int):
             return tf.keras.layers.MaxPooling2D(pool_size=(args, args))
         elif isinstance(args, list):
-            f, k, s = list
+            f, k, s = args
             return tf.keras.layers.Conv2D(
                 f, k, activation=activation, strides=(s, s))
         else:
@@ -34,12 +34,3 @@ def mlp_classifier(info, activation=tf.nn.relu, layers=[32]):
         + [tf.keras.layers.Dense(u) for u in layers]
         + [tf.keras.layers.Dense(10, activation="softmax")]
     )
-
-
-def debug_net(info, activation=tf.nn.relu):
-    """Debug Network."""
-    return tf.keras.Sequential([
-        tf.keras.layers.Input(shape=info.features['image'].shape),
-        tf.keras.layers.MaxPool2D(pool_size=(4, 4)),
-        tf.keras.layers.Dense(10, activation="softmax")
-    ])

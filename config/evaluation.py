@@ -2,12 +2,15 @@
 
 
 EVALUATION_PROBLEMS = {
-    "debug": {
-        "config": {},
-        "target": "debug_net",
+    "mlp_train": {
+        "config": {
+            "layers": [20],
+            "activation": "sigmoid",
+        },
+        "target": "conv_classifier",
         "dataset": "mnist",
-        "epochs": 2,
-        "batch_size": 32
+        "epochs": 25,
+        "batch_size": 128
     },
     "conv_train": {
         "config": {
