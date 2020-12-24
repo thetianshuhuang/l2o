@@ -37,7 +37,7 @@ OVERRIDE_PRESETS = {
             "depth": 25,
             "epochs": 25,
             "annealing_schedule": {"type": "constant", "value": 0.0},
-            "validation_epochs": 10,
+            "validation_epochs": 5,
             "validation_unroll": 20,
             "validation_depth": 25,
             "name": "SimpleStrategy"
