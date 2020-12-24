@@ -192,6 +192,27 @@ class Conv2D(Layer):
             return self.activation(res + bias)
 
 
+class MaxPooling2D(Layer):
+
+    def __init__(self, pool_size=(2, 2), strides=None):
+        self.size = pool_size
+        self.strides = pool_size if strides is None else pool_size
+
+    def build(self, input_shape, in_idx):
+        self.output_dim = [
+            math.floor((input_shape[0] - self.size[0]) / self.strides[0]) + 1,
+            math.floor((input_shape[1] - self.size[1]) / self.strides[1]) + 1,
+            input_shape[2]
+        ]
+        return self.output_dim, in_idx
+
+    def get_parameters(self, seed=None):
+        return []
+    
+    def call(self, params, x):
+        return tf.nn.max_pool(x, self.size, self.strides, "VALID")
+
+
 class Sequential:
     """Sequential model.
 

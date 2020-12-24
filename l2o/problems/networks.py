@@ -4,7 +4,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 
 from .problem import Problem
-from .stateless_keras import Dense, Sequential, Conv2D
+from .stateless_keras import Dense, Sequential, Conv2D, MaxPooling2D
 
 
 def load_images(dataset, split="train"):
@@ -152,10 +152,18 @@ def conv_classifier(
         shape = img.shape.as_list()
         return tf.cast(tf.reshape(img, shape[:-1] + []), tf.float32) / 255.
 
+    def _deserialize(args):
+        if isinstance(args, int):
+            return MaxPooling2D(pool_size=(args, args))
+        elif isinstance(args, list) and len(args) == 3:
+            f, k, s = args
+            return Conv2D(f, k, stride=s, activation=activation)
+        else:
+            raise TypeError("Not a valid layer: {}".format(args))
+
     def _network(input_shape, labels):
         return Sequential(
-            [Conv2D(f, k, stride=s, activation=activation)
-             for f, k, s in layers]
+            [_deserialize(x) for x in layers]
             + [Dense(labels, activation=tf.nn.softmax)], input_shape)
 
     return _make_tfds(_network, dataset=dataset, **kwargs)

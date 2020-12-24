@@ -108,10 +108,10 @@ class LossMixin:
         imitation_loss = 0.
         callback_states = [cb.get_state(unroll) for cb in self.step_callbacks]
 
-        indices = tf.random.shuffle(tf.range(unroll))
+        dataset = problem.prepare_batches(unroll, data)
         for i in tf.range(unroll):
             weight = self.unroll_weight(i, unroll)
-            batch = problem.get_batch(data, indices[i])
+            batch = problem.get_batch(dataset, i)
 
             # Advance by one step
             losses, unroll_states = list(map(list, zip(*[

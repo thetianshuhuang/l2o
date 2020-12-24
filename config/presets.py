@@ -53,16 +53,10 @@ OVERRIDE_PRESETS = {
             "target": "conv_classifier",
             "args": [],
             "kwargs": {
-                "layers": [
-                    [3, 8, 1],
-                    [3, 16, 2],
-                    [3, 16, 1],
-                    [3, 16, 2],
-                    [3, 16, 1],
-                ],
+                "layers": [[3, 16, 1], 2, [5, 32, 1], 2],
                 "activation": "relu",
                 "dataset": "mnist",
-                "batch_size": 64,
+                "batch_size": 128,
                 "shuffle_buffer": 16384,
             }
         }]
