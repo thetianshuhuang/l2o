@@ -26,11 +26,6 @@ OVERRIDE_PRESETS = {
             }
         }
     )],
-    "teacher_nadam": [(
-        ["training", "teachers", "*"],
-        {"class_name": "Nadam",
-         "config": {"learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999}}
-    )],
     "simple_comparison": [(
         ["strategy"],
         {
@@ -54,7 +49,7 @@ OVERRIDE_PRESETS = {
             "target": "conv_classifier",
             "args": [],
             "kwargs": {
-                "layers": [[3, 16, 1], 2, [5, 32, 1], 2],
+                "layers": [[16, 3, 1], 2, [32, 5, 1], 2],
                 "activation": "relu",
                 "dataset": "mnist",
                 "batch_size": 128,
