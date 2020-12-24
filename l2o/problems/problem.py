@@ -33,6 +33,9 @@ class Problem:
         Number of elements in this dataset, if known.
     config : dict
         Configuration dictionary (for tracking and info).
+    concat : int
+        Concatenate dataset with itself to minimize performance penalties
+        when resetting dataset iteration.
 
     Attributes
     ----------
@@ -44,11 +47,16 @@ class Problem:
     """
 
     def __init__(
-            self, model, dataset, loss,
+            self, model, dataset, loss, concat=1,
             shuffle_buffer=None, batch_size=32, size=None, config=None):
 
-        self.dataset = dataset
-        
+        if concat > 1:
+            self.dataset = dataset
+            for _ in range(concat - 1):
+                self.dataset.concatenate(dataset)
+        else:
+            self.dataset = dataset
+
         self.model = model
         self.loss = loss
 

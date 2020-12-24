@@ -39,7 +39,7 @@ OVERRIDE_PRESETS = {
             "validation_seed": 12345,
             "num_periods": 100,
             "unroll_distribution": 20,
-            "epochs": 5,
+            "epochs": 1,
             "repeat": 100,
             "annealing_schedule": 0.5,
             "validation_repeat": 1,
@@ -58,6 +58,7 @@ OVERRIDE_PRESETS = {
                 "dataset": "mnist",
                 "batch_size": 128,
                 "shuffle_buffer": 16384,
+                "concat": 5
             }
         }]
     )],
