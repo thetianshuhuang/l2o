@@ -83,12 +83,9 @@ def evaluate(
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
 
-    distribute = tf.distribute.get_strategy()
-
     def _batch(ds):
-        return distribute.experimental_distribute_dataset(
-            ds.batch(batch_size=batch_size)
-            .prefetch(tf.data.experimental.AUTOTUNE))
+        return ds.batch(
+            batch_size=batch_size).prefetch(tf.data.experimental.AUTOTUNE)
 
     time_tracking = EpochTimeTracker()
     batch_tracking = BatchTracker()

@@ -18,7 +18,7 @@ def conv_classifier(
             raise TypeError("Not a valid layer: {}".format(args))
 
     return tf.keras.Sequential(
-        [tf.keras.layers.Input(shape=info.features['image'])] + [
+        [tf.keras.layers.Input(shape=info.features['image'].shape)] + [
             _deserialize(x) for x in layers
         ] + [
             tf.keras.layers.Flatten(),
@@ -30,7 +30,7 @@ def conv_classifier(
 def mlp_classifier(info, activation=tf.nn.relu, layers=[32]):
     """MLP classifier (identical to mlp_classifier problem)."""
     return tf.keras.Sequential(
-        [tf.keras.layers.Flatten(input_shape=info.features['image'])]
+        [tf.keras.layers.Flatten(input_shape=info.features['image'].shape)]
         + [tf.keras.layers.Dense(u) for u in layers]
         + [tf.keras.layers.Dense(10, activation="softmax")]
     )
@@ -39,7 +39,7 @@ def mlp_classifier(info, activation=tf.nn.relu, layers=[32]):
 def debug_net(info, activation=tf.nn.relu):
     """Debug Network."""
     return tf.keras.Sequential([
-        tf.keras.layers.Input(shape=info.features['image']),
+        tf.keras.layers.Input(shape=info.features['image'].shape),
         tf.keras.layers.MaxPool2D(pool_size=(4, 4)),
         tf.keras.layers.Dense(10, activation="softmax")
     ])

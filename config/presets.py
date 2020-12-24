@@ -43,7 +43,7 @@ OVERRIDE_PRESETS = {
             "name": "SimpleStrategy"
         }
     )],
-    "train_conv": [(
+    "conv_train": [(
         ["problems"],
         [{
             "target": "conv_classifier",
@@ -76,7 +76,7 @@ OVERRIDE_PRESETS = {
     "log_teachers": [
         (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
         (["training", "stack_stats", "*"], "teacher_counts")
-    ]
+    ],
 }
 
 
