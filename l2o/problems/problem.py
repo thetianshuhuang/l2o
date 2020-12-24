@@ -153,7 +153,7 @@ class Problem:
         dataset = self.dataset.repeat(math.ceil(
             self._adjusted_size(unroll) * length / self._size))
         if self.shuffle_buffer is not None:
-            dataset = self.dataset.shuffle(
+            dataset = dataset.shuffle(
                 self.shuffle_buffer, seed=seed,
                 reshuffle_each_iteration=True)
         return distribute.experimental_distribute_dataset(
