@@ -35,7 +35,7 @@ OVERRIDE_PRESETS = {
             "num_periods": 100,
             "unroll_distribution": 20,
             "depth": 25,
-            "epochs": 100,
+            "epochs": 25,
             "annealing_schedule": {"type": "constant", "value": 0.0},
             "validation_epochs": 10,
             "validation_unroll": 20,
