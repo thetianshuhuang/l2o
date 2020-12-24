@@ -37,17 +37,20 @@ class SimpleStrategy(BaseStrategy):
             epoch within each training problem.
         int: fixed unroll length.
         float: sets unroll_distribution ~ Geometric(x)
+    depth : int
+        Number of outer steps per outer epoch (number of outer steps
+        before resetting training problem)
     epochs : int
-        Number of inner epochs per outer problem repetition
-    repeat : int
-        Number of problem repetitions per meta-epoch
+        Number of outer epochs to run.
     annealing_schedule : callable(int -> float) or float or float[]
         callable: function returning the probability of choosing imitation
             learning for a given period. The idea is to anneal this to 0.
         float: sets annealing_schedule ~ exp(-i * x)
         float[]: specify the annealing schedule explicitly as a list or tuple.
-    validation_repeat : int
-        Number of problem repetitions during validation.
+    validation_epochs : int
+        Number of outer epochs during validation.
+    validation_depth : int
+        Depth during validation.
     validation_unroll : int
         Unroll length to use for validation.
     """
@@ -56,20 +59,23 @@ class SimpleStrategy(BaseStrategy):
 
     def __init__(
             self, *args, num_periods=100, unroll_distribution=200, epochs=1,
-            repeat=1, annealing_schedule=0.1, validation_repeat=None,
-            validation_unroll=50, name="SimpleStrategy", **kwargs):
+            depth=1, annealing_schedule=0.1, validation_epochs=None,
+            validation_depth=None, validation_unroll=None,
+            name="SimpleStrategy", **kwargs):
 
         super().__init__(*args, name=name, **kwargs)
 
         self.num_periods = num_periods
 
-        if validation_repeat is None:
-            self.validation_repeat = repeat
-        else:
-            self.validation_repeat = validation_repeat
+        def _default(val, default):
+            return val if val is not None else default
+
+        self.validation_epochs = _default(validation_epochs, epochs)
+        self.validation_depth = _default(validation_depth, depth)
+        validation_unroll = _default(validation_unroll, unroll_distribution)
 
         self.epochs = epochs
-        self.repeat = repeat
+        self.depth = depth
 
         self.validation_unroll = deserialize.integer_distribution(
             validation_unroll, name="validation_unroll")
@@ -103,10 +109,10 @@ class SimpleStrategy(BaseStrategy):
 
             train_args = {
                 "unroll_len": self.unroll_distribution, "p_teacher": p_teacher,
-                "repeat": self.repeat, "epochs": self.epochs}
+                "depth": self.depth, "epochs": self.epochs}
             validation_args = {
                 "unroll_len": self.validation_unroll, "p_teacher": 0,
-                "repeat": self.validation_repeat, "epochs": self.epochs}
+                "depth": self.depth, "epochs": self.validation_epochs}
             metadata = {"period": self.period}
 
             self._training_period(train_args, validation_args, metadata)

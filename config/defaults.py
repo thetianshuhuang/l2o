@@ -56,12 +56,12 @@ STRATEGY = {
             "epochs_per_period": 10,
             "validation_seed": 12345,
             "num_periods": 100,
-            "unroll_distribution": 200,
+            "unroll_distribution": 20,
+            "depth": 1,
             "epochs": 1,
-            "repeat": 1,
             "annealing_schedule": 0.1,
-            "validation_repeat": None,
-            "validation_unroll": 200,
+            "validation_epochs": None,
+            "validation_unroll": 20,
             "name": "SimpleStrategy",
         }
     }

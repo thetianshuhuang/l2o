@@ -91,6 +91,10 @@ class LossMixin:
             [1] Final problem parameters.
             [2] Summary statistics collected by self.step_callback if present.
         """
+        # Unbatch data
+        data = [
+            tf.stack(tf.split(dim, num_or_size_splits=unroll)) for dim in data]
+
         # Make random scaling
         params_scale, transform = create_random_parameter_scaling(
             params, spread=self.parameter_scale_spread, seed=seed)
@@ -107,11 +111,9 @@ class LossMixin:
         meta_loss = 0.
         imitation_loss = 0.
         callback_states = [cb.get_state(unroll) for cb in self.step_callbacks]
-
-        dataset = problem.prepare_batches(unroll, data)
         for i in tf.range(unroll):
             weight = self.unroll_weight(i, unroll)
-            batch = problem.get_batch(dataset, i)
+            batch = [dim[i] for dim in data]
 
             # Advance by one step
             losses, unroll_states = list(map(list, zip(*[
@@ -121,9 +123,9 @@ class LossMixin:
 
             # Scale objective
             if self.scale_objective:
-                init_obj = 1.
-            else:
                 init_obj = problem.objective(params, batch)
+            else:
+                init_obj = 1.
 
             # Add meta loss
             if self._max_obj(init_obj, losses[0]):

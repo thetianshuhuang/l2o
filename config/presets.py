@@ -39,11 +39,12 @@ OVERRIDE_PRESETS = {
             "validation_seed": 12345,
             "num_periods": 100,
             "unroll_distribution": 20,
-            "epochs": 1,
-            "repeat": 100,
+            "depth": 25,
+            "epochs": 100,
             "annealing_schedule": 0.5,
-            "validation_repeat": 1,
-            "validation_unroll": 200,
+            "validation_epochs": 10,
+            "validation_unroll": 20,
+            "validation_depth": 25,
             "name": "SimpleStrategy"
         }
     )],
@@ -58,7 +59,6 @@ OVERRIDE_PRESETS = {
                 "dataset": "mnist",
                 "batch_size": 128,
                 "shuffle_buffer": 16384,
-                "concat": 5
             }
         }]
     )],
@@ -70,10 +70,10 @@ OVERRIDE_PRESETS = {
             "validation_seed": 12345,
             "num_periods": 2,
             "unroll_distribution": 20,
-            "epochs": 1,
-            "repeat": 1,
+            "depth": 10,
+            "epochs": 2,
             "annealing_schedule": 0.5,
-            "validation_repeat": 1,
+            "validation_epochs": 2,
             "validation_unroll": 20,
             "name": "SimpleDebugStrategy",
         }

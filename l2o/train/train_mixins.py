@@ -38,7 +38,7 @@ class TrainingMixin:
         summary["imitation_loss_weight"] = w_imit
         return params, summary
 
-    def _train(self, meta, epochs=1, repeat=1):
+    def _train(self, meta, depth=1, epochs=1):
         """Main outer training loop.
 
         Parameters
@@ -48,10 +48,11 @@ class TrainingMixin:
 
         Keyword Args
         ------------
+        depth : int
+            Number of outer steps per outer epoch (number of outer steps
+            before resetting training problem)
         epochs : int
-            Number of epochs to run for.
-        repeat : int
-            Number of times to repeat. Will reset at the end of every repeat.
+            Number of outer epochs to run.
 
         Returns
         -------
@@ -65,38 +66,39 @@ class TrainingMixin:
 
         # Single progress bar
         size = meta.problem.size(meta.unroll_len)
-        pbar = Progbar(epochs * repeat * size, unit_name='step')
+        pbar = Progbar(epochs * depth, unit_name='step')
         losses = LossTracker()
 
-        dataset = meta.problem.get_dataset(meta.unroll_len, seed=meta.seed)
-        seeds = make_seeds(meta.seed, epochs * repeat)
-        for i, seed in enumerate(seeds):
-            # Get new state for each repeat
-            if i % epochs == 0:
-                params = meta.problem.get_parameters(seed=seed)
+        dataset = meta.problem.get_dataset(
+            meta.unroll_len, depth * epochs, seed=meta.seed)
 
-            # Dataset is reused; reshuffle_each_iteration is enabled
-            # NOTE: type(batch) depends on the unroll length; see
-            # problems.Problem.get_dataset.
-            for batch in dataset:
-                # Only create concrete loss on first iteration
-                if step is None:
-                    step = self.make_concrete_step(meta, batch, params)
+        seeds = list(make_seeds(meta.seed, epochs))
+        for i, batch in enumerate(dataset):
+            # Reset params
+            if i % depth == 0:
+                params = meta.problem.get_parameters(seed=seeds.pop())
+            # Create concrete_step; done here to capture batch shape.
+            if step is None:
+                step = self.make_concrete_step(meta, batch, params)
 
-                # The actual step
-                if meta.validation:
-                    params, stats = step(batch, params)
-                else:
-                    params, stats = self._meta_step(meta, step, batch, params)
-                losses.append(stats)
-                pbar.add(1, values=[(k, stats[k]) for k in self.pbar_values])
+            # The actual step
+            if meta.validation:
+                params, stats = step(batch, params)
+            else:
+                params, stats = self._meta_step(meta, step, batch, params)
+            losses.append(stats)
+            pbar.add(1, values=[(k, stats[k]) for k in self.pbar_values])
+
+            # Dataset size doesn't always line up
+            if i >= depth * epochs:
+                break
 
         meta.problem.save_step(step, meta)
         return losses.summarize(self.stack_stats, self.mean_stats)
 
     def train(
             self, problems, unroll_len=lambda: 20, p_teacher=0,
-            epochs=1, repeat=1, validation=False, seed=None):
+            epochs=1, depth=1, validation=False, seed=None):
         """Run meta-training.
 
         Parameters
@@ -111,10 +113,11 @@ class TrainingMixin:
         p_teacher : float
             Probability of choosing imitation learning or imitation learning
             proportional constant. Cannot be >0 if self.teachers is empty.
+        depth : int
+            Number of outer steps per outer epoch (number of outer steps
+            before resetting training problem)
         epochs : int
-            Number of epochs to run.
-        repeat : int
-            Number of repetitions to run; does not rebuild graph between runs.
+            Number of outer epochs to run.
         validation : bool
             If True, runs in validation mode (does not perform any parameter
             updates)
@@ -142,6 +145,6 @@ class TrainingMixin:
 
             meta = MetaIteration(
                 problem, unroll_len(), p_teacher, validation, seed)
-            results.append(self._train(meta, repeat=repeat, epochs=epochs))
+            results.append(self._train(meta, depth=depth, epochs=epochs))
 
         return results.summarize(self.stack_stats, self.mean_stats)

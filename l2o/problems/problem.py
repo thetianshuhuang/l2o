@@ -4,8 +4,6 @@ import math
 import tensorflow as tf
 import collections
 
-InnerLoopData = collections.namedtuple("InnerLoopData", ["data", "shuffle"])
-
 
 class Problem:
     """Training problem.
@@ -33,9 +31,6 @@ class Problem:
         Number of elements in this dataset, if known.
     config : dict
         Configuration dictionary (for tracking and info).
-    concat : int
-        Concatenate dataset with itself to minimize performance penalties
-        when resetting dataset iteration.
 
     Attributes
     ----------
@@ -47,23 +42,16 @@ class Problem:
     """
 
     def __init__(
-            self, model, dataset, loss, concat=1,
+            self, model, dataset, loss,
             shuffle_buffer=None, batch_size=32, size=None, config=None):
 
-        if concat > 1:
-            self.dataset = dataset
-            for _ in range(concat - 1):
-                self.dataset.concatenate(dataset)
-        else:
-            self.dataset = dataset
-
+        self.dataset = dataset
         self.model = model
         self.loss = loss
 
         self.shuffle_buffer = shuffle_buffer
         self._size = size
         self.batch_size = batch_size
-
         self.config = config
 
         self.step = {}
@@ -138,20 +126,15 @@ class Problem:
         distribute = tf.distribute.get_strategy()
         return self._get_parameters(distribute, seed=seed)
 
-    def get_dataset(self, unroll, seed=None):
+    def get_dataset(self, unroll, length, seed=None):
         """Get problem dataset.
-
-        The type returned depends on the unroll length. Specifically:
-          - outer-steps per inner epoch > 2: returns batched tf.data.Dataset,
-            where each batch corresponds to a single outer step.
-          - outer-steps per inner epoch <= 2: returns tensors containing all
-            data. This provides performance improvements when most or all
-            of the dataset is used each outer-step.
 
         Parameters
         ----------
         unroll : int
             Unroll length (to set batch size).
+        length : int
+            Target dataset size (in batches).
 
         Keyword Args
         ------------
@@ -167,73 +150,17 @@ class Problem:
         """
         distribute = tf.distribute.get_strategy()
 
-        # Short unroll
-        if self.size(unroll) > 2:
-            dataset = self.dataset
-            if self.shuffle_buffer is not None:
-                dataset = self.dataset.shuffle(
-                    self.shuffle_buffer, seed=seed,
-                    reshuffle_each_iteration=True)
-            return distribute.experimental_distribute_dataset(
-                dataset
-                .batch(self._adjusted_size(unroll), drop_remainder=True)
-                .prefetch(tf.data.experimental.AUTOTUNE))
-
-        # Very long unroll
-        else:
-            if unroll in self.dataset_cache:
-                return self.dataset[int(unroll)]
-            ds = distribute.experimental_distribute_dataset(
-                self.dataset.batch(self._size, drop_remainder=True))
-            for batch in ds:
-                self.dataset_cache[int(unroll)] = batch
-                return [batch]
-
-    def prepare_batches(self, unroll, data):
-        """Prepare batch fetching operation.
-
-        Parameters
-        ----------
-        unroll : int
-            Unroll length.
-        data : tf.Tensor[]
-            Either full dataset, or batches to be used for this problem.
-
-        Returns
-        -------
-        InnerLoopData
-            namedtuple containing state information interpreted by get_batch.
-            .data : stored data.
-            .shuffle : shuffle state; only used by long unrolls.
-        """
-        # Short unroll -> rebatch data, no shuffle
-        if self.size(unroll) > 2:
-            batches = [
-                tf.stack(tf.split(dim, num_or_size_splits=unroll))
-                for dim in data]
-            return InnerLoopData(data=batches, shuffle=None)
-        # Long unroll -> leave data alone, shuffle
-        else:
-            shuffle = tf.random.shuffle(tf.range(unroll))
-            return InnerLoopData(data=data, shuffle=shuffle)
-
-    def get_batch(self, dataset, idx):
-        """Get slice of dataset.
-
-        Parameters
-        ----------
-        dataset : InnerLoopData
-            Object created by prepare_batches.
-        idx : int
-            Current optimization index.
-        """
-        if dataset.shuffle is None:
-            return [dim[idx] for dim in dataset.data]
-
-        else:
-            start = dataset.shuffle[idx] * self.batch_size
-            end = start + self.batch_size
-            return [dim[start:end] for dim in dataset.data]
+        dataset = self.dataset.repeat(math.ceil(
+            self._adjusted_size(unroll) * length / self._size))
+        if self.shuffle_buffer is not None:
+            dataset = self.dataset.shuffle(
+                self.shuffle_buffer, seed=seed,
+                reshuffle_each_iteration=True)
+        return distribute.experimental_distribute_dataset(
+            dataset
+            .batch(self._adjusted_size(unroll), drop_remainder=True)
+            .take(length)
+            .prefetch(tf.data.experimental.AUTOTUNE))
 
     def objective(self, parameters, data):
         """Objective function.
