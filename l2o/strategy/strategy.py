@@ -209,6 +209,6 @@ class BaseStrategy:
         results = {k: np.stack([d[k] for d in results]) for k in results[0]}
 
         if file is not None:
-            np.savez(os.path.join(self._path(**metadata), name), **results)
+            np.savez(os.path.join(self._path(**metadata), file), **results)
 
         return results

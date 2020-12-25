@@ -22,10 +22,11 @@ distribute = create_distribute(vgpus=vgpus)
 problem = args.pop_get("--problem", "conv_train")
 target = args.pop_get("--optimizer", "adam")
 output = args.pop_get("--out", "eval")
+repeat = int(args.pop_get("--repeat", 10))
 
 with distribute.scope():
     results = []
-    for i in range(10):
+    for i in range(repeat):
         print("Evaluation Training {}/{}".format(i + 1, repeat))
         results.append(l2o.evaluate.evaluate(
             tf.keras.optimizers.get(target), **get_eval_problem(problem)))

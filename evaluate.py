@@ -22,9 +22,12 @@ distribute = create_distribute(vgpus=vgpus)
 problem = args.pop_get("--problem", "conv_train")
 target = args.pop_get("--directory", "weights")
 output = args.pop_get("--out", "eval")
+repeat = int(args.pop_get("--repeat", 10))
+periods = [int(x) for x in args.pop_get("--periods", "99").split(",")]
 
-with distribute.scope():
-    strategy = l2o.strategy.build_from_config(target)
-    config = get_eval_problem(problem)
-    strategy.evaluate(
-        metadata={"period": 99}, repeat=10, file=output, **config)
+for p in periods:
+    with distribute.scope():
+        strategy = l2o.strategy.build_from_config(target)
+        config = get_eval_problem(problem)
+        strategy.evaluate(
+            metadata={"period": p}, repeat=repeat, file=output, **config)
