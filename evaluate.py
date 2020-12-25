@@ -18,7 +18,7 @@ from config import create_distribute, ArgParser, get_eval_problem
 args = ArgParser(sys.argv[1:])
 vgpus = int(args.pop_get("--vgpu", default=1))
 distribute = create_distribute(vgpus=vgpus)
-
+  
 problem = args.pop_get("--problem", "conv_train")
 target = args.pop_get("--directory", "weights")
 output = args.pop_get("--out", "eval")

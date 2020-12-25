@@ -43,6 +43,40 @@ OVERRIDE_PRESETS = {
             "name": "SimpleStrategy"
         }
     )],
+    "comparison_deeper": [(
+        ["strategy"],
+        {
+            "validation_problems": None,
+            "epochs_per_period": 1,
+            "validation_seed": 12345,
+            "num_periods": 100,
+            "unroll_distribution": 50,
+            "depth": 25,
+            "epochs": 10,
+            "annealing_schedule": {"type": "constant", "value": 0.0},
+            "validation_epochs": 1,
+            "validation_unroll": 50,
+            "validation_depth": 25,
+            "name": "SimpleStrategy"
+        }
+    )],
+    "comparison_deepest": [(
+        ["strategy"],
+        {
+            "validation_problems": None,
+            "epochs_per_period": 1,
+            "validation_seed": 12345,
+            "num_periods": 100,
+            "unroll_distribution": 100,
+            "depth": 25,
+            "epochs": 5,
+            "annealing_schedule": {"type": "constant", "value": 0.0},
+            "validation_epochs": 1,
+            "validation_unroll": 50,
+            "validation_depth": 25,
+            "name": "SimpleStrategy"
+        }
+    )],
     "conv_train": [(
         ["problems"],
         [{
