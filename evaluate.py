@@ -24,7 +24,7 @@ target = args.pop_get("--directory", "weights")
 output = args.pop_get("--out", "eval")
 
 with distribute.scope():
-    strategy = l2o.strategy.build_from_config(directory)
-    config = get_eval_problem("debug")
+    strategy = l2o.strategy.build_from_config(target)
+    config = get_eval_problem(problem)
     strategy.evaluate(
         metadata={"period": 99}, repeat=10, file=output, **config)

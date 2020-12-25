@@ -1,12 +1,33 @@
-"""Adam Baseline."""
+"""Evaluate Baseline.
 
-import json
+Run with
+```
+python evaluate.py directory --vgpu=1
+```
+"""
+
+import os
+import sys
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
+
 import l2o
-import numpy as np
+from config import create_distribute, ArgParser, get_eval_problem
 
 
-results = [
-    l2o.evaluate.evaluate(tf.keras.optimizers.Adam()) for _ in range(10)]
-results = {k: np.stack([d[k] for d in results]) for k in results[0]}
-np.savez('baseline_adam.npz', **results)
+args = ArgParser(sys.argv[1:])
+vgpus = int(args.pop_get("--vgpu", default=1))
+distribute = create_distribute(vgpus=vgpus)
+
+problem = args.pop_get("--problem", "conv_train")
+target = args.pop_get("--optimizer", "adam")
+output = args.pop_get("--out", "eval")
+
+with distribute.scope():
+    results = []
+    for i in range(10):
+        print("Evaluation Training {}/{}".format(i + 1, repeat))
+        results.append(l2o.evaluate.evaluate(
+            tf.keras.optimizers.get(target), **get_eval_problem(problem)))
+    results = {k: np.stack([d[k] for d in results]) for k in results[0]}
+    np.savez(output, **results)
