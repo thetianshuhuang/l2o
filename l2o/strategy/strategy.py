@@ -193,7 +193,7 @@ class BaseStrategy:
             Otherwise, uses current weights.
         repeat : int
             Number of repetitions.
-        name : str or None
+        file : str or None
             File to save to. If None, does not save (and only returns).
         kwargs : dict
             Additional arguments to pass to ``evaluate.evaluate``.
@@ -208,7 +208,7 @@ class BaseStrategy:
             results.append(evaluate(opt, **kwargs))
         results = {k: np.stack([d[k] for d in results]) for k in results[0]}
 
-        if save:
+        if file is not None:
             np.savez(os.path.join(self._path(**metadata), name), **results)
 
         return results
