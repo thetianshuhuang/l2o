@@ -26,7 +26,7 @@ OVERRIDE_PRESETS = {
             }
         }
     )],
-    "simple_comparison": [(
+    "simple_20": [(
         ["strategy"],
         {
             "validation_problems": None,
@@ -43,7 +43,7 @@ OVERRIDE_PRESETS = {
             "name": "SimpleStrategy"
         }
     )],
-    "comparison_deeper": [(
+    "simple_50": [(
         ["strategy"],
         {
             "validation_problems": None,
@@ -60,7 +60,7 @@ OVERRIDE_PRESETS = {
             "name": "SimpleStrategy"
         }
     )],
-    "comparison_deepest": [(
+    "simple_100": [(
         ["strategy"],
         {
             "validation_problems": None,
@@ -70,6 +70,23 @@ OVERRIDE_PRESETS = {
             "unroll_distribution": 100,
             "depth": 25,
             "epochs": 5,
+            "annealing_schedule": {"type": "constant", "value": 0.0},
+            "validation_epochs": 1,
+            "validation_unroll": 50,
+            "validation_depth": 25,
+            "name": "SimpleStrategy"
+        }
+    )],
+    "simple_deeper": [(
+        ["strategy"],
+        {
+            "validation_problems": None,
+            "epochs_per_period": 1,
+            "validation_seed": 12345,
+            "num_periods": 100,
+            "unroll_distribution": 20,
+            "depth": 625,
+            "epochs": 1,
             "annealing_schedule": {"type": "constant", "value": 0.0},
             "validation_epochs": 1,
             "validation_unroll": 50,

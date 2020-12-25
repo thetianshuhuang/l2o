@@ -8,6 +8,7 @@ python evaluate.py directory --vgpu=1
 
 import os
 import sys
+import numpy as np
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 
