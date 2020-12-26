@@ -27,7 +27,7 @@ class EpochTimeTracker(tf.keras.callbacks.Callback):
 class BatchTracker(tf.keras.callbacks.Callback):
     """Callback to track loss and accuracy on a per-batch basis."""
 
-    def on_epoch_begin(self, logs=None):
+    def on_epoch_begin(self, epoch, logs=None):
         """Count iterations within each epoch."""
         self.idx = 0
         self._prev = {}
