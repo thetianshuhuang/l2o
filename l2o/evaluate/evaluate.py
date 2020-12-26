@@ -40,7 +40,6 @@ class BatchTracker(tf.keras.callbacks.Callback):
         reverse engineer it here.
         """
         x = logs.get(key)
-        self.idx += 1
         if key in self._prev:
             val = (self.idx * x) - ((self.idx - 1) * self._prev[key])
             self._prev[key] = x
@@ -56,6 +55,7 @@ class BatchTracker(tf.keras.callbacks.Callback):
 
     def on_train_batch_end(self, batch, logs=None):
         """Called after training each batch."""
+        self.idx += 1
         self.loss.append(self._subtract(logs, "loss"))
         self.accuracy.append(
             self._subtract(logs, "sparse_categorical_accuracy"))

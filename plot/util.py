@@ -5,8 +5,8 @@ import os
 import json
 
 
-with open('results/names.json') as f:
-    FULL_NAMES = json.load(f)
+# with open('results/names.json') as f:
+#     FULL_NAMES = json.load(f)
 
 
 RESULTS = os.listdir('results')
@@ -29,8 +29,9 @@ def get_test(preset, data='evaluation'):
 
 
 def get_name(test):
-    """Get test display name."""
-    try:
-        return FULL_NAMES[test]
-    except KeyError:
-        return test
+#     """Get test display name."""
+#     try:
+#         return FULL_NAMES[test]
+#     except KeyError:
+#         return test
+    return test
