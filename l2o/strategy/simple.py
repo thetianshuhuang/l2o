@@ -112,7 +112,8 @@ class SimpleStrategy(BaseStrategy):
                 "depth": self.depth, "epochs": self.epochs}
             validation_args = {
                 "unroll_len": self.validation_unroll, "p_teacher": 0,
-                "depth": self.depth, "epochs": self.validation_epochs}
+                "depth": self.validation_depth,
+                "epochs": self.validation_epochs}
             metadata = {"period": self.period}
 
             self._training_period(train_args, validation_args, metadata)

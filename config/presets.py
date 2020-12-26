@@ -130,7 +130,7 @@ OVERRIDE_PRESETS = {
     ],
     "metaopt_sgd": [(
         ["optimizer"],
-        {"class_name": "sgd", "config": "learning_rate": 0.01}
+        {"class_name": "sgd", "config": {"learning_rate": 0.01}}
     )]
 }
 
