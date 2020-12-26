@@ -23,6 +23,7 @@ checkpoint
 *.index
 weights/*
 results*
+baseline*
 *.npz
 *.json
 

@@ -27,6 +27,28 @@ class EpochTimeTracker(tf.keras.callbacks.Callback):
 class BatchTracker(tf.keras.callbacks.Callback):
     """Callback to track loss and accuracy on a per-batch basis."""
 
+    def on_epoch_begin(self, logs=None):
+        """Count iterations within each epoch."""
+        self.idx = 0
+        self._prev = {}
+
+    def _subtract(self, logs, key):
+        """Get loss for batch n from average.
+
+        Since tensorflow is fucking stupid and doesn't expose the current
+        batch loss and only the current epoch cumulative average, we must
+        reverse engineer it here.
+        """
+        x = logs.get(key)
+        self.idx += 1
+        if key in self._prev:
+            val = (self.idx * x) - ((self.idx - 1) * self._prev[key])
+            self._prev[key] = x
+            return val
+        else:
+            self._prev[key] = x
+            return x
+
     def on_train_begin(self, logs=None):
         """Called at the beginning of training."""
         self.loss = []
@@ -34,8 +56,9 @@ class BatchTracker(tf.keras.callbacks.Callback):
 
     def on_train_batch_end(self, batch, logs=None):
         """Called after training each batch."""
-        self.loss.append(logs.get("loss"))
-        self.accuracy.append(logs.get("sparse_categorical_accuracy"))
+        self.loss.append(self._subtract(logs, "loss"))
+        self.accuracy.append(
+            self._subtract(logs, "sparse_categorical_accuracy"))
 
 
 def evaluate(
