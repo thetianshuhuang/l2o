@@ -7,8 +7,17 @@ from matplotlib import pyplot as plt
 from .util import get_name, get_test
 
 
-def plot_band(ax, x, y, label=None, color=None):
+def running_mean(x, N):
+    """Simple moving average."""
+    cumsum = np.cumsum(np.insert(x, 0, 0))
+    return (cumsum[N:] - cumsum[:-N]) / float(N)
+
+
+def plot_band(ax, x, y, label=None, color=None, sma=0):
     """Plot mean and min-to-max color band for stacked data y."""
+    if sma > 0:
+        y = np.stack([running_mean(y_i, sma) for y_i in y])
+        x = x[:y.shape[1]]
     lower, upper, mean = [f(y, axis=0) for f in [np.min, np.max, np.mean]]
     mean_line, = ax.plot(x, mean, label=label)
     ax.fill_between(x, lower, upper, alpha=0.25, color=mean_line.get_color())
@@ -43,23 +52,32 @@ def plot_stats(tests, axs):
     axs[1][1].set_ylabel("Validation Accuracy")
 
 
-def plot_stats_batch(tests, axs, end=0):
+def plot_stats_batch(tests, axs, end=0, use_time=False, sma=0):
     """Plot test statistics, batch-wise."""
     for key in tests:
         d = np.load(get_test(key))
-        if end == 0:
-            x = np.arange(d["batch_loss"].shape[1])
-            plot_band(axs[0], x, d["batch_loss"], label=get_name(key))
-            plot_band(axs[1], x, d["batch_accuracy"], label=get_name(key))
-        else:
-            x = np.arange(end)
-            plot_band(
-                axs[0], x, d["batch_loss"][:, :end], label=get_name(key))
-            plot_band(
-                axs[1], x, d["batch_accuracy"][:, :end], label=get_name(key))
 
-    axs[0].set_xlabel("Step")
-    axs[1].set_xlabel("Step")
+        if use_time:
+            x = np.linspace(
+                0, np.sum(d["epoch_time"]) / d["epoch_time"].shape[0],
+                num=d["batch_loss"].shape[1])
+            xlabel = "Time (s)"
+        else:
+            x = np.arange(d["batch_loss"].shape[1])
+            xlabel = "Step"
+
+        if end == 0:
+            end = d["batch_loss"].shape[1]
+
+        plot_band(
+            axs[0], x[:end], np.log(d["batch_loss"][:, :end]),
+            label=get_name(key), sma=sma)
+        plot_band(
+            axs[1], x[:end], d["batch_accuracy"][:, :end],
+            label=get_name(key), sma=sma)
+
+    axs[0].set_xlabel(xlabel)
+    axs[1].set_xlabel(xlabel)
     axs[1].legend()
     axs[0].set_ylabel("Log Training Loss")
     axs[1].set_ylabel("Training Accuracy")

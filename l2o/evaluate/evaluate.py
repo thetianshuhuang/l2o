@@ -103,7 +103,7 @@ def evaluate(
     model = model(info_train, **config)
     model.compile(
         optimizer=opt,
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
         metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
 
     def _batch(ds):
