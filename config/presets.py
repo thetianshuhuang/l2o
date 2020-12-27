@@ -77,16 +77,16 @@ OVERRIDE_PRESETS = {
             "name": "SimpleStrategy"
         }
     )],
-    "simple_deeper": [(
+    "simple_250": [(
         ["strategy"],
         {
             "validation_problems": None,
             "epochs_per_period": 1,
             "validation_seed": 12345,
             "num_periods": 100,
-            "unroll_distribution": 20,
-            "depth": 625,
-            "epochs": 1,
+            "unroll_distribution": 250,
+            "depth": 25,
+            "epochs": 2,
             "annealing_schedule": {"type": "constant", "value": 0.0},
             "validation_epochs": 1,
             "validation_unroll": 50,
@@ -105,6 +105,18 @@ OVERRIDE_PRESETS = {
                 "dataset": "mnist",
                 "batch_size": 128,
                 "shuffle_buffer": 16384,
+            }
+        }]
+    )],
+    "mlp_train_deeper": [(
+        ["problems"],
+        [{
+            "target": "mlp_classifier",
+            "args": [],
+            "kwargs": {
+                "layers": [20, 20], "dataset": "mnist",
+                "activation": "sigmoid", "shuffle_buffer": 18384,
+                "batch_size": 128
             }
         }]
     )],
