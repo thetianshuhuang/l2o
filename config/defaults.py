@@ -40,7 +40,7 @@ BASE = {
             "args": [],
             "kwargs": {
                 "layers": [20], "dataset": "mnist", "activation": "sigmoid",
-                "shuffle_buffer": 16384, "batch_size": 64
+                "shuffle_buffer": 16384, "batch_size": 128
             }
         },
     ]

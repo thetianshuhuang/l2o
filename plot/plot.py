@@ -114,23 +114,20 @@ def plot_training(tests, axs, meta=True):
         df = pd.read_csv(get_test(test, data='summary'))
 
         if meta:
-            axs[0].plot(df["meta_loss_mean"][1:20], label=get_name(test))
-            axs[1].plot(df["imitation_loss_mean"][1:20], label=get_name(test))
+            axs[0].plot(df["meta_loss"], label=get_name(test))
+            axs[1].plot(df["imitation_loss"], label=get_name(test))
         else:
-            axs.plot(df["imitation_loss_mean"][1:20], label=get_name(test))
+            axs.plot(df["imitation_loss"], label=get_name(test))
 
     if meta:
         axs[0].legend()
         axs[1].legend()
         axs[0].set_xlabel("Epoch")
         axs[1].set_xlabel("Epoch")
-        axs[0].set_xticks(np.arange(2, 20, 2))
-        axs[0].set_xticks(np.arange(2, 20, 2))
     else:
         axs.legend()
         axs.set_xlabel("Epoch")
         axs.set_ylabel("Log Imitation Loss")
-        axs.set_xticks(np.arange(2, 20, 2))
 
 
 def plot_stats_phase(tests, axs):
