@@ -167,8 +167,9 @@ class Conv2D(Layer):
         self.out_idx = in_idx + 2
         self.input_dim = input_shape[2]
         self.output_dim = [
-            math.ceil(input_shape[0] / self.stride),
-            math.ceil(input_shape[1] / self.stride), self.filters]
+            math.floor((input_shape[0] - self.kernel_size) / self.stride) + 1,
+            math.floor((input_shape[1] - self.kernel_size) / self.stride) + 1,
+            self.filters]
         return self.output_dim, self.out_idx
 
     def get_parameters(self, seed=None):
@@ -176,7 +177,7 @@ class Conv2D(Layer):
             self.kernel_initializer, self.bias_initializer, seed=seed)
         kernel_shape = [
             self.kernel_size, self.kernel_size, self.input_dim, self.filters]
-        return [kernel(kernel_shape), bias(self.output_dim)]
+        return [kernel(kernel_shape), bias([self.filters])]
 
     def call(self, params, x):
         kernel, bias = params[self.in_idx:self.out_idx]
@@ -185,11 +186,12 @@ class Conv2D(Layer):
         if len(tf.shape(x)) == 3:
             x = x.reshape(list(tf.shape(x)) + [1])
 
-        res = tf.nn.conv2d(x, kernel, [1, self.stride, self.stride, 1], "SAME")
+        res = tf.nn.conv2d(
+            x, kernel, [1, self.stride, self.stride, 1], "VALID")
         if self.activation is None:
-            return res + bias
+            tf.nn.bias_add(res, bias)
         else:
-            return self.activation(res + bias)
+            return self.activation(tf.nn.bias_add(res, bias))
 
 
 class MaxPooling2D(Layer):
