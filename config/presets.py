@@ -120,6 +120,10 @@ OVERRIDE_PRESETS = {
             }
         }]
     )],
+    "leaky_relu": [(
+        ["problems", 0, "kwargs", "activation"],
+        {"class_name": "relu", "config": {"alpha": 0.01}}
+    )],
     "debug": [(
         ["strategy"],
         {

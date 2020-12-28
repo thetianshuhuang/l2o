@@ -108,26 +108,10 @@ def plot_phase(tests, ax, loss=False):
         ax.set_ylabel("Validation Accuracy")
 
 
-def plot_training(tests, axs, meta=True):
-    """Plot training meta and imitation loss."""
-    for test in tests:
-        df = pd.read_csv(get_test(test, data='summary'))
-
-        if meta:
-            axs[0].plot(df["meta_loss"], label=get_name(test))
-            axs[1].plot(df["imitation_loss"], label=get_name(test))
-        else:
-            axs.plot(df["imitation_loss"], label=get_name(test))
-
-    if meta:
-        axs[0].legend()
-        axs[1].legend()
-        axs[0].set_xlabel("Epoch")
-        axs[1].set_xlabel("Epoch")
-    else:
-        axs.legend()
-        axs.set_xlabel("Epoch")
-        axs.set_ylabel("Log Imitation Loss")
+TRAIN_KEYS = {
+    "meta_loss": "Meta Loss",
+    "imitation_loss": "Imitation Loss"
+}
 
 
 def plot_stats_phase(tests, axs):

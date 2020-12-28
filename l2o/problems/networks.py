@@ -1,5 +1,7 @@
 """NN based training problems."""
 
+import functools
+
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
@@ -126,8 +128,8 @@ def conv_classifier(
         output labels.
     layers : int[][3]
         List of (kernel size, num_filters, stride) for convolutional layers
-    activation : str
-        Keras activation type
+    activation : str or dict
+        Keras activation type. If dict, uses tf.keras.get-like syntax
     **kwargs : dict
         Passed on to Classifier()
 
@@ -145,8 +147,15 @@ def conv_classifier(
     TypeError
         Dataset does not have a fixed input dimension.
     """
+    # NOTE: tf.keras.activations.get is broken as of tf 2.3 for dict
+    # deserializing (with config). As such, we manually reimplement its
+    # supposed functionality here.
     if isinstance(activation, str):
         activation = tf.keras.activations.get(activation)
+    elif isinstance(activation, dict):
+        activation = functools.partial(
+            tf.keras.activations.get(activation["class_name"]),
+            **activation["config"])
 
     def _preprocess(img):
         shape = img.shape.as_list()
