@@ -108,6 +108,34 @@ OVERRIDE_PRESETS = {
             }
         }]
     )],
+    "conv_train_bigger": [(
+        ["problems"],
+        [{
+            "target": "conv_classifier",
+            "args": [],
+            "kwargs": {
+                "layers": [[16, 7, 1], 2, [32, 5, 1], 2],
+                "activation": "relu",
+                "dataset": "mnist",
+                "batch_size": 128,
+                "shuffle_buffer": 16384,
+            }
+        }]
+    )],
+    "conv_train_wider": [(
+        ["problems"],
+        [{
+            "target": "conv_classifier",
+            "args": [],
+            "kwargs": {
+                "layers": [[32, 3, 1], 2, [32, 5, 1], 2],
+                "activation": "relu",
+                "dataset": "mnist",
+                "batch_size": 128,
+                "shuffle_buffer": 16384,
+            }
+        }]
+    )],
     "mlp_train_deeper": [(
         ["problems"],
         [{
