@@ -179,6 +179,20 @@ OVERRIDE_PRESETS = {
     "il_annealing": [(
         ["strategy", "annealing_schedule"],
         {"type": "exponential", "alpha": 0.1}
+    )].
+    "debug_conv": [(
+        ["problems"],
+        [{
+            "target": "conv_classifier",
+            "args": [],
+            "kwargs": {
+                "layers": [[20, 28, 1]],
+                "activation": "sigmoid",
+                "dataset": "mnist",
+                "batch_size": 128,
+                "shuffle_buffer": 16384,
+            }
+        }]
     )]
 }
 

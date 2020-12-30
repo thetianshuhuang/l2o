@@ -78,7 +78,7 @@ class Problem:
         step : tf.Graph
             Concrete function for this problem.
         meta : MetaIteration
-            Namedtuple; indexes with (unroll_len, validation).        
+            Namedtuple; indexes with (unroll_len, validation).
         """
         self.step[(meta.unroll_len, meta.validation)] = step
 
