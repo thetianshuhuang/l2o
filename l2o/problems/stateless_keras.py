@@ -189,7 +189,7 @@ class Conv2D(Layer):
         res = tf.nn.conv2d(
             x, kernel, [1, self.stride, self.stride, 1], "VALID")
         if self.activation is None:
-            tf.nn.bias_add(res, bias)
+            return tf.nn.bias_add(res, bias)
         else:
             return self.activation(tf.nn.bias_add(res, bias))
 

@@ -179,8 +179,8 @@ OVERRIDE_PRESETS = {
     "il_annealing": [(
         ["strategy", "annealing_schedule"],
         {"type": "exponential", "alpha": 0.1}
-    )].
-    "debug_conv": [(
+    )],
+    "conv_debug": [(
         ["problems"],
         [{
             "target": "conv_classifier",
