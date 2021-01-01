@@ -66,7 +66,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         -----
         Rules are as of TF 2.3.0-RC1.
         (1) ``inputs`` may have undefined dimensions due to gradients not
-            yet being connected to the graph yet. The dimension of ``param``
+            being connected to the graph yet. The dimension of ``param``
             should be used instead.
         (2) ``states`` MUST NOT be modified since this will be wrapped in
             a @tf.function. Create a new dictionary, and write updates to that

@@ -43,14 +43,23 @@ def nested_assign(x, y):
         Nested structure of variables to assign
     y : object
         Nested structure of variables or tensors to assign from
+
+    Returns
+    -------
+    tf.python.ops.???[]
+        List of ops returned by assign. Type unclear from tf source & docs.
     """
     tf.nest.assert_same_structure(x, y)
 
     if isinstance(x, tf.Variable):
-        x.assign(y)
+        return [x.assign(y)]
     if isinstance(x, list) or isinstance(x, tuple):
+        res = []
         for _x, _y in zip(x, y):
-            nested_assign(_x, _y)
+            res.extend(nested_assign(_x, _y))
+        return res
     if isinstance(x, dict):
+        res = []
         for k in x:
-            nested_assign(x[k], y[k])
+            res.extend(nested_assign(x[k], y[k]))
+        return res
