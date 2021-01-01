@@ -2,7 +2,7 @@
 
 Run with
 ```
-python baseline.py directory --vgpu=1
+python baseline_custom.py directory --vgpu=1
 ```
 """
 
@@ -21,15 +21,18 @@ vgpus = int(args.pop_get("--vgpu", default=1))
 distribute = create_distribute(vgpus=vgpus)
 
 problem = args.pop_get("--problem", "conv_train")
-target = args.pop_get("--optimizer", "adam")
 output = args.pop_get("--out", "eval")
 repeat = int(args.pop_get("--repeat", 10))
+
+policy = l2o.policies.AdamOptimizer(
+    learning_rate=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-07)
+opt = policy.architecture(policy)
+
 
 with distribute.scope():
     results = []
     for i in range(repeat):
         print("Evaluation Training {}/{}".format(i + 1, repeat))
-        results.append(l2o.evaluate.evaluate(
-            tf.keras.optimizers.get(target), **get_eval_problem(problem)))
+        results.append(l2o.evaluate.evaluate(opt, **get_eval_problem(problem)))
     results = {k: np.stack([d[k] for d in results]) for k in results[0]}
     np.savez(output, **results)

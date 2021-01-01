@@ -22,8 +22,8 @@ checkpoint
 *.data*
 *.index
 weights/*
-results*
-baseline*
+results/*
+baseline/*
 *.npz
 *.json
 logs/*
