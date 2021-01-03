@@ -1,4 +1,4 @@
-"""Hierarchical Optimizer described by the Scale, 2017 paper."""
+"""Hierarchical Choice Optimizer similar to the Scale, 2017 paper."""
 import tensorflow as tf
 from tensorflow.keras.layers import GRUCell, Dense
 from scipy.special import logit
@@ -8,9 +8,9 @@ from .moments import rms_momentum
 
 
 class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
-    """Hierarchical optimizer.
+    """Hierarchical choice optimizer.
 
-    Described in
+    Uses a core hierarchical architecture inspired by
     "Learned Optimizers that Scale and Generalize" (Wichrowska et. al, 2017)
 
     Keyword Args
@@ -43,7 +43,7 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
         Passed onto tf.keras.layers.GRUCell
     """
 
-    default_name = "ScaleHierarchicalOptimizer"
+    default_name = "ChoiceHierarchicalOptimizer"
 
     def init_layers(
             self, param_units=10, tensor_units=5, global_units=5,
@@ -63,13 +63,9 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
         self.global_rnn = GRUCell(global_units, name="global_rnn", **kwargs)
 
         # Parameter change
-        self.d_theta = Dense(
-            1, input_shape=(param_units,), name="d_theta",
-            kernel_initializer="zeros")
+        self.d_theta = Dense(1, input_shape=(param_units,), name="d_theta")
         # Learning rate change
-        self.delta_nu = Dense(
-            1, input_shape=(param_units,), name="delta_nu",
-            kernel_initializer="zeros")
+        self.delta_nu = Dense(1, input_shape=(param_units,), name="delta_nu")
         # Momentum decay rate
         self.beta_g = Dense(
             1, input_shape=(param_units,), kernel_initializer="zeros",
@@ -85,10 +81,8 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
         # Momentum shortcut
         if use_gradient_shortcut:
             self.gradient_shortcut = Dense(
-                1, input_shape=(timescales,), name="gradient_shortcut",
-                kernel_initializer="zeros")
-        else:
-            self.gradient_shortcut = None
+                1, input_shape=(timescales,), use_bias=False,
+                name="gradient_shortcut")
 
         # Gamma parameter
         # Stored as a logit - the actual gamma used will be sigmoid(gamma)
@@ -174,12 +168,10 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
 
         # Direction
         # Eq 5, using the update given in Appendix D.3
-        d_theta = self.d_theta(states_new["param"])
-
-        if self.gradient_shortcut:
-            d_theta += self.gradient_shortcut(m)
-
-        return tf.exp(eta) * tf.reshape(d_theta, tf.shape(param))
+        d_theta = tf.reshape(
+            self.d_theta(states_new["param"]) + self.gradient_shortcut(m),
+            tf.shape(param))
+        return tf.exp(eta) * d_theta
 
     def call(self, param, grads, states, global_state):
         """Optimizer Update.
@@ -188,8 +180,8 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
         -----
         The state indices in Wichrowska et al. are incorrect, and should be:
         (1) g_bar^n, lambda^n = EMA(g_bar^n-1, g^n), EMA(lambda^n-1, g^n)
-            instead of EMA(..., g^n-1), etc
-        (2) h^n = RNN(x^n, h^n-1) instead of h^n+1 = RNN(x^n, h^n)
+                instead of EMA(..., g^n-1), etc
+            (2) h^n = RNN(x^n, h^n-1) instead of h^n+1 = RNN(x^n, h^n)
         Then, the g^n -> g_bar^n, lambda^n -> m^n -> h^n -> d^n data flow
         occurs within the same step instead of across 2 steps. This fix is
         reflected in the original Scale code.
@@ -208,7 +200,6 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
         # Prerequisites ("Momentum and variance at various timescales")
         # Eq 1, 2, 3, 13
         m = self._new_momentum_variance(grads, states, states_new)
-
         # Eq 4
         gamma = self._relative_log_gradient_magnitude(states, states_new)
 
@@ -250,10 +241,10 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
                 batch_size=batch_size, dtype=tf.float32),
             "tensor": self.tensor_rnn.get_initial_state(
                 batch_size=1, dtype=tf.float32),
-            "eta_bar": tf.random.uniform(
+            "eta_bar": tf.exp(tf.random.uniform(
                 shape=tf.shape(var),
                 minval=tf.math.log(self.init_lr[0]),
-                maxval=tf.math.log(self.init_lr[1])),
+                maxval=tf.math.log(self.init_lr[1]))),
             "eta_rel": tf.zeros([batch_size, 1]),
         }
 
