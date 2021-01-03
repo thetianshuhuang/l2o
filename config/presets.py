@@ -176,9 +176,13 @@ OVERRIDE_PRESETS = {
         ["optimizer"],
         {"class_name": "sgd", "config": {"learning_rate": 0.01}}
     )],
-    "il_annealing": [(
+    "il_fast": [(
         ["strategy", "annealing_schedule"],
         {"type": "exponential", "alpha": 0.1}
+    )],
+    "il_slow": [(
+        ["strategy", "annealing_schedule"],
+        {"type": "exponential", "alpha": 0.04}
     )],
     "conv_debug": [(
         ["problems"],
