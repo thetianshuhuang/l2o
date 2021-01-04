@@ -199,12 +199,12 @@ class BaseStrategy:
             Additional arguments to pass to ``evaluate.evaluate``.
         """
         self._load_network(**metadata)
-        opt = self.learner.network.architecture(
-            self.learner.network, name="OptimizerEvaluation")
 
         results = []
         for i in range(repeat):
             print("Evaluation Training {}/{}".format(i + 1, repeat))
+            opt = self.learner.network.architecture(
+                self.learner.network, name="OptimizerEvaluation")
             results.append(evaluate(opt, **kwargs))
         results = {k: np.stack([d[k] for d in results]) for k in results[0]}
 

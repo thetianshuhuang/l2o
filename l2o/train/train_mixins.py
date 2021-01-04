@@ -86,6 +86,7 @@ class TrainingMixin:
                 params, stats = step(batch, params)
             else:
                 params, stats = self._meta_step(meta, step, batch, params)
+
             losses.append(stats)
             pbar.add(1, values=[(k, stats[k]) for k in self.pbar_values])
 
