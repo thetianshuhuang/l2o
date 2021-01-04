@@ -8,6 +8,7 @@ from tensorflow.keras.utils import Progbar
 
 from .loss_tracker import LossTracker
 from .utils import make_seeds
+from .unroll_state import UnrollStateManager
 
 
 MetaIteration = collections.namedtuple(
@@ -19,7 +20,7 @@ MetaIteration = collections.namedtuple(
 class TrainingMixin:
     """Training Method Mixins for TrainableOptimizer."""
 
-    def _meta_step(self, meta, concrete_step, data, params):
+    def _meta_step(self, meta, concrete_step, data, state):
         """Helper function to run for a single step."""
         # Prepare abstract loss params (meta, imitation learning weight)
         if self.il_mode == 'switch':
@@ -30,7 +31,7 @@ class TrainingMixin:
 
         # Graph mode this function only
         params, summary = concrete_step(
-            data, params,
+            data, state,
             meta_loss_weight=tf.constant(w_meta, dtype=tf.float32),
             imitation_loss_weight=tf.constant(w_imit, dtype=tf.float32))
 
@@ -62,7 +63,8 @@ class TrainingMixin:
         # concrete_step, params will be assigned on first iteration.
         # concrete_step is cached.
         step = meta.problem.get_step(meta)
-        params = None
+        state_mgr = UnrollStateManager(self.network)
+        state = None
 
         # Single progress bar
         size = meta.problem.size(meta.unroll_len)
@@ -77,15 +79,16 @@ class TrainingMixin:
             # Reset params
             if i % depth == 0:
                 params = meta.problem.get_parameters(seed=seeds.pop())
+                state = state_mgr.create_state(params)
             # Create concrete_step; done here to capture batch shape.
             if step is None:
-                step = self.make_concrete_step(meta, batch, params)
+                step = self.make_concrete_step(meta, batch, state)
 
             # The actual step
             if meta.validation:
-                params, stats = step(batch, params)
+                params, stats = step(batch, state)
             else:
-                params, stats = self._meta_step(meta, step, batch, params)
+                params, stats = self._meta_step(meta, step, batch, state)
 
             losses.append(stats)
             pbar.add(1, values=[(k, stats[k]) for k in self.pbar_values])

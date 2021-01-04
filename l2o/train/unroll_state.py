@@ -7,6 +7,13 @@ UnrollState = collections.namedtuple(
     "UnrollState", ["params", "states", "global_state"])
 
 
+class AlwaysTrue:
+    def __iter__(self):
+        return self
+    def __next__(self):
+        return True
+
+
 class UnrollStateManager:
     """Unroll state -- sort of.
 
@@ -19,6 +26,9 @@ class UnrollStateManager:
     ----------
     policy : l2o.policies.BaseLearnToOptimizePolicy
         Optimization gradient policy to apply.
+
+    Keyword Args
+    ------------
     get_objective : callable(params, batch) -> float
         Computes objective value from current parameters and data batch.
     transform : callable(tf.Tensor[]) -> tf.Tensor[]
@@ -28,23 +38,36 @@ class UnrollStateManager:
         should use the reference optimizer (policy_ref).
     """
 
-    def __init__(self, policy, get_objective, transform, learner_mask):
+    def __init__(
+            self, policy,
+            get_objective=None, transform=None, learner_mask=AlwaysTrue()):
         self.policy = policy
         self.get_objective = get_objective
         self.transform = transform
         self.mask = learner_mask
 
-    def create_state(self, params):
+    def create_state(self, params, state=None):
         """Abstracted unroll state for training loop inner optimization.
 
         Parameters
         ----------
         params : object
             Nested structure of tensors describing initial problems state.
+        state : UnrollState or None
+            If state is not None, uses the state and global state there.
+            Params are replaced.
         """
+        # Passthrough
+        if state is not None:
+            return UnrollState(
+                params=params, states=state.states,
+                global_state=state.global_state)
+
+        # Proper processing
         states = [
             (self.policy if mask else self.policy_ref).get_initial_state(p)
             for p, mask in zip(params, self.mask)]
+
         return UnrollState(
             params=params, states=states,
             global_state=self.policy.get_initial_state_global())

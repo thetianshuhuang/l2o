@@ -26,6 +26,23 @@ OVERRIDE_PRESETS = {
             }
         }
     )],
+    "deep_5x": [(
+        ["strategy"],
+        {
+            "validation_problems": None,
+            "epochs_per_period": 1,
+            "validation_seed": 12345,
+            "num_periods": 100,
+            "unroll_distribution": 20,
+            "depth": 125,
+            "epochs": 5,
+            "annealing_schedule": {"type": "constant", "value": 0.0},
+            "validation_epochs": 1,
+            "validation_unroll": 50,
+            "validation_depth": 25,
+            "name": "SimpleStrategy"
+        }
+    )],
     "simple_20": [(
         ["strategy"],
         {

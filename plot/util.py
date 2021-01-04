@@ -13,11 +13,11 @@ RESULTS = os.listdir('results')
 BASELINES = os.listdir('baseline')
 
 
-def get_test(preset, data='evaluation'):
+def get_test(preset, data='evaluation', period=99):
     """Get test path."""
     if preset in RESULTS:
         if data == 'evaluation':
-            return "results/{}/period_99/conv_train.npz".format(preset)
+            return "results/{}/period_{}/conv_train.npz".format(preset, period)
         elif data == 'summary':
             return "results/{}/summary.csv".format(preset)
     elif preset in BASELINES:

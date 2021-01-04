@@ -4,7 +4,7 @@ import collections
 import tensorflow as tf
 
 from .random_scaling import create_random_parameter_scaling
-from .unroll_state import UnrollStateManager, state_distance
+from .unroll_state import UnrollStateManager, state_distance, UnrollState
 
 
 class LossMixin:
@@ -42,7 +42,7 @@ class LossMixin:
         else:
             return not tf.math.is_finite(current_obj)
 
-    def abstract_loss(self, data, params, unroll=20, problem=None, seed=None):
+    def abstract_loss(self, data, state, unroll=20, problem=None, seed=None):
         """Get abstract imitation learning and meta learning loss.
 
         Runs inner training in order to compute the abstract loss
@@ -72,8 +72,9 @@ class LossMixin:
         ----------
         data : tf.Tensor[]
             List of data tensors.
-        params : tf.Tensor[]
-            Initial problem parameter values.
+        state : UnrollState
+            Initial problem parameter values and hidden state values; created
+            by UnrollStateManager.
 
         Keyword Args
         ------------
@@ -97,16 +98,16 @@ class LossMixin:
 
         # Make random scaling
         params_scale, transform = create_random_parameter_scaling(
-            params, spread=self.parameter_scale_spread, seed=seed)
+            state.params, spread=self.parameter_scale_spread, seed=seed)
         # Make states: [trained policy, teacher policy #1, ...]
-        policies = [self.network, *self.teachers]
-
-        def mgr_constructor(p):
-            return UnrollStateManager(
-                p, problem.objective, transform, [True for _ in params_scale])
-
-        policy_managers = [mgr_constructor(p) for p in policies]
-        unroll_states = [p.create_state(params_scale) for p in policy_managers]
+        policy_managers = [
+            UnrollStateManager(
+                p, get_objective=problem.objective, transform=transform)
+            for p in [self.network, *self.teachers]
+        ]
+        unroll_states = [
+            policy_managers[0].create_state(params_scale, state)
+        ] + [p.create_state(params_scale) for p in policy_managers[1:]]
 
         meta_loss = 0.
         imitation_loss = 0.
@@ -123,7 +124,7 @@ class LossMixin:
 
             # Scale objective
             if self.scale_objective:
-                init_obj = problem.objective(params, batch)
+                init_obj = problem.objective(state.params, batch)
             else:
                 init_obj = 1.
 
@@ -143,5 +144,9 @@ class LossMixin:
                 cb.on_step_end(st, i, losses[0], teacher_loss)
                 for st, cb in zip(callback_states, self.step_callbacks)]
 
-        params = transform(unroll_states[0].params)
-        return meta_loss, imitation_loss, params, callback_states
+        state = UnrollState(
+            params=transform(unroll_states[0].params),
+            states=unroll_states[0].states,
+            global_state=unroll_states[0].global_state)
+
+        return meta_loss, imitation_loss, state, callback_states
