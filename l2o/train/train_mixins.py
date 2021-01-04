@@ -79,7 +79,7 @@ class TrainingMixin:
             # Reset params
             if i % depth == 0:
                 params = meta.problem.get_parameters(seed=seeds.pop())
-                state = state_mgr.create_state(params)
+                state = state_mgr.create_state_distr(params)
             # Create concrete_step; done here to capture batch shape.
             if step is None:
                 step = self.make_concrete_step(meta, batch, state)

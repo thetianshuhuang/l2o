@@ -7,7 +7,7 @@ EVALUATION_PROBLEMS = {
             "layers": [20],
             "activation": "sigmoid",
         },
-        "target": "conv_classifier",
+        "target": "mlp_classifier",
         "dataset": "mnist",
         "epochs": 25,
         "batch_size": 128

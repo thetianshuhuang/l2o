@@ -8,9 +8,14 @@ UnrollState = collections.namedtuple(
 
 
 class AlwaysTrue:
+    """Placeholder iterator that always returns True."""
+
     def __iter__(self):
+        """No action."""
         return self
+
     def __next__(self):
+        """Always returns true. Infinite iterable."""
         return True
 
 
@@ -53,6 +58,9 @@ class UnrollStateManager:
         ----------
         params : object
             Nested structure of tensors describing initial problems state.
+
+        Keyword Args
+        ------------
         state : UnrollState or None
             If state is not None, uses the state and global state there.
             Params are replaced.
@@ -71,6 +79,29 @@ class UnrollStateManager:
         return UnrollState(
             params=params, states=states,
             global_state=self.policy.get_initial_state_global())
+
+    @tf.function
+    def _create_state_distr(self, params, state, distribute):
+        """Inner tf.function wrapping distribute.run."""
+        return distribute.run(
+            self.create_state, args=[params], kwargs={"state": state})
+
+    def create_state_distr(self, params, state=None):
+        """Create distributed state outside of distributed context.
+
+        Parameters
+        ----------
+        params : object
+            Nested structure of tensors describing initial problems state.
+
+        Keyword Args
+        ------------            
+        state : UnrollState or None
+            If state is not None, uses the state and global state there.
+            Params are replaced.
+        """
+        distribute = tf.distribute.get_strategy()
+        return self._create_state_distr(params, state, distribute)
 
     def advance_param(self, args, mask, global_state):
         """Advance a single parameter, depending on mask."""

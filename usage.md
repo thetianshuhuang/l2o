@@ -8,3 +8,26 @@ sbatch -p gtx -N 1 -n 1 -o eval_sgd.txt -J EvalSGD -t 00:02:00 -A Exploration-in
 ```
 sbatch -p gtx -N 1 -n 1 -o eval_mult.txt -J EvalMult -t 02:00:00 -A Exploration-into-Aut --dependency=afterany:129442:129441:129460:129452 run_eval.sh
 ```
+
+
+```
+policy-{unroll}x{depth}{problem}{teachers}-mods
+```
+
+Codes:
+Unroll=20,50,100
+Depth=25
+Problem=M,C
+    M=MLP
+    C=Conv
+Teachers=A,R,AR (alphabetical)
+    A=Adam
+    R=RMSProp
+    C=Radam
+    S=SGD
+
+Examples:
+choice-20x25M
+scale-20x25MAR-slow
+scale-20x25MAR-fast
+scale-20x25MACRS-slow
