@@ -31,3 +31,10 @@ choice-20x25M
 scale-20x25MAR-slow
 scale-20x25MAR-fast
 scale-20x25MACRS-slow
+
+
+
+sbatch -p gtx -N 1 -n 1 -o choice-20x25C.log -J CH20x25C -t 10:00:00 -A Senior-Design_UT-ECE choice-20x25C.sh
+sbatch -p gtx -N 1 -n 1 -o choice-20x25M.log -J CH20x25M -t 10:00:00 -A Senior-Design_UT-ECE choice-20x25M.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25C.log -J RP20x25C -t 10:00:00 -A Senior-Design_UT-ECE rnnprop-20x25C.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25M.log -J RP20x25M -t 10:00:00 -A Senior-Design_UT-ECE rnnprop-20x25M.sh

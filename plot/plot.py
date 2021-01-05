@@ -52,10 +52,10 @@ def plot_stats(tests, axs):
     axs[1][1].set_ylabel("Validation Accuracy")
 
 
-def plot_stats_batch(tests, axs, end=0, use_time=False, sma=0):
+def plot_stats_batch(tests, axs, end=0, use_time=False, sma=0, period=99):
     """Plot test statistics, batch-wise."""
     for key in tests:
-        d = np.load(get_test(key))
+        d = np.load(get_test(key, period=period))
 
         if use_time:
             x = np.linspace(

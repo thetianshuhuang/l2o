@@ -195,11 +195,11 @@ OVERRIDE_PRESETS = {
     )],
     "il_fast": [(
         ["strategy", "annealing_schedule"],
-        {"type": "exponential", "alpha": 0.1}
+        {"type": "exponential", "alpha": 0.1, "base": 1.0}
     )],
     "il_slow": [(
         ["strategy", "annealing_schedule"],
-        {"type": "exponential", "alpha": 0.04}
+        {"type": "exponential", "alpha": 0.05, "base": 10.0}
     )],
     "conv_debug": [(
         ["problems"],

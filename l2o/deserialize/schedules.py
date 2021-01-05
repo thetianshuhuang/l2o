@@ -25,7 +25,8 @@ def float_schedule(x, name="undefined"):
         elif x["type"] == "list":
             return x["values"].__getitem__
         elif x["type"] == "exponential":
-            return lambda i: np.exp(i * -np.abs(x["alpha"]))
+            base = x["base"] if "base" in x else 1.0
+            return lambda i: base * np.exp(i * -np.abs(x["alpha"]))
         else:
             return ValueError("Invalid float schedule: {}".format(str(x)))
     elif callable(x):
