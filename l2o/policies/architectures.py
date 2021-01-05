@@ -109,14 +109,14 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         nested structures that are None to tf.Tensor, returns ``0.`` instead of
         ``None`` as it should be.
         """
-        return 0.
+        return tf.constant(0.)
 
     def get_initial_state_global(self):
         """By default, there is no global state.
 
         See ```call_global``` for reason why we return 0.
         """
-        return 0.
+        return tf.constant(0.)
 
 
 class BaseCoordinateWisePolicy(BaseLearnToOptimizePolicy):

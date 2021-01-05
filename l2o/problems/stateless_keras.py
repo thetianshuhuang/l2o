@@ -11,17 +11,6 @@ import numpy as np
 import math
 
 
-@tf.function
-def _randint():
-    """Get random integer.
-
-    Needs to be @tf.function decorated because of some odd behavior in
-    tf.random.uniform when this is called by other @tf.functions.
-    """
-    return tf.random.uniform(
-        shape=[], minval=tf.int32.min, maxval=tf.int32.max, dtype=tf.int32)
-
-
 class Layer:
     """Base layer class."""
 
@@ -86,11 +75,10 @@ class Layer:
         seeds, which needs to be handled.
         """
         res = []
-        tf.random.set_seed(seed)
         for initializer in args:
             # Accepts seed
             try:
-                res.append(initializer(seed=_randint()))
+                res.append(initializer(seed=seed))
             # Doesn't take a seed
             except TypeError:
                 res.append(initializer())
@@ -251,9 +239,8 @@ class Sequential:
             Initialized model parameters.
         """
         res = []
-        tf.random.set_seed(seed)
         for layer in self.layers:
-            res += layer.get_parameters(seed=_randint())
+            res += layer.get_parameters(seed=seed)
         return res
 
     def call(self, params, x):

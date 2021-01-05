@@ -19,6 +19,43 @@ class AlwaysTrue:
         return True
 
 
+@tf.function
+def create_state(policy, params, policy_ref=None, mask=AlwaysTrue()):
+    """Abstracted unroll state for training loop inner optimization.
+
+    Parameters
+    ----------
+    policy : BaseLearnToOptimizePolicy
+        Policy to create state for.
+    params : object
+        Nested structure of tensors describing initial problems state.
+
+    Keyword Args
+    ------------
+    policy_ref : BaseLearnToOptimizePolicy
+        Policy to use for non-masked elements.
+    mask : bool[]
+        Mask indicating which parameters should be trained on, and which
+        should use the reference optimizer (policy_ref).
+
+    Returns
+    -------
+    UnrollState
+        Created state for this policy.
+    """
+    def _inner(params):
+        states = [
+            (policy if mask else policy_ref).get_initial_state(p)
+            for p, mask in zip(params, mask)]
+
+        return UnrollState(
+            params=params, states=states,
+            global_state=policy.get_initial_state_global())
+
+    distribute = tf.distribute.get_strategy()
+    return distribute.run(_inner, args=[params])
+
+
 class UnrollStateManager:
     """Unroll state -- sort of.
 
@@ -34,74 +71,18 @@ class UnrollStateManager:
 
     Keyword Args
     ------------
-    get_objective : callable(params, batch) -> float
+    objective : callable(params, batch) -> float
         Computes objective value from current parameters and data batch.
-    transform : callable(tf.Tensor[]) -> tf.Tensor[]
-        Parameter transformation prior to objective function call.
     learner_mask : bool[]
         Mask indicating which parameters should be trained on, and which
         should use the reference optimizer (policy_ref).
     """
 
     def __init__(
-            self, policy,
-            get_objective=None, transform=None, learner_mask=AlwaysTrue()):
+            self, policy, objective=None, learner_mask=AlwaysTrue()):
         self.policy = policy
-        self.get_objective = get_objective
-        self.transform = transform
+        self.objective = objective
         self.mask = learner_mask
-
-    def create_state(self, params, state=None):
-        """Abstracted unroll state for training loop inner optimization.
-
-        Parameters
-        ----------
-        params : object
-            Nested structure of tensors describing initial problems state.
-
-        Keyword Args
-        ------------
-        state : UnrollState or None
-            If state is not None, uses the state and global state there.
-            Params are replaced.
-        """
-        # Passthrough
-        if state is not None:
-            return UnrollState(
-                params=params, states=state.states,
-                global_state=state.global_state)
-
-        # Proper processing
-        states = [
-            (self.policy if mask else self.policy_ref).get_initial_state(p)
-            for p, mask in zip(params, self.mask)]
-
-        return UnrollState(
-            params=params, states=states,
-            global_state=self.policy.get_initial_state_global())
-
-    @tf.function
-    def _create_state_distr(self, params, state, distribute):
-        """Inner tf.function wrapping distribute.run."""
-        return distribute.run(
-            self.create_state, args=[params], kwargs={"state": state})
-
-    def create_state_distr(self, params, state=None):
-        """Create distributed state outside of distributed context.
-
-        Parameters
-        ----------
-        params : object
-            Nested structure of tensors describing initial problems state.
-
-        Keyword Args
-        ------------            
-        state : UnrollState or None
-            If state is not None, uses the state and global state there.
-            Params are replaced.
-        """
-        distribute = tf.distribute.get_strategy()
-        return self._create_state_distr(params, state, distribute)
 
     def advance_param(self, args, mask, global_state):
         """Advance a single parameter, depending on mask."""
@@ -110,7 +91,7 @@ class UnrollStateManager:
         else:
             return self.policy_ref.call(*args)
 
-    def advance_state(self, unroll_state, batch):
+    def advance_state(self, unroll_state, batch, scale):
         """Advance this state by a single inner step.
 
         Parameters
@@ -119,17 +100,20 @@ class UnrollStateManager:
             Unroll state data.
         batch : object
             Nested structure containing data batch.
+        scale : tf.Tensor[]
+            Parameter scaling to apply to parameters coordinatewise by
+            multiplication.
 
         Returns
         -------
         float
             Objective value.
         """
-        # 1. objective <- get_objective(params, batch)
+        # 1. objective <- objective(params, batch)
         with tf.GradientTape() as tape:
             tape.watch(unroll_state.params)
-            objective = self.get_objective(
-                self.transform(unroll_state.params), batch)
+            objective = self.objective(
+                [p * s for p, s in zip(unroll_state.params, scale)], batch)
         # 2. grads <- gradient(objective, params)
         grads = tape.gradient(objective, unroll_state.params)
         # 3. delta p, state <- policy(params, grads, local, global)

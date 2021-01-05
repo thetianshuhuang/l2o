@@ -1,0 +1,115 @@
+[
+    UnrollState(
+        params=[
+            PerReplicaSpec(
+                TensorSpec(shape=(784, 20), dtype=tf.float32, name=None),
+                TensorSpec(shape=(784, 20), dtype=tf.float32, name=None)),
+            PerReplicaSpec(
+                TensorSpec(shape=(20,), dtype=tf.float32, name=None),
+                TensorSpec(shape=(20,), dtype=tf.float32, name=None)),
+            PerReplicaSpec(
+                TensorSpec(shape=(20, 10), dtype=tf.float32, name=None),
+                TensorSpec(shape=(20, 10), dtype=tf.float32, name=None)),
+            PerReplicaSpec(
+                TensorSpec(shape=(10,), dtype=tf.float32, name=None),
+                TensorSpec(shape=(10,), dtype=tf.float32, name=None))],
+        states=[
+            {
+                'rnn_0': [
+                    PerReplicaSpec(
+                        TensorSpec(shape=(15680, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(15680, 20), dtype=tf.float32, name=None)),
+                    PerReplicaSpec(
+                        TensorSpec(shape=(15680, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(15680, 20), dtype=tf.float32, name=None))
+                ],
+                'rnn_1': [
+                    PerReplicaSpec(
+                        TensorSpec(shape=(15680, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(15680, 20), dtype=tf.float32, name=None)),
+                    PerReplicaSpec(
+                        TensorSpec(shape=(15680, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(15680, 20), dtype=tf.float32, name=None))
+                ],
+                'm': PerReplicaSpec(
+                    TensorSpec(shape=(784, 20), dtype=tf.float32, name=None),
+                    TensorSpec(shape=(784, 20), dtype=tf.float32, name=None)),
+                'v': PerReplicaSpec(
+                    TensorSpec(shape=(784, 20), dtype=tf.float32, name=None),
+                    TensorSpec(shape=(784, 20), dtype=tf.float32, name=None))
+            },
+            {
+                'rnn_0': [
+                    PerReplicaSpec(
+                        TensorSpec(shape=(20, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(20, 20), dtype=tf.float32, name=None)),
+                    PerReplicaSpec(
+                        TensorSpec(shape=(20, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(20, 20), dtype=tf.float32, name=None))
+                ],
+                'rnn_1': [
+                    PerReplicaSpec(
+                        TensorSpec(shape=(20, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(20, 20), dtype=tf.float32, name=None)),
+                    PerReplicaSpec(
+                        TensorSpec(shape=(20, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(20, 20), dtype=tf.float32, name=None))
+                ],
+                'm': PerReplicaSpec(
+                    TensorSpec(shape=(20,), dtype=tf.float32, name=None),
+                    TensorSpec(shape=(20,), dtype=tf.float32, name=None)),
+                'v': PerReplicaSpec(
+                    TensorSpec(shape=(20,), dtype=tf.float32, name=None),
+                    TensorSpec(shape=(20,), dtype=tf.float32, name=None))
+            },
+            {
+                'rnn_0': [
+                    PerReplicaSpec(
+                        TensorSpec(shape=(200, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(200, 20), dtype=tf.float32, name=None)),
+                    PerReplicaSpec(
+                        TensorSpec(shape=(200, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(200, 20), dtype=tf.float32, name=None))
+                ],
+                'rnn_1': [
+                    PerReplicaSpec(
+                        TensorSpec(shape=(200, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(200, 20), dtype=tf.float32, name=None)),
+                    PerReplicaSpec(
+                        TensorSpec(shape=(200, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(200, 20), dtype=tf.float32, name=None))
+                ],
+                'm': PerReplicaSpec(
+                    TensorSpec(shape=(20, 10), dtype=tf.float32, name=None),
+                    TensorSpec(shape=(20, 10), dtype=tf.float32, name=None)),
+                'v': PerReplicaSpec(
+                    TensorSpec(shape=(20, 10), dtype=tf.float32, name=None),
+                    TensorSpec(shape=(20, 10), dtype=tf.float32, name=None))
+            },
+            {
+                'rnn_0': [
+                    PerReplicaSpec(
+                        TensorSpec(shape=(10, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(10, 20), dtype=tf.float32, name=None)),
+                    PerReplicaSpec(
+                        TensorSpec(shape=(10, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(10, 20), dtype=tf.float32, name=None))
+                ],
+                'rnn_1': [
+                    PerReplicaSpec(
+                        TensorSpec(shape=(10, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(10, 20), dtype=tf.float32, name=None)),
+                    PerReplicaSpec(
+                        TensorSpec(shape=(10, 20), dtype=tf.float32, name=None),
+                        TensorSpec(shape=(10, 20), dtype=tf.float32, name=None))
+                ],
+                'm': PerReplicaSpec(
+                    TensorSpec(shape=(10,), dtype=tf.float32, name=None),
+                    TensorSpec(shape=(10,), dtype=tf.float32, name=None)),
+                'v': PerReplicaSpec(
+                    TensorSpec(shape=(10,), dtype=tf.float32, name=None),
+                    TensorSpec(shape=(10,), dtype=tf.float32, name=None))
+            }
+        ],
+        global_state=TensorSpec(
+            shape=(), dtype=tf.float32, name='states/0/global_state'))]

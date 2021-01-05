@@ -33,7 +33,7 @@ def make_seeds(seed, n):
         return [None] * n
     else:
         rng = np.random.default_rng(seed)
-        return rng.integers(0, 0x80000000, size=n, dtype=np.uint32)
+        return rng.integers(-2147483648, 2147483647, size=n, dtype=np.int32)
 
 
 # NOTE: Currently Unused

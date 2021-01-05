@@ -8,7 +8,7 @@ from tensorflow.keras.utils import Progbar
 
 from .loss_tracker import LossTracker
 from .utils import make_seeds
-from .unroll_state import UnrollStateManager
+from .unroll_state import UnrollStateManager, create_state
 
 
 MetaIteration = collections.namedtuple(
@@ -20,7 +20,46 @@ MetaIteration = collections.namedtuple(
 class TrainingMixin:
     """Training Method Mixins for TrainableOptimizer."""
 
-    def _meta_step(self, meta, concrete_step, data, state):
+    @tf.function
+    def _create_scaling(self, params):
+        """Random Parameter Scaling.
+
+        Described by
+        "Learning Gradient Descent: Better Generalization and Longer Horizons"
+        (Lv. et. al, 2017)
+
+        Generates a random parameter-wise scale, and transforms the parameters
+        with g(parameter) = f(parameter * scale)
+
+        Parameters
+        ----------
+        params : tf.Tensor[]
+            List of parameters to generate scale for.
+
+        Returns
+        -------
+        (tf.Tensor[], tf.Tensor[])
+            [0] Transformed parameters.
+            [1] Parameter scales (apply multiplicatively).
+        """
+        spread = self.parameter_scale_spread
+
+        def _inner(params_):
+            if spread > 0.0:
+                scale = [
+                    tf.exp(tf.random.uniform(
+                        tf.shape(p), minval=-spread, maxval=spread))
+                    for p in params_]
+                params_ = [p / s for p, s in zip(params_, scale)]
+            else:
+                scale = [tf.ones(tf.shape(p)) for p in params_]
+
+            return params_, scale
+
+        distribute = tf.distribute.get_strategy()
+        return distribute.run(_inner, args=(params,))
+
+    def _meta_step(self, meta, concrete_step, data, states, scale):
         """Helper function to run for a single step."""
         # Prepare abstract loss params (meta, imitation learning weight)
         if self.il_mode == 'switch':
@@ -31,7 +70,7 @@ class TrainingMixin:
 
         # Graph mode this function only
         params, summary = concrete_step(
-            data, state,
+            data, states, scale,
             meta_loss_weight=tf.constant(w_meta, dtype=tf.float32),
             imitation_loss_weight=tf.constant(w_imit, dtype=tf.float32))
 
@@ -60,11 +99,11 @@ class TrainingMixin:
         float
             Mean training loss for this meta-iteration
         """
-        # concrete_step, params will be assigned on first iteration.
+        # concrete_step, meta state will be assigned on first iteration.
         # concrete_step is cached.
         step = meta.problem.get_step(meta)
-        state_mgr = UnrollStateManager(self.network)
-        state = None
+        policies = [self.network, *self.teachers]
+        states, scale = None, None
 
         # Single progress bar
         size = meta.problem.size(meta.unroll_len)
@@ -74,21 +113,26 @@ class TrainingMixin:
         dataset = meta.problem.get_dataset(
             meta.unroll_len, depth * epochs, seed=meta.seed)
 
-        seeds = list(make_seeds(meta.seed, epochs))
+        # NOTE: Random seeds are totally fucked
+        # (I have no idea what is going on)
+        # Validation may or may not be perfectly repeatable
+        tf.random.set_seed(meta.seed)
         for i, batch in enumerate(dataset):
-            # Reset params
+            # Reset params & states
             if i % depth == 0:
-                params = meta.problem.get_parameters(seed=seeds.pop())
-                state = state_mgr.create_state_distr(params)
+                params = meta.problem.get_parameters(seed=meta.seed)
+                params, scale = self._create_scaling(params)
+                states = [create_state(p, params) for p in policies]
             # Create concrete_step; done here to capture batch shape.
             if step is None:
-                step = self.make_concrete_step(meta, batch, state)
+                step = self.make_concrete_step(meta, batch, states, scale)
 
             # The actual step
             if meta.validation:
-                params, stats = step(batch, state)
+                states, stats = step(batch, states, scale)
             else:
-                params, stats = self._meta_step(meta, step, batch, state)
+                states, stats = self._meta_step(
+                    meta, step, batch, states, scale)
 
             losses.append(stats)
             pbar.add(1, values=[(k, stats[k]) for k in self.pbar_values])

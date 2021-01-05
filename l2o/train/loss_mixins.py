@@ -3,7 +3,6 @@
 import collections
 import tensorflow as tf
 
-from .random_scaling import create_random_parameter_scaling
 from .unroll_state import UnrollStateManager, state_distance, UnrollState
 
 
@@ -42,12 +41,13 @@ class LossMixin:
         else:
             return not tf.math.is_finite(current_obj)
 
-    def abstract_loss(self, data, state, unroll=20, problem=None, seed=None):
+    def abstract_loss(
+            self, data, states, scale, unroll=20, problem=None, seed=None):
         """Get abstract imitation learning and meta learning loss.
 
         Runs inner training in order to compute the abstract loss
         ```
-        strategy(imitation_loss(teachers)) + meta_loss_weight * meta_loss().
+        strategy([imitation_loss(teachers)]) + meta_loss_weight * meta_loss().
         ```
 
         By decorating as a @tf.function, the for loop is wrapped into a
@@ -72,9 +72,11 @@ class LossMixin:
         ----------
         data : tf.Tensor[]
             List of data tensors.
-        state : UnrollState
-            Initial problem parameter values and hidden state values; created
-            by UnrollStateManager.
+        states : UnrollState[]
+            Initial problem parameter values and hidden state values for
+            learned optimizer and teachers; created by UnrollStateManager.
+        scale : tf.Tensor[]
+            Random parameter scaling; applied multiplicatively.
 
         Keyword Args
         ------------
@@ -87,27 +89,23 @@ class LossMixin:
 
         Returns
         -------
-        (tf.Tensor, tf.Tensor[], tf.Tensor{})
+        (tf.Tensor, tf.Tensor, UnrollState[], tf.Tensor{})
             [0] Meta loss.
-            [1] Final problem parameters.
-            [2] Summary statistics collected by self.step_callback if present.
+            [1] Imitation loss.
+            [2] Learner and teacher states after this unroll.
+            [3] Summary statistics collected by self.step_callback if present.
         """
         # Unbatch data
         data = [
             tf.stack(tf.split(dim, num_or_size_splits=unroll)) for dim in data]
 
-        # Make random scaling
-        params_scale, transform = create_random_parameter_scaling(
-            state.params, spread=self.parameter_scale_spread, seed=seed)
-        # Make states: [trained policy, teacher policy #1, ...]
+        # Make Managers
         policy_managers = [
-            UnrollStateManager(
-                p, get_objective=problem.objective, transform=transform)
+            UnrollStateManager(p, objective=problem.objective)
             for p in [self.network, *self.teachers]
         ]
-        unroll_states = [
-            policy_managers[0].create_state(params_scale, state)
-        ] + [p.create_state(params_scale) for p in policy_managers[1:]]
+
+        init_params = states[0].params
 
         meta_loss = 0.
         imitation_loss = 0.
@@ -117,14 +115,14 @@ class LossMixin:
             batch = [dim[i] for dim in data]
 
             # Advance by one step
-            losses, unroll_states = list(map(list, zip(*[
-                mgr.advance_state(st, batch)
-                for st, mgr in zip(unroll_states, policy_managers)
+            losses, states = list(map(list, zip(*[
+                mgr.advance_state(st, batch, scale)
+                for st, mgr in zip(states, policy_managers)
             ])))
 
             # Scale objective
             if self.scale_objective:
-                init_obj = problem.objective(state.params, batch)
+                init_obj = problem.objective(init_params, batch)
             else:
                 init_obj = 1.
 
@@ -136,7 +134,7 @@ class LossMixin:
 
             # Add imitation loss
             teacher_loss = [
-                state_distance(unroll_states[0], s) for s in unroll_states[1:]]
+                state_distance(states[0], s) for s in states[1:]]
             imitation_loss += weight * self._imitation_objective(teacher_loss)
 
             # Log optional statistics
@@ -144,9 +142,4 @@ class LossMixin:
                 cb.on_step_end(st, i, losses[0], teacher_loss)
                 for st, cb in zip(callback_states, self.step_callbacks)]
 
-        state = UnrollState(
-            params=transform(unroll_states[0].params),
-            states=unroll_states[0].states,
-            global_state=unroll_states[0].global_state)
-
-        return meta_loss, imitation_loss, state, callback_states
+        return meta_loss, imitation_loss, states, callback_states
