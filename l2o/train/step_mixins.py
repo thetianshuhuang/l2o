@@ -38,6 +38,7 @@ class StepMixin:
             Weight applied to imitation loss. If 0, imitation loss is not
             computed.
         """
+
         def _inner(data_, states_, scale_):
             """Distribute function.
 

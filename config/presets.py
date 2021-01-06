@@ -43,6 +43,23 @@ OVERRIDE_PRESETS = {
             "name": "SimpleStrategy"
         }
     )],
+    "simple_20x50": [(
+        ["strategy"],
+        {
+            "validation_problems": None,
+            "epochs_per_period": 1,
+            "validation_seed": 12345,
+            "num_periods": 100,
+            "unroll_distribution": 20,
+            "depth": 50,
+            "epochs": 25,
+            "annealing_schedule": {"type": "constant", "value": 0.0},
+            "validation_epochs": 1,
+            "validation_unroll": 50,
+            "validation_depth": 25,
+            "name": "SimpleStrategy"
+        }
+    )],
     "conv_train": [(
         ["problems"],
         [{
