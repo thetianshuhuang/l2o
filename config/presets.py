@@ -26,23 +26,6 @@ OVERRIDE_PRESETS = {
             }
         }
     )],
-    "deep_5x": [(
-        ["strategy"],
-        {
-            "validation_problems": None,
-            "epochs_per_period": 1,
-            "validation_seed": 12345,
-            "num_periods": 100,
-            "unroll_distribution": 20,
-            "depth": 125,
-            "epochs": 5,
-            "annealing_schedule": {"type": "constant", "value": 0.0},
-            "validation_epochs": 1,
-            "validation_unroll": 50,
-            "validation_depth": 25,
-            "name": "SimpleStrategy"
-        }
-    )],
     "simple_20": [(
         ["strategy"],
         {
@@ -53,57 +36,6 @@ OVERRIDE_PRESETS = {
             "unroll_distribution": 20,
             "depth": 25,
             "epochs": 25,
-            "annealing_schedule": {"type": "constant", "value": 0.0},
-            "validation_epochs": 1,
-            "validation_unroll": 50,
-            "validation_depth": 25,
-            "name": "SimpleStrategy"
-        }
-    )],
-    "simple_50": [(
-        ["strategy"],
-        {
-            "validation_problems": None,
-            "epochs_per_period": 1,
-            "validation_seed": 12345,
-            "num_periods": 100,
-            "unroll_distribution": 50,
-            "depth": 25,
-            "epochs": 10,
-            "annealing_schedule": {"type": "constant", "value": 0.0},
-            "validation_epochs": 1,
-            "validation_unroll": 50,
-            "validation_depth": 25,
-            "name": "SimpleStrategy"
-        }
-    )],
-    "simple_100": [(
-        ["strategy"],
-        {
-            "validation_problems": None,
-            "epochs_per_period": 1,
-            "validation_seed": 12345,
-            "num_periods": 100,
-            "unroll_distribution": 100,
-            "depth": 25,
-            "epochs": 5,
-            "annealing_schedule": {"type": "constant", "value": 0.0},
-            "validation_epochs": 1,
-            "validation_unroll": 50,
-            "validation_depth": 25,
-            "name": "SimpleStrategy"
-        }
-    )],
-    "simple_250": [(
-        ["strategy"],
-        {
-            "validation_problems": None,
-            "epochs_per_period": 1,
-            "validation_seed": 12345,
-            "num_periods": 100,
-            "unroll_distribution": 250,
-            "depth": 25,
-            "epochs": 2,
             "annealing_schedule": {"type": "constant", "value": 0.0},
             "validation_epochs": 1,
             "validation_unroll": 50,
@@ -195,11 +127,15 @@ OVERRIDE_PRESETS = {
     )],
     "il_fast": [(
         ["strategy", "annealing_schedule"],
-        {"type": "exponential", "alpha": 0.1, "base": 1.0}
+        {"type": "exponential", "alpha": 0.1, "base": 10.0}
     )],
     "il_slow": [(
         ["strategy", "annealing_schedule"],
         {"type": "exponential", "alpha": 0.05, "base": 10.0}
+    )],
+    "il_more": [(
+        ["strategy": "annealing_schedule"],
+        {"type": "exponential", "alpha": 0.05, "base": 100.0}
     )],
     "conv_debug": [(
         ["problems"],
