@@ -105,7 +105,7 @@ class LossMixin:
             for p in [self.network, *self.teachers]
         ]
 
-        init_params = states[0].params
+        init_params = [p * s for p, s in zip(states[0].params, scale)]
 
         meta_loss = 0.
         imitation_loss = 0.
