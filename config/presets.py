@@ -134,7 +134,7 @@ OVERRIDE_PRESETS = {
         {"type": "exponential", "alpha": 0.05, "base": 10.0}
     )],
     "il_more": [(
-        ["strategy": "annealing_schedule"],
+        ["strategy", "annealing_schedule"],
         {"type": "exponential", "alpha": 0.05, "base": 100.0}
     )],
     "conv_debug": [(
