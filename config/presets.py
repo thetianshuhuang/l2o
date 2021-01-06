@@ -26,7 +26,7 @@ OVERRIDE_PRESETS = {
             }
         }
     )],
-    "simple_20": [(
+    "simple_20x25": [(
         ["strategy"],
         {
             "validation_problems": None,
@@ -141,6 +141,11 @@ OVERRIDE_PRESETS = {
     "metaopt_sgd": [(
         ["optimizer"],
         {"class_name": "sgd", "config": {"learning_rate": 0.01}}
+    )],
+    "metaopt_rmsprop": [(
+        ["optimizer"],
+        {"class_name": "rmsprop",
+         "config": {"learning_rate": 0.001, "rho": 0.9}}
     )],
     "il_fast": [(
         ["strategy", "annealing_schedule"],

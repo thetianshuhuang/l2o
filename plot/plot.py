@@ -52,35 +52,34 @@ def plot_stats(tests, axs):
     axs[1][1].set_ylabel("Validation Accuracy")
 
 
-def plot_stats_batch(tests, axs, end=0, use_time=False, sma=0, period=99):
-    """Plot test statistics, batch-wise."""
+def plot_stats_batch(
+        tests, ax, end=0, use_time=False, sma=0, period=99, loss=True):
+    """Plot test loss or accuracy, batch-wise."""
     for key in tests:
         d = np.load(get_test(key, period=period))
-
-        if use_time:
-            x = np.linspace(
-                0, np.sum(d["epoch_time"]) / d["epoch_time"].shape[0],
-                num=d["batch_loss"].shape[1])
-            xlabel = "Time (s)"
-        else:
-            x = np.arange(d["batch_loss"].shape[1])
-            xlabel = "Step"
 
         if end == 0:
             end = d["batch_loss"].shape[1]
 
-        plot_band(
-            axs[0], x[:end], np.log(d["batch_loss"][:, :end]),
-            label=get_name(key), sma=sma)
-        plot_band(
-            axs[1], x[:end], d["batch_accuracy"][:, :end],
-            label=get_name(key), sma=sma)
+        if use_time:
+            x = np.linspace(
+                0, np.sum(d["epoch_time"]) / d["epoch_time"].shape[0],
+                num=d["batch_loss"].shape[1])[:end]
+            xlabel = "Time (s)"
+        else:
+            x = np.arange(end)
+            xlabel = "Step"
 
-    axs[0].set_xlabel(xlabel)
-    axs[1].set_xlabel(xlabel)
-    axs[1].legend()
-    axs[0].set_ylabel("Log Training Loss")
-    axs[1].set_ylabel("Training Accuracy")
+        if loss:
+            y = np.log(d["batch_loss"][:, :end] + 1e-4)
+        else:
+            y = d["batch_accuracy"][:, :end]
+
+        plot_band(ax, x, y, label=get_name(key), sma=sma)
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel("Log Training Loss" if loss else "Training Accuracy")
+    ax.legend()
 
 
 COLOR_CYCLE = ["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9"]

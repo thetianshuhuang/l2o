@@ -44,3 +44,6 @@ sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CR.log -J 20x25CR -t 10:00:00 -A Senior-
 sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CA.log -J 20x25CA -t 10:00:00 -A Senior-Design_UT-ECE rnnprop-20x25CA.sh
 sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CAR.log -J 20x25CAR -t 10:00:00 -A Senior-Design_UT-ECE rnnprop-20x25CAR.sh
 
+
+sbatch -p gtx -N 1 -n 1 -o choice-20x50C.log -J CH20x50C -t 20:00:00 -A Senior-Design_UT-ECE choice-20x50C.sh
+sbatch -p gtx -N 1 -n 1 -o choice-20x50M.log -J CH20x50M -t 20:00:00 -A Senior-Design_UT-ECE choice-20x50M.sh
