@@ -97,6 +97,20 @@ class BaseStrategy:
         """Wrapper for ``self.learner.load_state`` with ``self._path``."""
         self.learner.load_state(self._path(**kwargs))
 
+    def _filter(self, **kwargs):
+        """Get filtered view of summary dataframe."""
+        df = self.summary
+        for k, v in kwargs.items():
+            df = df[df[k] == v]
+        return df
+
+    def _get(self, **kwargs):
+        """Get item from summary dataframe."""
+        try:
+            return self._filter(**kwargs).iloc[0]
+        except IndexError:
+            raise Exception("Entry not found: {}".format(kwargs))
+
     def _append(self, training_stats, validation_stats, metadata):
         """Save training and validation statistics.
 

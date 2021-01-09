@@ -64,6 +64,24 @@ STRATEGY = {
             "validation_unroll": 20,
             "name": "SimpleStrategy",
         }
+    },
+    "repeat": {
+        "strategy_constructor": "RepeatStrategy",
+        "strategy": {
+            "validation_problems": None,
+            "epochs_per_period": 10,
+            "validation_seed": 12345,
+            "num_periods": 100,
+            "unroll_distribution": 20,
+            "depth": 1,
+            "epochs": 1,
+            "annealing_schedule": 0.1,
+            "validation_epochs": None,
+            "validation_unroll": 20,
+            "max_repeat": 4,
+            "repeat_threshold": 0.1,
+            "name": "RepeatStrategy",
+        }
     }
 }
 
