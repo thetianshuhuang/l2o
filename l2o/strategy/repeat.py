@@ -69,8 +69,6 @@ class RepeatStrategy(BaseStrategy):
             validation_depth=None, validation_unroll=None, max_repeat=0,
             repeat_threshold=0.1, name="SimpleStrategy", **kwargs):
 
-        super().__init__(*args, name=name, **kwargs)
-
         self.num_periods = num_periods
 
         def _default(val, default):
@@ -92,6 +90,8 @@ class RepeatStrategy(BaseStrategy):
 
         self.max_repeat = max_repeat
         self.repeat_threshold = repeat_threshold
+
+        super().__init__(*args, name=name, **kwargs)
 
     def _check_repeat(self):
         """Check if current period should be repeated.
