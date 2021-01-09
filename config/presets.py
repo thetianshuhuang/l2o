@@ -172,7 +172,13 @@ OVERRIDE_PRESETS = {
                 "shuffle_buffer": 16384,
             }
         }]
-    )]
+    )],
+    "repeat": [
+        (["strategy_constructor"], "RepeatStrategy"),
+        (["strategy", "max_repeat"], 4),
+        (["strategy", "repeat_threshold"], 0.1),
+        (["strategy", "name"], "RepeatStrategy")
+    ]
 }
 
 
