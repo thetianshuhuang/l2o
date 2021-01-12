@@ -5,11 +5,11 @@ Attributes
 BaseLearnToOptimizePolicy
     Base class that all policies should extend.
 AdamOptimizer
-
+    Standard Adam optimizer.
 RMSPropOptimizer
-
+    Standard RMSProp optimizer.
 SGDOptimizer
-
+    Standard SGD optimizer.
 DMOptimizer
     "Learing to learn by gradient descent by gradient descent"
     (Andrychowicz et. al, 2016)
@@ -31,6 +31,7 @@ from .rnnprop_2016 import RNNPropOptimizer
 from .scale_hierarchical_2017 import ScaleHierarchicalOptimizer
 from .choice import ChoiceOptimizer
 from .hand_crafted import AdamOptimizer, RMSPropOptimizer, SGDOptimizer
+from .load import load
 
 __all__ = [
     "BaseLearnToOptimizePolicy",
@@ -41,5 +42,6 @@ __all__ = [
     "RNNPropOptimizer",
     "ScaleBasicOptimizer",
     "ScaleHierarchicalOptimizer",
-    "ChoiceOptimizer"
+    "ChoiceOptimizer",
+    "load"
 ]

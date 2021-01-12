@@ -23,7 +23,7 @@ Problem=M,C
 Teachers=A,R,AR (alphabetical)
     A=Adam
     R=RMSProp
-    C=Radam
+    D=Radam
     S=SGD
 
 Examples:
@@ -47,3 +47,6 @@ sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CAR.log -J 20x25CAR -t 10:00:00 -A Senio
 
 sbatch -p gtx -N 1 -n 1 -o choice-20x50C.log -J CH20x50C -t 20:00:00 -A Senior-Design_UT-ECE choice-20x50C.sh
 sbatch -p gtx -N 1 -n 1 -o choice-20x50M.log -J CH20x50M -t 20:00:00 -A Senior-Design_UT-ECE choice-20x50M.sh
+
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CAR-repeat.log -J RepeatC -t 10:00:00 -A Senior-Design_UT-ECE rnnprop-20x25CAR-repeat.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25MAR-repeat.log -J RepeatM -t 10:00:00 -A Senior-Design_UT-ECE rnnprop-20x25MAR-repeat.sh

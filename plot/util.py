@@ -17,7 +17,10 @@ def get_test(preset, data='evaluation', period=99):
     """Get test path."""
     if preset in RESULTS:
         if data == 'evaluation':
-            return "results/{}/period_{}/conv_train.npz".format(preset, period)
+            if 'repeat' in preset:
+                return "results/{}/period_{}.0/conv_train.npz".format(preset, period)
+            else:
+                return "results/{}/period_{}/conv_train.npz".format(preset, period)
         elif data == 'summary':
             return "results/{}/summary.csv".format(preset)
     elif preset in BASELINES:

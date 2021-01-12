@@ -149,8 +149,8 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
         raise NotImplementedError()
 
     def get_config(self):
-        """Serialize Configuration."""
-        return {}
+        """Serialize Configuration; passes through to network."""
+        return self.network.get_config()
 
     def variables(self):
         """Returns variables of this Optimizer based on the order created.

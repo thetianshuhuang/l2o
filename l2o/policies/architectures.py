@@ -32,6 +32,10 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         with distribute.scope():
             self.init_layers(**kwargs)
 
+    def load_weights(self, file):
+        """Load saved weights from file."""
+        tf.train.Checkpoint(network=self).read(file)
+
     def init_layers(self, **kwargs):
         """Initialize layers."""
         raise NotImplementedError()
