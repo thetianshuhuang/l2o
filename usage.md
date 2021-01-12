@@ -10,28 +10,6 @@ sbatch -p gtx -N 1 -n 1 -o eval_mult.txt -J EvalMult -t 02:00:00 -A Exploration-
 ```
 
 
-```
-policy-{unroll}x{depth}{problem}{teachers}-mods
-```
-
-Codes:
-Unroll=20,50,100
-Depth=25
-Problem=M,C
-    M=MLP
-    C=Conv
-Teachers=A,R,AR (alphabetical)
-    A=Adam
-    R=RMSProp
-    D=Radam
-    S=SGD
-
-Examples:
-choice-20x25M
-scale-20x25MAR-slow
-scale-20x25MAR-fast
-scale-20x25MACRS-slow
-
 
 
 sbatch -p gtx -N 1 -n 1 -o choice-20x25C.log -J CH20x25C -t 10:00:00 -A Senior-Design_UT-ECE choice-20x25C.sh
