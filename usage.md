@@ -28,3 +28,20 @@ sbatch -p gtx -N 1 -n 1 -o choice-20x50M.log -J CH20x50M -t 20:00:00 -A Senior-D
 
 sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CAR-repeat.log -J RepeatC -t 10:00:00 -A Senior-Design_UT-ECE rnnprop-20x25CAR-repeat.sh
 sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25MAR-repeat.log -J RepeatM -t 10:00:00 -A Senior-Design_UT-ECE rnnprop-20x25MAR-repeat.sh
+
+
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CARm-repeat.log -J RepeatC -t 10:00:00 -A Senior-Design_UT-ECE rnnprop-20x25CARm-repeat.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25MARm-repeat.log -J RepeatM -t 10:00:00 -A Senior-Design_UT-ECE rnnprop-20x25MARm-repeat.sh
+
+
+sbatch -p gtx -N 1 -n 1 -o choice-20x25C-noscale.log -J CH20x25C -t 10:00:00 -A Senior-Design_UT-ECE choice-20x25C-noscale.sh
+sbatch -p gtx -N 1 -n 1 -o choice-20x25M-noscale.log -J CH20x25M -t 10:00:00 -A Senior-Design_UT-ECE choice-20x25M-noscale.sh
+
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CAR-noscale.log -J NoScaleC -t 12:00:00 -A Senior-Design_UT-ECE rnnprop-20x25CAR-noscale.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25MAR-noscale.log -J NoScaleM -t 12:00:00 -A Senior-Design_UT-ECE rnnprop-20x25MAR-noscale.sh
+
+
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CARs-repeat.log -J ConvSlow -t 12:00:00 -A Senior-Design_UT-ECE rnnprop-20x25CARs-repeat.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25MARs-repeat.log -J MLPSlow -t 12:00:00 -A Senior-Design_UT-ECE rnnprop-20x25MARs-repeat.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CARc-repeat.log -J ConvConst -t 12:00:00 -A Senior-Design_UT-ECE rnnprop-20x25CARm-repeat.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25MARc-repeat.log -J MLPConst -t 12:00:00 -A Senior-Design_UT-ECE rnnprop-20x25MARm-repeat.sh

@@ -156,7 +156,7 @@ class RepeatStrategy(BaseStrategy):
     def train(self):
         """Start or resume training."""
         if self.period > 0:
-            self._load_previous(self)
+            self._load_previous()
 
         while self.period < self.num_periods:
 
