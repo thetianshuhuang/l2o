@@ -17,13 +17,17 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         Set to True when training, and False during evaluation. Used for
         policies with gradient estimation (i.e. gumbel softmax); can be ignored
         by most policies.
+    weights_file : str or None
+        Optional filepath to load optimizer network weights from.
     kwargs : dict
         Passed to ``init_layers``.
     """
 
     default_name = "LearnedOptimizer"
 
-    def __init__(self, name=None, distribute=None, train=True, **kwargs):
+    def __init__(
+            self, name=None, distribute=None, train=True, weights_file=None,
+            **kwargs):
 
         if name is None:
             name = self.default_name
@@ -36,6 +40,9 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
             distribute = tf.distribute.get_strategy()
         with distribute.scope():
             self.init_layers(**kwargs)
+
+        if weights_file is not None:
+            self.load_weights(weights_file)
 
     def load_weights(self, file):
         """Load saved weights from file."""

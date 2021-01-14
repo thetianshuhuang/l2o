@@ -186,7 +186,22 @@ OVERRIDE_PRESETS = {
         (["strategy", "max_repeat"], 4),
         (["strategy", "repeat_threshold"], 0.2),
         (["strategy", "name"], "RepeatStrategy")
-    ]
+    ],
+    "teacher_choice": [(
+        ["training", "teachers", "*"],
+        {
+            "class_name": "Choice",
+            "config": {
+                "layers": [20, 20], "beta_1": 0.9, "beta_2": 0.999,
+                "learning_rate": 0.001, "epsilon": 1e-10, "hardness": 0.0,
+                "activation": "tanh", "recurrent_activation": "sigmoid",
+                "use_bias": True, "kernel_initializer": "glorot_uniform",
+                "recurrent_initializer": "orthogonal",
+                "bias_initializer": "zeros", "unit_forget_bias": True,
+                "weights_file": "results/choice-20x25M-n/period_99/network"
+            }
+        }
+    )]
 }
 
 
