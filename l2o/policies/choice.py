@@ -87,7 +87,7 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
             else:
                 opt_weights = tf.cast(tf.stack([
                     opt_weights[:, 0] > opt_weights[:, 1],
-                    opt_weights[:, 0] < opt_weights[:, 1]], tf.float32))
+                    opt_weights[:, 0] < opt_weights[:, 1]]), tf.float32)
         # Soft Choice
         else:
             # Manual softmax in order to add epsilon in denominator
