@@ -27,7 +27,7 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
         Denominator epsilon for normalization operation in case input is 0.
     hardness : float
         If hardness=0.0, uses standard softmax. Otherwise, uses gumbel-softmax
-        with temperature = 1/hardness.
+        with temperature = 1/hardness during training.
     name : str
         Name of optimizer network.
     **kwargs : dict
@@ -74,13 +74,21 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
         # Factor in softmax of Adam, RMSProp
         opt_weights = tf.reshape(self.choice(x), [-1, 2])
 
-        # Apply gumbel-softmax
+        # Hard Choice
         if self.hardness > 0.0:
-            gumbels = -tf.math.log(-tf.math.log(
-                tf.random.uniform(tf.shape(opt_weights))))
-            z = tf.math.exp((opt_weights + gumbels) * self.hardness)
-            opt_weights = z / tf.tile(tf.reshape(
-                tf.math.reduce_sum(z, axis=1), [-1, 1]), [1, 2])
+            # Train -> use gumbel-softmax approximator
+            if self.train:
+                gumbels = -tf.math.log(-tf.math.log(
+                    tf.random.uniform(tf.shape(opt_weights))))
+                z = tf.math.exp((opt_weights + gumbels) * self.hardness)
+                opt_weights = z / tf.tile(tf.reshape(
+                    tf.math.reduce_sum(z, axis=1), [-1, 1]), [1, 2])
+            # Otherwise, use ordinary softmax.
+            else:
+                opt_weights = tf.cast(tf.stack([
+                    opt_weights[0] > opt_weights[1],
+                    opt_weights[0] < opt_weights[1]], tf.float32))
+        # Soft Choice
         else:
             # Manual softmax in order to add epsilon in denominator
             normalize = tf.reduce_sum(

@@ -30,7 +30,6 @@ def load(policy, directory="weights", name=None):
     tf.keras.optimizers.Optimizer
         Keras-compatible optimizer.
     """
-
     try:
         with open(os.path.join(directory, "config.json"), 'r') as f:
             cfg = json.load(f)

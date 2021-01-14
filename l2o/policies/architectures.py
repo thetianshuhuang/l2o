@@ -13,18 +13,23 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         Defaults to name specified by the ``default_name`` attribute.
     distribute : None or tf.distribute.Strategy
         Distributed training tensorflow strategy.
+    train : bool
+        Set to True when training, and False during evaluation. Used for
+        policies with gradient estimation (i.e. gumbel softmax); can be ignored
+        by most policies.
     kwargs : dict
         Passed to ``init_layers``.
     """
 
     default_name = "LearnedOptimizer"
 
-    def __init__(self, name=None, distribute=None, **kwargs):
+    def __init__(self, name=None, distribute=None, train=True, **kwargs):
 
         if name is None:
             name = self.default_name
         super().__init__(name)
 
+        self.train = train
         self.config = kwargs
 
         if distribute is None:

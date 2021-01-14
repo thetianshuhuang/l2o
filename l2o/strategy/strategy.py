@@ -172,6 +172,7 @@ class BaseStrategy:
         """
         # Train for ``epochs_per_period`` meta-epochs
         print("Training:")
+        self.learner.network.train = True
         training_stats = LossTracker()
         for i in range(self.epochs_per_period):
             print("Meta-Epoch {}/{}".format(i + 1, self.epochs_per_period))
@@ -213,6 +214,7 @@ class BaseStrategy:
             Additional arguments to pass to ``evaluate.evaluate``.
         """
         self._load_network(**metadata)
+        self.learner.network.train = False
 
         results = []
         for i in range(repeat):
