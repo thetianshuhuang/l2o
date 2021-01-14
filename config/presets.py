@@ -184,7 +184,7 @@ OVERRIDE_PRESETS = {
     "repeat": [
         (["strategy_constructor"], "RepeatStrategy"),
         (["strategy", "max_repeat"], 4),
-        (["strategy", "repeat_threshold"], 0.1),
+        (["strategy", "repeat_threshold"], 0.2),
         (["strategy", "name"], "RepeatStrategy")
     ]
 }
