@@ -6,7 +6,8 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 
 from .problem import Problem
-from .stateless_keras import Dense, Sequential, Conv2D, MaxPooling2D
+from .stateless_keras import (
+    Dense, Sequential, Conv2D, MaxPooling2D, AveragePoolingAll)
 
 
 def load_images(dataset, split="train"):
@@ -117,8 +118,8 @@ def mlp_classifier(
 
 
 def conv_classifier(
-        dataset="mnist",
-        layers=[(5, 32, 2), ], activation=tf.nn.relu, **kwargs):
+        dataset="mnist", layers=[(5, 32, 2), ], head_type="dense",
+        activation=tf.nn.relu, **kwargs):
     """Create Convolutional classifier training problem.
 
     Keyword Args
@@ -127,7 +128,12 @@ def conv_classifier(
         Dataset from tdfs catalog. Must have fixed input dimension and
         output labels.
     layers : int[][3]
-        List of (kernel size, num_filters, stride) for convolutional layers
+        List of (num_filters, kernel_size, stride) for convolutional layers
+    head_type : str
+        Classification head type. Can be "dense" (flatten + sigmoid dense) or
+        "average" (average pooling over all dimensions). For "average", the
+        number of filters in the last layer is overwritten with the number
+        of classes.
     activation : str or dict
         Keras activation type. If dict, uses tf.keras.get-like syntax
     **kwargs : dict
@@ -164,15 +170,26 @@ def conv_classifier(
     def _deserialize(args):
         if isinstance(args, int):
             return MaxPooling2D(pool_size=(args, args))
-        elif isinstance(args, list) and len(args) == 3:
+        elif isinstance(args, (list, tuple)) and len(args) == 3:
             f, k, s = args
             return Conv2D(f, k, stride=s, activation=activation)
         else:
             raise TypeError("Not a valid layer: {}".format(args))
 
-    def _network(input_shape, labels):
-        return Sequential(
-            [_deserialize(x) for x in layers]
-            + [Dense(labels, activation=tf.nn.softmax)], input_shape)
+    if head_type == "dense":
+        def _network(input_shape, labels):
+            return Sequential(
+                [_deserialize(x) for x in layers]
+                + [Dense(labels, activation=tf.nn.softmax)], input_shape)
+    elif head_type == "average":
+        def _network(input_shape, labels):
+            return Sequential(
+                [_deserialize(x) for x in layers[:-1]]
+                + [_deserialize((labels, layers[-1][1], layers[-1][2]))]
+                + [AveragePoolingAll()], input_shape)
+    else:
+        raise ValueError(
+            "Invalid classification head type {}. "
+            "Must be 'dense' or 'average'.".format(head_type))
 
     return _make_tfds(_network, dataset=dataset, **kwargs)

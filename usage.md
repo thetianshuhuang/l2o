@@ -45,3 +45,12 @@ sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CARs-repeat.log -J ConvSlow -t 12:00:00 
 sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25MARs-repeat.log -J MLPSlow -t 12:00:00 -A Senior-Design_UT-ECE rnnprop-20x25MARs-repeat.sh
 sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CARc-repeat.log -J ConvConst -t 12:00:00 -A Senior-Design_UT-ECE rnnprop-20x25CARc-repeat.sh
 sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25MARc-repeat.log -J MLPConst -t 12:00:00 -A Senior-Design_UT-ECE rnnprop-20x25MARc-repeat.sh
+
+
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CC-r.log -J ChTeach -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25CC-r.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CC-rm.log -J ChMore -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25CC-rm.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CC-rc.log -J ChConst -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25CC-rc.sh
+
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25MC-r.log -J ChTeach -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25MC-r.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25MC-rm.log -J ChMore -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25MC-rm.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25MC-rc.log -J ChConst -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25MC-rc.sh

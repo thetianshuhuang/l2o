@@ -74,49 +74,20 @@ OVERRIDE_PRESETS = {
             }
         }]
     )],
-    "conv_train_bigger": [(
+    "conv_avg": [(
         ["problems"],
         [{
             "target": "conv_classifier",
             "args": [],
             "kwargs": {
-                "layers": [[16, 7, 1], 2, [32, 5, 1], 2],
+                "layers": [[16, 3, 1], 2, [32, 5, 1], 2, [0, 3, 1]],
+                "head_type": "average",
                 "activation": "relu",
                 "dataset": "mnist",
                 "batch_size": 128,
-                "shuffle_buffer": 16384,
+                "shuffle_buffer": 16384
             }
         }]
-    )],
-    "conv_train_wider": [(
-        ["problems"],
-        [{
-            "target": "conv_classifier",
-            "args": [],
-            "kwargs": {
-                "layers": [[32, 3, 1], 2, [32, 5, 1], 2],
-                "activation": "relu",
-                "dataset": "mnist",
-                "batch_size": 128,
-                "shuffle_buffer": 16384,
-            }
-        }]
-    )],
-    "mlp_train_deeper": [(
-        ["problems"],
-        [{
-            "target": "mlp_classifier",
-            "args": [],
-            "kwargs": {
-                "layers": [20, 20], "dataset": "mnist",
-                "activation": "sigmoid", "shuffle_buffer": 18384,
-                "batch_size": 128
-            }
-        }]
-    )],
-    "leaky_relu": [(
-        ["problems", 0, "kwargs", "activation"],
-        {"class_name": "relu", "config": {"alpha": 0.01}}
     )],
     "debug": [(
         ["strategy"],
@@ -138,15 +109,6 @@ OVERRIDE_PRESETS = {
         (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
         (["training", "stack_stats", "*"], "teacher_counts")
     ],
-    "metaopt_sgd": [(
-        ["optimizer"],
-        {"class_name": "sgd", "config": {"learning_rate": 0.01}}
-    )],
-    "metaopt_rmsprop": [(
-        ["optimizer"],
-        {"class_name": "rmsprop",
-         "config": {"learning_rate": 0.001, "rho": 0.9}}
-    )],
     "il_fast": [(
         ["strategy", "annealing_schedule"],
         {"type": "exponential", "alpha": 0.1, "base": 1.0}

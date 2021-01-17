@@ -29,7 +29,7 @@ class Layer:
 
         Returns
         -------
-        (int[0], int)
+        (int[], int)
             [0] output shape.
             [1] index in the parameter list of the next layer.
         """
@@ -115,17 +115,23 @@ class Dense(Layer):
         self.activation = activation
 
     def build(self, input_shape, in_idx):
+        """Build this layer."""
         self.input_shape = np.prod(input_shape)
         self.in_idx = in_idx
         self.out_idx = in_idx + 2
         return self.units, self.out_idx
 
     def get_parameters(self, seed=None):
+        """Get layer parameters."""
         kernel, bias = self._seeded_init(
             self.kernel_initializer, self.bias_initializer, seed=seed)
         return [kernel([self.input_shape, self.units]), bias([self.units])]
 
     def call(self, params, x):
+        """Call this layer.
+
+        The output shape will be [batch, units].
+        """
         x = tf.reshape(x, [tf.shape(x)[0], -1])
         kernel, bias = params[self.in_idx:self.out_idx]
 
@@ -136,6 +142,26 @@ class Dense(Layer):
 
 
 class Conv2D(Layer):
+    """Convolutional Layer.
+
+    Parameters
+    ----------
+    filters : int
+        Number of filters in output
+    kernel_size : int
+        Kernel width and height
+
+    Keyword Args
+    ------------
+    stride : int
+        Convolution stride
+    activation : callable(tf.Tensor -> tf.Tensor)
+        Activation function. If None, no activation is used.
+    kernel_initializer : tf.keras.initializers.Initializer
+        Initializer for convolutional kernel
+    bias_initializer : tf.keras.initializers.Initializer
+        Initializer for convolutional bias
+    """
 
     def __init__(
             self, filters, kernel_size, stride=1, activation=tf.nn.relu,
@@ -151,6 +177,7 @@ class Conv2D(Layer):
         self.activation = activation
 
     def build(self, input_shape, in_idx):
+        """Build this layer."""
         self.in_idx = in_idx
         self.out_idx = in_idx + 2
         self.input_dim = input_shape[2]
@@ -161,6 +188,7 @@ class Conv2D(Layer):
         return self.output_dim, self.out_idx
 
     def get_parameters(self, seed=None):
+        """Get layer parameters."""
         kernel, bias = self._seeded_init(
             self.kernel_initializer, self.bias_initializer, seed=seed)
         kernel_shape = [
@@ -168,6 +196,10 @@ class Conv2D(Layer):
         return [kernel(kernel_shape), bias([self.filters])]
 
     def call(self, params, x):
+        """Call this layer.
+
+        The output shape will be [batch, height, width, filters].
+        """
         kernel, bias = params[self.in_idx:self.out_idx]
 
         # Add on filter dimension if not present
@@ -183,12 +215,22 @@ class Conv2D(Layer):
 
 
 class MaxPooling2D(Layer):
+    """Max Pooling layer.
+
+    Keyword Args
+    ------------
+    pool_size : int[2]
+        Size of pools.
+    strides : int[2] or None
+        If int[2], strides in each direction. If None, uses the pool_size.
+    """
 
     def __init__(self, pool_size=(2, 2), strides=None):
         self.size = pool_size
         self.strides = pool_size if strides is None else pool_size
 
     def build(self, input_shape, in_idx):
+        """Build this layer."""
         self.output_dim = [
             math.floor((input_shape[0] - self.size[0]) / self.strides[0]) + 1,
             math.floor((input_shape[1] - self.size[1]) / self.strides[1]) + 1,
@@ -197,10 +239,38 @@ class MaxPooling2D(Layer):
         return self.output_dim, in_idx
 
     def get_parameters(self, seed=None):
+        """No layer parameters."""
         return []
-    
+
     def call(self, params, x):
+        """Call this layer.
+
+        The output shape will be [batch, height, width, filters].
+        """
         return tf.nn.max_pool(x, self.size, self.strides, "VALID")
+
+
+class AveragePoolingAll(Layer):
+    """Average Pooling over all coordinates for a convolutional network."""
+
+    def __init__(self):
+        pass
+
+    def build(self, input_shape, in_idx):
+        """Build this layer."""
+        return input_shape[2], in_idx
+
+    def get_parameters(self, seed=None):
+        """No layer parameters."""
+        return []
+
+    def call(self, params, x):
+        """Call this layer.
+
+        The input shape should be [batch, height, width, filters].
+        The output shape will be [batch, filters].
+        """
+        return tf.math.reduce_mean(x, axis=(1, 2))
 
 
 class Sequential:

@@ -13,8 +13,12 @@ RESULTS = os.listdir('results')
 BASELINES = os.listdir('baseline')
 
 
-def get_test(preset, data='evaluation', period=99):
+def get_test(preset, data='evaluation'):
     """Get test path."""
+    if ':' in preset:
+        preset, period = preset.split(':')
+    else:
+        period = 99
     if preset in RESULTS:
         if data == 'evaluation':
             p = "results/{}/period_{}/conv_train.npz".format(preset, period)
@@ -35,7 +39,11 @@ def get_test(preset, data='evaluation', period=99):
 def get_name(test):
     """Get test display name."""
     try:
-        return FULL_NAMES[test]
+        if ':' in test:
+            test, period = test.split(':')
+            return FULL_NAMES[test] + " @ {}".format(period)
+        else:
+            return FULL_NAMES[test]
     except KeyError:
         return test
     return test

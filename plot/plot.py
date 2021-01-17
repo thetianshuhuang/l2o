@@ -53,10 +53,10 @@ def plot_stats(tests, axs):
 
 
 def plot_stats_batch(
-        tests, ax, end=0, use_time=False, sma=0, period=99, loss=True):
+        tests, ax, end=0, use_time=False, sma=0, loss=True):
     """Plot test loss or accuracy, batch-wise."""
     for key in tests:
-        d = np.load(get_test(key, period=period))
+        d = np.load(get_test(key))
 
         if end == 0:
             end = d["batch_loss"].shape[1]
