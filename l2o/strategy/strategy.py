@@ -220,7 +220,10 @@ class BaseStrategy:
         for i in range(repeat):
             print("Evaluation Training {}/{}".format(i + 1, repeat))
             opt = self.learner.network.architecture(
-                self.learner.network, name="OptimizerEvaluation")
+                self.learner.network,
+                warmup=self.learner.warmup,
+                warmup_rate=self.learner.warmup_rate,
+                name="OptimizerEvaluation")
             results.append(evaluate(opt, **kwargs))
         results = {k: np.stack([d[k] for d in results]) for k in results[0]}
 

@@ -35,8 +35,7 @@ class CoordinateWiseOptimizer(TrainableOptimizer):
 
     def _compute_update(self, param, grad, state):
         """Compute updates from child network."""
-        dparam, new_state = self.network.call(param, grad, state, 0.)
-        return param - dparam, new_state
+        return self.network.call(param, grad, state, 0.)
 
 
 class HierarchicalOptimizer(TrainableOptimizer):
@@ -83,9 +82,8 @@ class HierarchicalOptimizer(TrainableOptimizer):
 
     def _compute_update(self, param, grad, state):
         """Fetch initial states from child network."""
-        dparam, new_state = self.network.call(
+        return self.network.call(
             param, grad, state, self._state_dict["__global__"])
-        return param - dparam, new_state
 
     def apply_gradients(self, grads_and_vars, *args, **kwargs):
         """Overrides apply_gradients in order to call global update."""

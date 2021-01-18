@@ -54,3 +54,15 @@ sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CC-rc.log -J ChConst -t 20:00:00 -A Seni
 sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25MC-r.log -J ChTeach -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25MC-r.sh
 sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25MC-rm.log -J ChMore -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25MC-rm.sh
 sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25MC-rc.log -J ChConst -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25MC-rc.sh
+
+
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25A-r.log -J Avg -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25A-r.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25AAR-r.log -J AvgIL -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25AAR-r.sh
+
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25S-r.log -J Sigm -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25S-r.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25SAR-r.log -J SigIL -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25SAR-r.sh
+
+
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25AAR-rm.log -J ILMore -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25AAR-rm.sh
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25AAR-rc.log -J ILConst -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25AAR-rc.sh
+

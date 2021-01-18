@@ -163,7 +163,11 @@ OVERRIDE_PRESETS = {
                 "weights_file": "results/choice-20x25M-n/period_99/network"
             }
         }
-    )]
+    )],
+    "warmup_100": [
+        (["training", "warmup"], 5),
+        (["training", "warmup_rate"], 0.01)
+    ]
 }
 
 
@@ -172,6 +176,9 @@ def get_preset(name):
     try:
         return OVERRIDE_PRESETS[name]
     except KeyError:
-        raise KeyError(
-            "Invalid preset: {}.\nValid presets are:\n  - ".format(name)
+        # NOTE: We cannot use a KeyError here since KeyError has special
+        # behavior which prevents it from rendering newlines correctly.
+        # See https://bugs.python.org/issue2651.
+        raise ValueError(
+            "Invalid preset: {}. Valid presets are:\n  - ".format(name)
             + "\n  - ".join(OVERRIDE_PRESETS.keys()))

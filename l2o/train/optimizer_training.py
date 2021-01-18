@@ -60,6 +60,10 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin):
         List of optimizers to train against. Each teacher is deserialized by
         tf.keras.optimizers.get extended to tensorflow_addons if available; see
         https://www.tensorflow.org/api_docs/python/tf/keras/optimizers/get.
+    warmup : int
+        Number of iterations for warmup; if 0, no warmup is applied.
+    warmup_rate : float
+        SGD Learning rate during warmup period.
     obj_train_max_multiplier : float
         The maximum multiplier for the increase in the objective before
         meta-training is stopped. If <= 0, meta-training is not stopped
@@ -85,7 +89,8 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin):
             use_log_objective=True, scale_objective=False,
             parameter_scale_spread=3.0, loss_reduce=tf.math.reduce_max,
             il_mode='switch', unroll_weight="sum", teachers=[],
-            obj_train_max_multiplier=-1, epsilon=1e-10, step_callbacks=[],
+            warmup=0, warmup_rate=0.01, obj_train_max_multiplier=-1,
+            epsilon=1e-10, step_callbacks=[],
             pbar_values=["meta_loss", "imitation_loss"],
             mean_stats=["meta_loss", "imitation_loss"],
             stack_stats=[]):
@@ -117,6 +122,10 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin):
         # Numerical stability
         self.obj_train_max_multiplier = obj_train_max_multiplier
         self.epsilon = epsilon
+
+        # Warmup
+        self.warmup = warmup
+        self.warmup_rate = warmup_rate
 
         # Tracking
         self.step_callbacks = [

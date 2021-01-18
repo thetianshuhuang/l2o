@@ -91,6 +91,22 @@ class UnrollStateManager:
         else:
             return self.policy_ref.call(*args)
 
+    def apply_gradients(self, unroll_state, grads):
+        """Apply gradients."""
+        # delta p, state <- policy(params, grads, local, global)
+        dparams, states_new = list(map(list, zip(*[
+            self.advance_param(args, mask, unroll_state.global_state)
+            for mask, args in zip(
+                self.mask,
+                zip(unroll_state.params, grads, unroll_state.states))
+        ])))
+        # global_state <- global_policy(local states, global state)
+        global_state_new = self.policy.call_global(
+            [s for s, mask in zip(states_new, self.mask) if mask],
+            unroll_state.global_state)
+        return UnrollState(
+            params=dparams, states=states_new, global_state=global_state_new)
+
     def advance_state(self, unroll_state, batch, scale):
         """Advance this state by a single inner step.
 
@@ -117,22 +133,15 @@ class UnrollStateManager:
         # 2. grads <- gradient(objective, params)
         grads = tape.gradient(objective, unroll_state.params)
         # 3. delta p, state <- policy(params, grads, local, global)
-        dparams, states_new = list(map(list, zip(*[
-            self.advance_param(args, mask, unroll_state.global_state)
-            for mask, args in zip(
-                self.mask,
-                zip(unroll_state.params, grads, unroll_state.states))
-        ])))
+        #    global_state <- global_policy(local states, global state)
+        dstate = self.apply_gradients(nroll_State, grads)
         # 4. p <- p - delta p
-        params_new = [p - d for p, d in zip(unroll_state.params, dparams)]
-        # 5. global_state <- global_policy(local states, global state)
-        global_state_new = self.policy.call_global(
-            [s for s, mask in zip(states_new, self.mask) if mask],
-            unroll_state.global_state)
+        params_new = [
+            p - d for p, d in zip(unroll_state.params, dstate.params)]
 
         return objective, UnrollState(
-            params=params_new, states=states_new,
-            global_state=global_state_new)
+            params=params_new, states=dstate.states,
+            global_state=dstate.global_state)
 
 
 def state_distance(s1, s2):

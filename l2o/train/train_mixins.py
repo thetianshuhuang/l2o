@@ -102,37 +102,45 @@ class TrainingMixin:
         # concrete_step, meta state will be assigned on first iteration.
         # concrete_step is cached.
         step = meta.problem.get_step(meta)
+        warmup_step = None
         policies = [self.network, *self.teachers]
         states, scale = None, None
 
         # Single progress bar
-        size = meta.problem.size(meta.unroll_len)
-        pbar = Progbar(epochs * depth, unit_name='step')
+        size = epochs * (depth + warmup)
+        pbar = Progbar(size, unit_name='step')
         losses = LossTracker()
 
         dataset = meta.problem.get_dataset(
-            meta.unroll_len, depth * epochs, seed=meta.seed)
+            meta.unroll_len, size, seed=meta.seed)
 
         # NOTE: Random seeds are totally fucked
         # (I have no idea what is going on)
         # Validation may or may not be perfectly repeatable
         tf.random.set_seed(meta.seed)
         for i, batch in enumerate(dataset):
+            args = (batch, states, scale)
+
             # Reset params & states
-            if i % depth == 0:
+            if i % (depth + self.warmup) == 0:
                 params = meta.problem.get_parameters(seed=meta.seed)
                 params, scale = self._create_scaling(params)
                 states = [create_state(p, params) for p in policies]
             # Create concrete_step; done here to capture batch shape.
             if step is None:
-                step = self.make_concrete_step(meta, batch, states, scale)
+                step = self.make_concrete_step(meta, *args)
+            if warmup_step is None and self.warmup > 0:
+                warmup_step = self.make_warmup_concrete_step(meta, *args)
 
+            # Warmup
+            if i % (depth + self.warmup) < self.warmup:
+                states = self.warmup_step(*args)
             # The actual step
-            if meta.validation:
-                states, stats = step(batch, states, scale)
             else:
-                states, stats = self._meta_step(
-                    meta, step, batch, states, scale)
+                if meta.validation:
+                    states, stats = step(*args)
+                else:
+                    states, stats = self._meta_step(meta, step, *args)
 
             losses.append(stats)
             pbar.add(1, values=[(k, stats[k]) for k in self.pbar_values])

@@ -9,6 +9,10 @@ from .utils import wrap_variables, nested_assign
 class TrainableOptimizer(tf.keras.optimizers.Optimizer):
     """Trainable optimizer using keras' optimizer API.
 
+    Optimizers have an optional warmup period. During this period, the policy
+    is still updated using ``.call()`` and ``.call_global()``, but the actual
+    update made by SGD with a specified learning rate.
+
     Parameters
     ----------
     network : tf.keras.Model
@@ -18,15 +22,23 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
     ------------
     name : str
         Optimizer name
-    weights_file : str | None
+    weights_file : str or None
         Optional filepath to load optimizer network weights from.
+    warmup : int
+        Number of iterations for warmup; if 0, no warmup is applied.
+    warmup_rate : float
+        SGD Learning rate during warmup period.
     """
 
-    def __init__(self, network, name="TrainableOptimizer", weights_file=None):
+    def __init__(
+            self, network, warmup=0, warmup_rate=0.01,
+            name="TrainableOptimizer", weights_file=None):
 
         super().__init__(name)
         self.name = name
         self.network = network
+        self.warmup = warmup
+        self.warmup_rate = warmup_rate
         if weights_file is not None:
             network.load_weights(weights_file)
         self._state_dict = {}
@@ -94,7 +106,7 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
     def _resource_apply_dense(self, grad, var, apply_state):
         """Apply optimizer updates to variables.
 
-        Note: this should only get called via _apply_dense or _apply_sparse
+        NOTE: this should only get called via _apply_dense or _apply_sparse
         when using the optimizer via optimizer.minimize or
         optimizer.apply_gradients. During meta-training, the optimizer.train
         function should be used to construct an optimization path that is
@@ -117,11 +129,15 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
             defines dependencies (used for control flow)
         """
         state = self.get_state(var)
-        new_var, new_state = self._compute_update(var, grad, state)
+        dparam, new_state = self._compute_update(var, grad, state)
+
+        # Warmup -> overwrite dparam
+        if self.warmup > 0 and self.warmup > self.iterations:
+            dparam = grad * self.warmup_rate
 
         # Track ops for tf.group
         ops = nested_assign(state, new_state)
-        ops.append(var.assign(new_var))
+        ops.append(var.assign(var - dparam))
         return tf.group(ops)
 
     def _resource_update_sparse(self, grad, var):
@@ -142,8 +158,8 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
 
         Returns
         -------
-        (tf.Variable, dict)
-            [0] : updated parameters
+        (tf.Tensor, dict)
+            [0] : parameter delta (to be subtracted from parameter)
             [1] : updated state variables (same format as `state`)
         """
         raise NotImplementedError()

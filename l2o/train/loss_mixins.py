@@ -1,6 +1,5 @@
 """Inner training and outer loss computation."""
 
-import collections
 import tensorflow as tf
 
 from .unroll_state import UnrollStateManager, state_distance, UnrollState

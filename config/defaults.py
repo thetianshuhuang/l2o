@@ -19,6 +19,8 @@ BASE = {
         "il_mode": "sum",
         "unroll_weight": "mean",
         "teachers": [],
+        "warmup": 0,
+        "warmup_rate": 0.01,
         "obj_train_max_multiplier": -1,
         "epsilon": 1e-10,
         "step_callbacks": [],
