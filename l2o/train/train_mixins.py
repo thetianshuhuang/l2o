@@ -107,7 +107,7 @@ class TrainingMixin:
         states, scale = None, None
 
         # Single progress bar
-        size = epochs * (depth + warmup)
+        size = epochs * (depth + self.warmup)
         pbar = Progbar(size, unit_name='step')
         losses = LossTracker()
 
