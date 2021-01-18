@@ -134,7 +134,7 @@ class UnrollStateManager:
         grads = tape.gradient(objective, unroll_state.params)
         # 3. delta p, state <- policy(params, grads, local, global)
         #    global_state <- global_policy(local states, global state)
-        dstate = self.apply_gradients(unroll_State, grads)
+        dstate = self.apply_gradients(unroll_state, grads)
         # 4. p <- p - delta p
         params_new = [
             p - d for p, d in zip(unroll_state.params, dstate.params)]

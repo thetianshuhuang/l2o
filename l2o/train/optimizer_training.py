@@ -7,6 +7,7 @@ import os
 from .loss_mixins import LossMixin
 from .step_mixins import StepMixin
 from .train_mixins import TrainingMixin
+from .warmup_mixins import WarmupMixin
 
 from . import step_callbacks as step_callbacks_module
 from .step_callbacks import BaseStepCallback, is_callback
@@ -14,7 +15,7 @@ from .step_callbacks import BaseStepCallback, is_callback
 from l2o import deserialize
 
 
-class OptimizerTraining(LossMixin, StepMixin, TrainingMixin):
+class OptimizerTraining(LossMixin, StepMixin, TrainingMixin, WarmupMixin):
     """Learned Optimizer Training Class.
 
     Parameters
