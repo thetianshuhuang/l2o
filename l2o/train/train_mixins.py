@@ -119,13 +119,14 @@ class TrainingMixin:
         # Validation may or may not be perfectly repeatable
         tf.random.set_seed(meta.seed)
         for i, batch in enumerate(dataset):
-            args = (batch, states, scale)
-
             # Reset params & states
             if i % (depth + self.warmup) == 0:
                 params = meta.problem.get_parameters(seed=meta.seed)
                 params, scale = self._create_scaling(params)
                 states = [create_state(p, params) for p in policies]
+
+            args = (batch, states, scale)
+
             # Create concrete_step; done here to capture batch shape.
             if step is None:
                 step = self.make_concrete_step(meta, *args)
