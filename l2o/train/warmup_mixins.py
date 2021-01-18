@@ -102,11 +102,6 @@ class WarmupMixin:
         tf.Graph
             Concrete function created with the specified problem inputs.
         """
-        # time it
-        start = time.time()
-        step = self.warmup_step.get_concrete_function(
+        return self.warmup_step.get_concrete_function(
             data, states, scale,
             unroll=meta.unroll_len, problem=meta.problem, seed=meta.seed)
-        print("[{:.2f}s] Built warmup concrete step: unroll={}".format(
-            time.time() - start, meta.unroll_len))
-        return step
