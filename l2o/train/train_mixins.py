@@ -107,12 +107,12 @@ class TrainingMixin:
         states, scale = None, None
 
         # Single progress bar
-        size = epochs * (depth + self.warmup)
-        pbar = Progbar(size, unit_name='step')
+        pbar = Progbar(epochs * depth, unit_name='step')
         losses = LossTracker()
 
+        # Dataset includes warmup
         dataset = meta.problem.get_dataset(
-            meta.unroll_len, size, seed=meta.seed)
+            meta.unroll_len, epochs * (depth + self.warmup), seed=meta.seed)
 
         # NOTE: Random seeds are totally fucked
         # (I have no idea what is going on)
@@ -142,11 +142,11 @@ class TrainingMixin:
                 else:
                     states, stats = self._meta_step(meta, step, *args)
 
-            losses.append(stats)
-            pbar.add(1, values=[(k, stats[k]) for k in self.pbar_values])
+                losses.append(stats)
+                pbar.add(1, values=[(k, stats[k]) for k in self.pbar_values])
 
             # Dataset size doesn't always line up
-            if i >= depth * epochs:
+            if i >= depth * (epochs + self.warmup):
                 break
 
         meta.problem.save_step(step, meta)
