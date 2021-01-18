@@ -134,7 +134,7 @@ class TrainingMixin:
 
             # Warmup
             if i % (depth + self.warmup) < self.warmup:
-                states = self.warmup_step(*args)
+                states = warmup_step(*args)
             # The actual step
             else:
                 if meta.validation:

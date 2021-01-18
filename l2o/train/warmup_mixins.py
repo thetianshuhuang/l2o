@@ -1,5 +1,6 @@
 """Warmup step."""
 
+import time
 import tensorflow as tf
 
 from .unroll_state import UnrollStateManager, state_distance, UnrollState
@@ -8,7 +9,8 @@ from .unroll_state import UnrollStateManager, state_distance, UnrollState
 class WarmupMixin:
     """Warmup Mixin."""
 
-    def warmup(self, data, states, scale, unroll=20, problem=None, seed=None):
+    def run_warmup(
+            self, data, states, scale, unroll=20, problem=None, seed=None):
         """Run Warmup.
 
         Parameters
@@ -52,9 +54,9 @@ class WarmupMixin:
             with tf.GradientTape() as tape:
                 tape.watch(params)
                 objective = problem.objective(
-                    [p * s for p, s in zip(params, scale)])
+                    [p * s for p, s in zip(params, scale)], batch)
             grads = tape.gradient(objective, params)
-            params = params - grads * self.warmup_rate
+            params = [p - g * self.warmup_rate for p, g in zip(params, grads)]
 
             # Apply gradients to update optimizer internal states
             states = [
@@ -75,12 +77,12 @@ class WarmupMixin:
         """
         # **kwargs are captured by closure since they only contain constants.
         def _inner(data_, states_, scale_):
-            return self.warmup(data_, states_, scale_, **kwargs)
+            return self.run_warmup(data_, states_, scale_, **kwargs)
 
         distribute = tf.distribute.get_strategy()
         return distribute.run(_inner, args=(data, states, scale))
 
-    def make_concrete_warmup_step(self, meta, data, states, scale):
+    def make_warmup_concrete_step(self, meta, data, states, scale):
         """Get a concrete @tf.function graph for warmup_step.
 
         Parameters
