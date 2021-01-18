@@ -125,9 +125,8 @@ class TrainingMixin:
                 params, scale = self._create_scaling(params)
                 states = [create_state(p, params) for p in policies]
 
-            args = (batch, states, scale)
-
             # Create concrete_step; done here to capture batch shape.
+            args = (batch, states, scale)
             if step is None:
                 step = self.make_concrete_step(meta, *args)
             if warmup_step is None and self.warmup > 0:
