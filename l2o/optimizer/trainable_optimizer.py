@@ -129,11 +129,16 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
             defines dependencies (used for control flow)
         """
         state = self.get_state(var)
-        dparam, new_state = self._compute_update(var, grad, state)
+        dparam_, new_state = self._compute_update(var, grad, state)
 
         # Warmup -> overwrite dparam
-        if self.warmup > 0 and self.warmup > self.iterations:
-            dparam = grad * self.warmup_rate
+        if self.warmup > 0:
+            # Odd construction here is used since warmup comparison must be
+            # a tf.bool for autograph to work correctly.
+            if tf.math.greater(self.warmup, self.iterations):
+                dparam = grad * self.warmup_rate
+            else:
+                dparam = dparam_
 
         # Track ops for tf.group
         ops = nested_assign(state, new_state)
