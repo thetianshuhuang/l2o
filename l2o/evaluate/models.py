@@ -6,10 +6,6 @@ import tensorflow as tf
 class AveragePoolingAll(tf.keras.layers.Layer):
     """Average Pooling over all coordinates for a convolutional network."""
 
-    def __init__(self):
-        """No parameters."""
-        pass
-
     def build(self, input_shape):
         """No weights to build."""
         pass
