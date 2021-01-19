@@ -22,6 +22,17 @@ EVALUATION_PROBLEMS = {
         "epochs": 25,
         "batch_size": 128
     },
+    "conv_avg": {
+        "config": {
+            "layers": [[16, 3, 1], 2, [32, 5, 1], 2, [0, 3, 1]],
+            "head_type": "average",
+            "activation": "relu",
+        },
+        "target": "conv_classifier",
+        "dataset": "mnist",
+        "epochs": 25,
+        "batch_size": 128
+    },
     "different_dataset": {
         "config": {
             "layers": [[16, 3, 1], 2, [32, 5, 1], 2],

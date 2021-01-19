@@ -140,8 +140,8 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
             # autograph defaults to tf.int32.
             in_warmup = tf.math.greater(
                 tf.cast(self.warmup, tf.int64), self.iterations)
-            result = tf.cond(
-                in_warmup, lambda: grad * self.warmup_rate, dparam_)
+            dparam = tf.cond(
+                in_warmup, lambda: grad * self.warmup_rate, lambda: dparam_)
 
         # Track ops for tf.group
         ops = nested_assign(state, new_state)
