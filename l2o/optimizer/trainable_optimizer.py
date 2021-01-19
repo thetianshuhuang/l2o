@@ -135,10 +135,14 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
         if self.warmup > 0:
             # Odd construction here is used since warmup comparison must be
             # a tf.bool for autograph to work correctly.
-            if tf.math.greater(self.warmup, self.iterations):
-                dparam = grad * self.warmup_rate
-            else:
-                dparam = dparam_
+            # NOTE: self.iterations is managed by the base class
+            # tf.keras.optimizers.Optimizer, and is a tf.int64. Because
+            # tensorflow is stupid, we require a cast here since autograph
+            # defaults to tf.int32.
+            in_warmup = tf.math.greater(
+                tf.cast(self.warmup, tf.int32), self.iterations)
+            result = tf.cond(
+                in_warmup, lambda: grad * self.warmup_rate, dparam_)
 
         # Track ops for tf.group
         ops = nested_assign(state, new_state)
