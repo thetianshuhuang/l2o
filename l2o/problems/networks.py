@@ -185,7 +185,9 @@ def conv_classifier(
         def _network(input_shape, labels):
             return Sequential(
                 [_deserialize(x) for x in layers[:-1]]
-                + [_deserialize((labels, layers[-1][1], layers[-1][2]))]
+                + [Conv2D(
+                    labels, layers[-1][1], stride=layers[-1][2],
+                    activation=tf.nn.softmax)]
                 + [AveragePoolingAll()], input_shape)
     else:
         raise ValueError(

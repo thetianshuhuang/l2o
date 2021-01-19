@@ -44,7 +44,7 @@ def conv_classifier(
             + [tf.keras.layers.Conv2D(
                 info.features["label"].num_classes, layers[-1][1],
                 strides=(layers[-1][2], layers[-1][2]))]
-            + [AveragePoolingAll()]
+            + [AveragePoolingAll(), tf.keras.layers.Softmax()]
         )
     else:
         raise ValueError(
