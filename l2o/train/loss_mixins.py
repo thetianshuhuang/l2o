@@ -21,7 +21,8 @@ class LossMixin:
         """Compute IL objective from individual teacher losses."""
         if len(self.teachers) > 0:
             if self.use_log_objective:
-                return tf.math.log(self.loss_reduce(teacher_losses))
+                return tf.math.log(
+                    self.loss_reduce(teacher_losses) + self.epsilon)
             else:
                 return self.loss_reduce(teacher_losses)
         # Manually check here since reduce_{} often returns NaN when empty

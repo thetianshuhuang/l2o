@@ -66,3 +66,4 @@ sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25SAR-r.log -J SigIL -t 20:00:00 -A Senior
 sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25AAR-rm.log -J ILMore -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25AAR-rm.sh
 sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25AAR-rc.log -J ILConst -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25AAR-rc.sh
 
+sbatch -p gtx -N 1 -n 1 -o rnnprop-20x25CAR-rf.log -J 10xWarmup -t 20:00:00 -A Senior-Design_UT-ECE rnnprop-20x25CAR-rf.sh
