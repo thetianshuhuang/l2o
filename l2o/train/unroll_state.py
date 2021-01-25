@@ -101,17 +101,22 @@ class UnrollStateManager:
                 zip(unroll_state.params, grads, unroll_state.states))
         ])))
 
-        # Catch NaN, make no changes
-        for dp in dparams:
-            if tf.math.reduce_any(tf.math.is_nan(dp)):
-                return unroll_state
-
         # global_state <- global_policy(local states, global state)
         global_state_new = self.policy.call_global(
             [s for s, mask in zip(states_new, self.mask) if mask],
             unroll_state.global_state)
-        return UnrollState(
+        unroll_state_new = UnrollState(
             params=dparams, states=states_new, global_state=global_state_new)
+
+        # Catch NaN, make no changes
+        nan_gradients = tf.math.reduce_any([
+            tf.math.reduce_any(tf.math.is_nan(dp))
+            for dp in dparams])
+        if nan_gradients:
+            return unroll_state
+        else:
+            return unroll_state_new
+
 
     def advance_state(self, unroll_state, batch, scale):
         """Advance this state by a single inner step.
