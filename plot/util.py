@@ -40,10 +40,13 @@ def get_name(test):
     """Get test display name."""
     try:
         if ':' in test:
-            test, period = test.split(':')
-            return FULL_NAMES[test] + " @ {}".format(period)
+            base, period = test.split(':')
+            return FULL_NAMES[base] + " @ {}".format(period)
         else:
             return FULL_NAMES[test]
     except KeyError:
-        return test
-    return test
+        if ':' in test:
+            base, period = test.split(':')
+            return base + "@{}".format(period)
+        else:
+            return test

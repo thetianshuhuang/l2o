@@ -100,6 +100,12 @@ class UnrollStateManager:
                 self.mask,
                 zip(unroll_state.params, grads, unroll_state.states))
         ])))
+
+        # Catch NaN, make no changes
+        for dp in dparams:
+            if tf.math.reduce_any(tf.math.is_nan(dp)):
+                return unroll_state
+
         # global_state <- global_policy(local states, global state)
         global_state_new = self.policy.call_global(
             [s for s, mask in zip(states_new, self.mask) if mask],
