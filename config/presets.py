@@ -9,12 +9,13 @@ OVERRIDE_PRESETS = {
     "teacher_adam": [(
         ["training", "teachers", "*"],
         {"class_name": "Adam",
-         "config": {"learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999}}
+         "config": {"learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999,
+                    "epsilon": 1e-10}}
     )],
     "teacher_rmsprop": [(
         ["training", "teachers", "*"],
         {"class_name": "RMSProp",
-         "config": {"learning_rate": 0.001, "rho": 0.9}}
+         "config": {"learning_rate": 0.001, "rho": 0.9, "epsilon": 1e-10}}
     )],
     "teacher_radam": [(
         ["training", "teachers", "*"],
