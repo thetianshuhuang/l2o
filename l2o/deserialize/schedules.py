@@ -8,6 +8,15 @@ def _err_msg(name, dtype, valid, received):
         name, dtype, received, valid)
 
 
+def _get_or_last(x):
+    def f(i):
+        try:
+            return x[i]
+        except IndexError:
+            return x[-1]
+    return f
+
+
 def integer_distribution(x, name="undefined"):
     """Deserializes an unroll distribution."""
     if type(x) == float:
@@ -28,7 +37,7 @@ def float_schedule(x, name="undefined"):
         if x["type"] == "constant":
             return lambda i: x["value"]
         elif x["type"] == "list":
-            return x["values"].__getitem__
+            return _get_or_last(x["values"])
         elif x["type"] == "exponential":
             base = x["base"] if "base" in x else 1.0
             return lambda i: base * np.exp(i * -np.abs(x["alpha"]))
@@ -52,12 +61,7 @@ def integer_schedule(x, name="undefined"):
         elif x["type"] == "geometric":
             return lambda i: x["coefficient"] * (x["base"]**i)
         elif x["type"] == "list":
-            def f(i):
-                try:
-                    return x["values"][i]
-                except IndexError:
-                    return x["values"][-1]
-            return f
+            return _get_or_last(x["values"])
         else:
             return ValueError("Invalid integer schedule: {}".format(str(x)))
     elif type(x) == int:

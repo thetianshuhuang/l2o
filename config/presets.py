@@ -90,9 +90,14 @@ OVERRIDE_PRESETS = {
         ["strategy", "annealing_schedule"],
         {"type": "constant", "value": 2.0}
     )],
-    "warmup": [
-        (["strategy", "warmup"], 2),
+    "warmup_constant": [
+        (["strategy", "warmup"], 5),
         (["strategy", "warmup_rate"], 0.1)
+    ],
+    "warmup_warmup": [
+        (["strategy", "warmup"], 5),
+        (["strategy", "warmup_rate"], {
+            "type": "list", "values": [0.0, 0.01, 0.02, 0.04, 0.06, 0.1]})
     ]
 }
 
