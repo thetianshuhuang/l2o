@@ -16,7 +16,7 @@ python3 evaluate.py \\
     --directory=results/{policy}/{flags} \\
     --out={problem} \\
     --repeat=10 \\
-    --periods=99
+    --periods=49
 """
 
 BASE_RUNNER = (
@@ -37,7 +37,7 @@ ctx = {
 ctx["shortname"] = ctx["policy"][0].upper() + ctx["flags"]
 
 
-with open("scripts/{policy}-{flags}.sh".format(**ctx), "w") as f:
+with open("{policy}-{flags}.sh".format(**ctx), "w") as f:
     f.write(BASE_SCRIPT.format(**ctx))
 
 print(BASE_RUNNER.format(**ctx))
