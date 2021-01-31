@@ -89,7 +89,7 @@ class SimpleStrategy(BaseStrategy):
 
     def _resume(self):
         """Resume current optimization."""
-        self.period = self.summary["period"].max() + 1
+        self.period = int(self.summary["period"].max() + 1)
 
     def _start(self):
         """Start new optimization."""
