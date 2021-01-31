@@ -32,7 +32,7 @@ class RepeatStrategy(BaseStrategy):
         Strategy name.
     num_periods : int
         Number of periods to train for
-    unroll_distribution : callable(() -> int) or int or float
+    unroll_len : callable(int) -> int or int or float
         callable: function returning the the unroll length; is rerolled each
             epoch within each training problem.
         int: fixed unroll length.
@@ -59,15 +59,30 @@ class RepeatStrategy(BaseStrategy):
     repeat_threshold : float
         Threshold for repetition, as a proportion of the absolute value of the
         current meta loss.
+    warmup : int
+        Number of iterations for warmup; if 0, no warmup is applied.
+    warmup_rate : float
+        SGD Learning rate during warmup period.
     """
 
-    metadata_columns = {"period": int, "repeat": int}
+    metadata_columns = {
+        "period": int,
+        "repeat": int
+    }
+    hyperparameter_columns = {
+        "warmup": int,
+        "warmup_rate": float,
+        "p_teacher": float,
+        "depth": int,
+        "unroll_len": int
+    }
 
     def __init__(
-            self, *args, num_periods=100, unroll_distribution=200, epochs=1,
+            self, *args, num_periods=100, unroll_len=200, epochs=1,
             depth=1, annealing_schedule=0.1, validation_epochs=None,
             validation_depth=None, validation_unroll=None, max_repeat=0,
-            repeat_threshold=0.1, name="SimpleStrategy", **kwargs):
+            repeat_threshold=0.1, warmup=0, warmup_rate=0.01,
+            name="SimpleStrategy", **kwargs):
 
         self.num_periods = num_periods
 
@@ -76,20 +91,23 @@ class RepeatStrategy(BaseStrategy):
 
         self.validation_epochs = _default(validation_epochs, epochs)
         self.validation_depth = _default(validation_depth, depth)
-        validation_unroll = _default(validation_unroll, unroll_distribution)
+        validation_unroll = _default(validation_unroll, unroll_len)
 
         self.epochs = epochs
-        self.depth = depth
-
-        self.validation_unroll = deserialize.integer_distribution(
-            validation_unroll, name="validation_unroll")
-        self.unroll_distribution = deserialize.integer_distribution(
-            unroll_distribution, name="unroll")
+        self.depth = deserialize.integer_schedule(depth, name="depth")
+        self.validation_unroll = validation_unroll
+        self.unroll_len = deserialize.integer_schedule(
+            unroll_len, name="unroll")
         self.annealing_schedule = deserialize.float_schedule(
             annealing_schedule, name="annealing")
 
         self.max_repeat = max_repeat
         self.repeat_threshold = repeat_threshold
+
+        self.warmup_schedule = deserialize.integer_schedule(
+            warmup, name="warmup")
+        self.warmup_rate_schedule = deserialize.float_schedule(
+            warmup_rate, name="warmup_rate")
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -130,10 +148,18 @@ class RepeatStrategy(BaseStrategy):
             period=self.period - 1,
             repeat=self._filter(period=self.period - 1)["repeat"].max())
 
-    def _path(self, period=0, repeat=0):
+    def _path(self, period=0, repeat=0, dtype="checkpoint", file="test"):
         """Get file path for the given metadata."""
-        return os.path.join(
-            self.directory, "period_{}.{}".format(int(period), int(repeat)))
+        args = (int(period), int(repeat))
+        if dtype == "checkpoint":
+            path = os.path.join("checkpoint", "period_{}.{}".format(*args))
+        elif dtype == "log":
+            path = os.path.join("log", "period_{}.{}".format(*args))
+        elif dtype == "evaluations":
+            path = os.path.join("eval", file, "period_{}.{}".format(*args))
+        else:
+            raise ValueError("Invalid dtype {}.".format(dtype))
+        return os.path.join(self.directory, path)
 
     def _resume(self):
         """Resume current optimization."""
@@ -161,17 +187,26 @@ class RepeatStrategy(BaseStrategy):
         while self.period < self.num_periods:
 
             p_teacher = self.annealing_schedule(self.period)
-            print("--- Period {}, Repetition {} [p_teacher={}] ---".format(
-                self.period, self.repeat, p_teacher))
+            args_common = {
+                "depth": self.depth(self.period),
+                "epochs": self.epochs,
+                "warmup": self.warmup_schedule(self.period),
+                "warmup_rate": self.warmup_rate_schedule(self.period)
+            }
 
             train_args = {
-                "unroll_len": self.unroll_distribution, "p_teacher": p_teacher,
-                "depth": self.depth, "epochs": self.epochs}
+                "unroll_len": self.unroll_len(self.period),
+                "p_teacher": p_teacher, **args_common}
             validation_args = {
-                "unroll_len": self.validation_unroll, "p_teacher": 0,
-                "depth": self.validation_depth,
-                "epochs": self.validation_epochs}
+                "unroll_len": self.validation_unroll,
+                "p_teacher": 0, **args_common}
             metadata = {"period": self.period, "repeat": self.repeat}
+
+            print("--- Period {}, Repetition {} ---".format(
+                self.period, self.repeat))
+            print(", ".join([
+                "{}={}".format(k, train_args[k])
+                for k in self.hyperparameter_columns]))
 
             self._training_period(train_args, validation_args, metadata)
 

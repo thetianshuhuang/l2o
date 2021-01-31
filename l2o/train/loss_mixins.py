@@ -134,7 +134,7 @@ class LossMixin:
 
             # Add imitation loss
             teacher_loss = [
-                state_distance(states[0], s, scale=scale) for s in states[1:]]
+                state_distance(states[0], s) for s in states[1:]]
             imitation_loss += weight * self._imitation_objective(teacher_loss)
 
             # Log optional statistics

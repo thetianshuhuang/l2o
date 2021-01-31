@@ -2,22 +2,22 @@
 
 
 OVERRIDE_PRESETS = {
-    "teacher_sgd": [(
+    "sgd": [(
         ["training", "teachers", "*"],
         {"class_name": "SGD", "config": {"learning_rate": 0.01}}
     )],
-    "teacher_adam": [(
+    "adam": [(
         ["training", "teachers", "*"],
         {"class_name": "Adam",
          "config": {"learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999,
                     "epsilon": 1e-10}}
     )],
-    "teacher_rmsprop": [(
+    "rmsprop": [(
         ["training", "teachers", "*"],
         {"class_name": "RMSProp",
          "config": {"learning_rate": 0.001, "rho": 0.9, "epsilon": 1e-10}}
     )],
-    "teacher_radam": [(
+    "radam": [(
         ["training", "teachers", "*"],
         {
             "class_name": "RectifiedAdam",
@@ -27,40 +27,15 @@ OVERRIDE_PRESETS = {
             }
         }
     )],
-    "simple_20x25": [(
-        ["strategy"],
-        {
-            "validation_problems": None,
-            "epochs_per_period": 1,
-            "validation_seed": 12345,
-            "num_periods": 100,
-            "unroll_distribution": 20,
-            "depth": 25,
-            "epochs": 25,
-            "annealing_schedule": {"type": "constant", "value": 0.0},
-            "validation_epochs": 1,
-            "validation_unroll": 50,
-            "validation_depth": 25,
-            "name": "SimpleStrategy"
-        }
-    )],
-    "simple_20x50": [(
-        ["strategy"],
-        {
-            "validation_problems": None,
-            "epochs_per_period": 1,
-            "validation_seed": 12345,
-            "num_periods": 100,
-            "unroll_distribution": 20,
-            "depth": 50,
-            "epochs": 25,
-            "annealing_schedule": {"type": "constant", "value": 0.0},
-            "validation_epochs": 1,
-            "validation_unroll": 50,
-            "validation_depth": 25,
-            "name": "SimpleStrategy"
-        }
-    )],
+    "debug": [
+        (["strategy", "unroll_len"], 20),
+        (["strategy", "depth"], 20),
+        (["strategy", "epochs"], 2),
+        (["strategy", "validation_unroll"], 20),
+        (["strategy", "validation_depth"], 2),
+        (["strategy", "validation_epochs"], 1),
+        (["strategy", "max_repeat"], 1),
+    ],
     "conv_train": [(
         ["problems"],
         [{
@@ -68,6 +43,7 @@ OVERRIDE_PRESETS = {
             "args": [],
             "kwargs": {
                 "layers": [[16, 3, 1], 2, [32, 5, 1], 2],
+                "head_type": "dense",
                 "activation": "relu",
                 "dataset": "mnist",
                 "batch_size": 128,
@@ -89,22 +65,6 @@ OVERRIDE_PRESETS = {
                 "shuffle_buffer": 16384
             }
         }]
-    )],
-    "debug": [(
-        ["strategy"],
-        {
-            "validation_problems": None,
-            "epochs_per_period": 1,
-            "validation_seed": 12345,
-            "num_periods": 2,
-            "unroll_distribution": 20,
-            "depth": 10,
-            "epochs": 2,
-            "annealing_schedule": {"type": "constant", "value": 0.5},
-            "validation_epochs": 2,
-            "validation_unroll": 20,
-            "name": "SimpleDebugStrategy",
-        }
     )],
     "log_teachers": [
         (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
@@ -129,41 +89,6 @@ OVERRIDE_PRESETS = {
     "il_constant": [(
         ["strategy", "annealing_schedule"],
         {"type": "constant", "value": 2.0}
-    )],
-    "conv_debug": [(
-        ["problems"],
-        [{
-            "target": "conv_classifier",
-            "args": [],
-            "kwargs": {
-                "layers": [[20, 28, 1]],
-                "activation": "sigmoid",
-                "dataset": "mnist",
-                "batch_size": 128,
-                "shuffle_buffer": 16384,
-            }
-        }]
-    )],
-    "repeat": [
-        (["strategy_constructor"], "RepeatStrategy"),
-        (["strategy", "max_repeat"], 4),
-        (["strategy", "repeat_threshold"], 0.2),
-        (["strategy", "name"], "RepeatStrategy")
-    ],
-    "teacher_choice": [(
-        ["training", "teachers", "*"],
-        {
-            "class_name": "Choice",
-            "config": {
-                "layers": [20, 20], "beta_1": 0.9, "beta_2": 0.999,
-                "learning_rate": 0.001, "epsilon": 1e-10, "hardness": 0.0,
-                "activation": "tanh", "recurrent_activation": "sigmoid",
-                "use_bias": True, "kernel_initializer": "glorot_uniform",
-                "recurrent_initializer": "orthogonal",
-                "bias_initializer": "zeros", "unit_forget_bias": True,
-                "weights_file": "results/choice-20x25M-n/period_99/network"
-            }
-        }
     )],
     "warmup": [
         (["training", "warmup"], 5),

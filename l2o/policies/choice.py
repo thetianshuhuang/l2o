@@ -5,6 +5,7 @@ from tensorflow.keras.layers import LSTMCell, Dense
 
 from .architectures import BaseCoordinateWisePolicy
 from .moments import rms_momentum
+from .softmax import softmax
 
 
 class ChoiceOptimizer(BaseCoordinateWisePolicy):
@@ -72,30 +73,9 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
             x, states_new[hidden_name] = layer(x, states[hidden_name])
 
         # Factor in softmax of Adam, RMSProp
-        opt_weights = tf.reshape(self.choice(x), [-1, 2])
-
-        # Hard Choice
-        if self.hardness > 0.0:
-            # Train -> use gumbel-softmax approximator
-            if self.train:
-                gumbels = -tf.math.log(-tf.math.log(
-                    tf.random.uniform(tf.shape(opt_weights))))
-                z = tf.math.exp((opt_weights + gumbels) * self.hardness)
-                opt_weights = z / tf.tile(tf.reshape(
-                    tf.math.reduce_sum(z, axis=1), [-1, 1]), [1, 2])
-            # Otherwise, use ordinary softmax.
-            else:
-                opt_weights = tf.cast(
-                    tf.stack([
-                        opt_weights[:, 0] > opt_weights[:, 1],
-                        opt_weights[:, 0] < opt_weights[:, 1]], axis=1),
-                    tf.float32)
-        # Soft Choice
-        else:
-            # Manual softmax in order to add epsilon in denominator
-            normalize = tf.reduce_sum(
-                tf.exp(opt_weights), axis=1, keepdims=True)
-            opt_weights = tf.exp(opt_weights) / (normalize + self.epsilon)
+        opt_weights = softmax(
+            tf.reshape(self.choice(x), [-1, 2]),
+            hardness=self.hardness, train=self.train, epsilon=self.epsilon)
 
         # Combine softmax
         update = self.learning_rate * (

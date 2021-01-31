@@ -19,7 +19,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 
 import l2o
-from config import get_default, get_preset, ArgParser, create_distribute
+from config import get_default, get_preset, ArgParser
+from gpu_setup import create_distribute
 
 # Directory
 args = ArgParser(sys.argv[1:])

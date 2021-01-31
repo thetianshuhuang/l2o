@@ -10,7 +10,8 @@ class WarmupMixin:
     """Warmup Mixin."""
 
     def run_warmup(
-            self, data, states, scale, unroll=20, problem=None, seed=None):
+            self, data, states, scale,
+            unroll=20, problem=None, seed=None, warmup_rate=0.01):
         """Run Warmup.
 
         Parameters
@@ -31,6 +32,8 @@ class WarmupMixin:
             Training problem
         seed : int or None
             Seed to use for intializing parameters.
+        warmup_rate : float
+            SGD Learning rate during warmup period.
 
         Returns
         -------
@@ -56,7 +59,7 @@ class WarmupMixin:
                 objective = problem.objective(
                     [p * s for p, s in zip(params, scale)], batch)
             grads = tape.gradient(objective, params)
-            params = [p - g * self.warmup_rate for p, g in zip(params, grads)]
+            params = [p - g * warmup_rate for p, g in zip(params, grads)]
 
             # Apply gradients to update optimizer internal states
             states = [
@@ -75,12 +78,9 @@ class WarmupMixin:
 
         See ``warmup`` for docstring.
         """
-        # **kwargs are captured by closure since they only contain constants.
-        def _inner(data_, states_, scale_):
-            return self.run_warmup(data_, states_, scale_, **kwargs)
-
         distribute = tf.distribute.get_strategy()
-        return distribute.run(_inner, args=(data, states, scale))
+        return distribute.run(
+            self.run_warmup, args=(data, states, scale), kwargs=kwargs)
 
     def make_warmup_concrete_step(self, meta, data, states, scale):
         """Get a concrete @tf.function graph for warmup_step.
@@ -103,5 +103,5 @@ class WarmupMixin:
             Concrete function created with the specified problem inputs.
         """
         return self.warmup_step.get_concrete_function(
-            data, states, scale,
-            unroll=meta.unroll_len, problem=meta.problem, seed=meta.seed)
+            data, states, scale, unroll=meta.unroll_len, problem=meta.problem,
+            seed=meta.seed, warmup_rate=tf.constant(0., dtype=tf.float32))

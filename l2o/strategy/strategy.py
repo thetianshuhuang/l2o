@@ -43,6 +43,7 @@ class BaseStrategy:
     """
 
     metadata_columns = {}
+    hyperparameter_columns = {}
 
     def __init__(
             self, learner, problems, validation_problems=None,
@@ -65,7 +66,9 @@ class BaseStrategy:
             self._resume()
         except FileNotFoundError:
             columns = dict(
-                validation=float, **self.metadata_columns,
+                validation=float,
+                **self.metadata_columns,
+                **self.hyperparameter_columns,
                 **{k: float for k in self.learner.mean_stats})
             self.summary = pd.DataFrame({
                 k: pd.Series([], dtype=v) for k, v in columns.items()})
@@ -85,17 +88,26 @@ class BaseStrategy:
         """Start new optimization."""
         raise NotImplementedError()
 
-    def _path(self, **kwargs):
-        """Get saved model file path."""
+    def _path(self, dtype="checkpoints", file="test", **kwargs):
+        """Get saved model file path.
+        
+        Parameters
+        ----------
+        dtype : str
+            Path type: "eval" (evaluations), "log" (training logs),
+            "checkpoint" (training saved states)
+        file : str
+            File name for evaluation type.
+        """
         raise NotImplementedError()
 
     def _save_network(self, **kwargs):
         """Wrapper for ``self.learner.save_state`` with ``self._path``."""
-        self.learner.save_state(self._path(**kwargs))
+        self.learner.save_state(self._path(dtype="checkpoint", **kwargs))
 
     def _load_network(self, **kwargs):
         """Wrapper for ``self.learner.load_state`` with ``self._path``."""
-        self.learner.load_state(self._path(**kwargs))
+        self.learner.load_state(self._path(dtype="checkpoint", **kwargs))
 
     def _filter(self, **kwargs):
         """Get filtered view of summary dataframe."""
@@ -111,11 +123,21 @@ class BaseStrategy:
         except IndexError:
             raise Exception("Entry not found: {}".format(kwargs))
 
-    def _append(self, training_stats, validation_stats, metadata):
+    def _save_np(self, dst, data):
+        """Save data to .npz, creating folders if needed."""
+        parent = os.path.dirname(dst)
+        if not os.path.exists(parent):
+            os.makedirs(parent)
+        np.savez(dst, **data)
+
+    def _append(self, train_args, training_stats, validation_stats, metadata):
         """Save training and validation statistics.
 
         Parameters
         ----------
+        train_args : dict
+            Training hyperparameters / arguments. Values in
+            ``hyperparameter_columns`` are appended to ``summary.csv``.
         training_stats : dict
             Training statistics to append. Values in ``scalar_statistics`` are
             appended to ``summary.csv``; other values are saved in a .npz
@@ -128,6 +150,7 @@ class BaseStrategy:
         # Save scalar summary values
         new_row = dict(
             validation=validation_stats["meta_loss"], **metadata,
+            **{k: train_args[k] for k in self.hyperparameter_columns},
             **{k: training_stats[k] for k in self.learner.mean_stats})
         self.summary = self.summary.append(new_row, ignore_index=True)
         self.summary.to_csv(
@@ -135,11 +158,9 @@ class BaseStrategy:
 
         # Save other values
         if len(self.learner.stack_stats) > 0:
-            save_np = {
-                k: training_stats[k] for k in self.learner.stack_stats
-            }
-            np.savez(
-                os.path.join(self._path(**metadata), "log.npz"), **save_np)
+            self._save_np(
+                self._path(dtype="log", **metadata),
+                {k: training_stats[k] for k in self.learner.stack_stats})
 
     def _training_period(
             self, train_args, validation_args, metadata, eval_file=None,
@@ -192,7 +213,7 @@ class BaseStrategy:
             training_stats["imitation_loss"], training_stats["meta_loss"],
             validation_stats["meta_loss"]))
         self._save_network(**metadata)
-        self._append(training_stats, validation_stats, metadata)
+        self._append(train_args, training_stats, validation_stats, metadata)
 
         # Evaluate (if applicable)
         if eval_file is not None:
@@ -228,6 +249,7 @@ class BaseStrategy:
         results = {k: np.stack([d[k] for d in results]) for k in results[0]}
 
         if file is not None:
-            np.savez(os.path.join(self._path(**metadata), file), **results)
+            self._save_np(
+                self._path(dtype="eval", file=file, **metadata), results)
 
         return results

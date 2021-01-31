@@ -22,6 +22,12 @@ ScaleHierarchicalOptimizer
     "Learned Optimizers that Scale and Generalize" (Wichrowska et. al, 2017)
 ChoiceOptimizer
     Optimizer that chooses either Adam or RMSProp in a coordinatewise fashion.
+RNNPropExtendedOptimizer
+    Extended version of RNNProp that includes direct gradient input and
+    shortcut connections to each layer.
+ChoiceExtendedOptimizer
+    Extended version of ChoiceOptimizer using the same modifications as
+    RNNPropExtended.
 """
 
 from .architectures import BaseLearnToOptimizePolicy
@@ -31,6 +37,8 @@ from .rnnprop_2016 import RNNPropOptimizer
 from .scale_hierarchical_2017 import ScaleHierarchicalOptimizer
 from .choice import ChoiceOptimizer
 from .hand_crafted import AdamOptimizer, RMSPropOptimizer, SGDOptimizer
+from .rnnprop_ext import RNNPropExtendedOptimizer
+from .choice_ext import ChoiceExtendedOptimizer
 from .load import load
 
 __all__ = [
@@ -43,5 +51,7 @@ __all__ = [
     "ScaleBasicOptimizer",
     "ScaleHierarchicalOptimizer",
     "ChoiceOptimizer",
+    "RNNPropExtendedOptimizer",
+    "ChoiceExtendedOptimizer",
     "load"
 ]

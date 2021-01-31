@@ -154,15 +154,9 @@ class UnrollStateManager:
             global_state=dstate.global_state)
 
 
-def state_distance(s1, s2, scale=None):
+def state_distance(s1, s2):
     """Compute parameter l2 distance between two states."""
-    if scale is None:
-        return tf.add_n([
-            tf.nn.l2_loss(self_p - ref_p)
-            for self_p, ref_p in zip(s1.params, s2.params)
-        ])
-    else:
-        return tf.add_n([
-            tf.nn.l2_loss((self_p - ref_p) * s)
-            for self_p, ref_p, s in zip(s1.params, s2.params, scale)
-        ])
+    return tf.add_n([
+        tf.nn.l2_loss(self_p - ref_p)
+        for self_p, ref_p in zip(s1.params, s2.params)
+    ])

@@ -13,7 +13,8 @@ from .unroll_state import UnrollStateManager, create_state
 
 MetaIteration = collections.namedtuple(
     "MetaIteration", [
-        "problem", "unroll_len", "p_teacher", "validation", "seed"
+        "problem", "unroll_len", "p_teacher", "validation", "seed",
+        "warmup", "warmup_rate"
     ])
 
 
@@ -112,7 +113,7 @@ class TrainingMixin:
 
         # Dataset includes warmup
         dataset = meta.problem.get_dataset(
-            meta.unroll_len, epochs * (depth + self.warmup), seed=meta.seed)
+            meta.unroll_len, epochs * (depth + meta.warmup), seed=meta.seed)
 
         # NOTE: Random seeds are totally fucked
         # (I have no idea what is going on)
@@ -120,7 +121,7 @@ class TrainingMixin:
         tf.random.set_seed(meta.seed)
         for i, batch in enumerate(dataset):
             # Reset params & states
-            if i % (depth + self.warmup) == 0:
+            if i % (depth + meta.warmup) == 0:
                 params = meta.problem.get_parameters(seed=meta.seed)
                 params, scale = self._create_scaling(params)
                 states = [create_state(p, params) for p in policies]
@@ -129,12 +130,13 @@ class TrainingMixin:
             args = (batch, states, scale)
             if step is None:
                 step = self.make_concrete_step(meta, *args)
-            if warmup_step is None and self.warmup > 0:
+            if warmup_step is None and meta.warmup > 0:
                 warmup_step = self.make_warmup_concrete_step(meta, *args)
 
             # Warmup
-            if i % (depth + self.warmup) < self.warmup:
-                states = warmup_step(*args)
+            if i % (depth + meta.warmup) < meta.warmup:
+                states = warmup_step(
+                    *args, warmup_rate=tf.constant(meta.warmup_rate))
             # The actual step
             else:
                 if meta.validation:
@@ -146,15 +148,16 @@ class TrainingMixin:
                 pbar.add(1, values=[(k, stats[k]) for k in self.pbar_values])
 
             # Dataset size doesn't always line up
-            if i >= depth * (epochs + self.warmup):
+            if i >= depth * (epochs + meta.warmup):
                 break
 
         meta.problem.save_step(step, meta)
         return losses.summarize(self.stack_stats, self.mean_stats)
 
     def train(
-            self, problems, unroll_len=lambda: 20, p_teacher=0,
-            epochs=1, depth=1, validation=False, seed=None):
+            self, problems, unroll_len=20, p_teacher=0,
+            epochs=1, depth=1, validation=False, seed=None,
+            warmup=0, warmup_rate=0.01):
         """Run meta-training.
 
         Parameters
@@ -164,8 +167,8 @@ class TrainingMixin:
 
         Keyword Args
         ------------
-        unroll_len : Callable -> int
-            Callable that returns unroll size.
+        unroll_len : int
+            Unroll length for truncated backpropagation.
         p_teacher : float
             Probability of choosing imitation learning or imitation learning
             proportional constant. Cannot be >0 if self.teachers is empty.
@@ -181,6 +184,10 @@ class TrainingMixin:
             Random seed to use for model initializations. If None, no specific
             seed is used. Should be set to None to reduce overfitting during
             training, but fixed during validation.
+        warmup : int
+            Number of iterations for warmup; if 0, no warmup is applied.
+        warmup_rate : float
+            SGD Learning rate during warmup period.
 
         Returns
         -------
@@ -200,7 +207,8 @@ class TrainingMixin:
             print("[#{}] {}".format(itr, problem.config))
 
             meta = MetaIteration(
-                problem, unroll_len(), p_teacher, validation, seed)
+                problem, unroll_len, p_teacher, validation, seed, warmup,
+                warmup_rate)
             results.append(self._train(meta, depth=depth, epochs=epochs))
 
         return results.summarize(self.stack_stats, self.mean_stats)
