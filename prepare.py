@@ -9,10 +9,11 @@ module load intel/18.0.2 python3/3.7.0 cuda/10.1 cudnn/7.6.5 nccl/2.5.6
 python3 train.py \\
     --presets={presets} \\
     --policy={policy} \\
-    --directory=results/{policy}-{flags} \\
+    --strategy={strategy} \\
+    --directory=results/{policy}/{flags} \\
 python3 evaluate.py \\
     --problem={problem} \\
-    --directory=results/{policy}-{flags} \\
+    --directory=results/{policy}/{flags} \\
     --out={problem} \\
     --repeat=10 \\
     --periods=99
@@ -29,6 +30,7 @@ ctx = {
     "policy": args.pop_get("--policy", "rnnprop_ext"),
     "flags": args.pop_get("--flags", "test"),
     "problem": args.pop_get("--problem", "conv_train"),
+    "strategy": args.pop_get("--strategy", "repeat"),
     "allocation": args.pop_get("--alloc", "Senior-Design_UT-ECE")
 }
 

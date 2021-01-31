@@ -91,8 +91,8 @@ OVERRIDE_PRESETS = {
         {"type": "constant", "value": 2.0}
     )],
     "warmup": [
-        (["training", "warmup"], 5),
-        (["training", "warmup_rate"], 0.1)
+        (["strategy", "warmup"], 2),
+        (["strategy", "warmup_rate"], 0.1)
     ]
 }
 

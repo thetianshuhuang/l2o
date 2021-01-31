@@ -41,8 +41,9 @@ default = get_default(strategy=strategy, policy=policy)
 # Build overrides
 presets = args.pop_get("--presets", "")
 overrides = []
-for p in presets.split(','):
-    overrides += get_preset(p)
+if presets != "":
+    for p in presets.split(','):
+        overrides += get_preset(p)
 overrides += args.to_overrides()
 
 with distribute.scope():
