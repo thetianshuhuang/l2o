@@ -84,6 +84,8 @@ STRATEGY = {
             "repeat_threshold": 0.25,
             "warmup": {"type": "constant", "value": 0},
             "warmup_rate": {"type": "constant", "value": 0.01},
+            "validation_warmup": 0,
+            "validation_warmup_rate": 0.01,
             "name": "RepeatStrategy",
         }
     }

@@ -63,6 +63,10 @@ class RepeatStrategy(BaseStrategy):
         Number of iterations for warmup; if 0, no warmup is applied.
     warmup_rate : float
         SGD Learning rate during warmup period.
+    validation_warmup : int
+        Number of iterations for warmup during validation.
+    validation_warmup_rate : float
+        SGD learning rate during warmup for validation.
     """
 
     metadata_columns = {
@@ -82,6 +86,7 @@ class RepeatStrategy(BaseStrategy):
             depth=1, annealing_schedule=0.1, validation_epochs=None,
             validation_depth=None, validation_unroll=None, max_repeat=0,
             repeat_threshold=0.1, warmup=0, warmup_rate=0.01,
+            validation_warmup=0, validation_warmup_rate=0.01,
             name="SimpleStrategy", **kwargs):
 
         self.num_periods = num_periods
@@ -108,6 +113,8 @@ class RepeatStrategy(BaseStrategy):
             warmup, name="warmup")
         self.warmup_rate_schedule = deserialize.float_schedule(
             warmup_rate, name="warmup_rate")
+        self.validation_warmup = validation_warmup
+        self.validation_warmup_rate = validation_warmup_rate
 
         super().__init__(*args, name=name, **kwargs)
 
@@ -138,9 +145,9 @@ class RepeatStrategy(BaseStrategy):
 
         # Check explosion
         max_loss = (
-            np.abs(p_last["meta_loss"]) * self.repeat_threshold
-            + p_last["meta_loss"])
-        return max_loss < p_current["meta_loss"]
+            np.abs(p_last["validation"]) * self.repeat_threshold
+            + p_last["validation"])
+        return max_loss < p_current["validation"]
 
     def _load_previous(self):
         """Load network from previous period for resuming or repeating."""
@@ -188,18 +195,22 @@ class RepeatStrategy(BaseStrategy):
 
             p_teacher = self.annealing_schedule(self.period)
             args_common = {
-                "depth": self.depth(self.period),
-                "epochs": self.epochs,
-                "warmup": self.warmup_schedule(self.period),
-                "warmup_rate": self.warmup_rate_schedule(self.period)
-            }
+                "depth": self.depth(self.period), "epochs": self.epochs}
 
             train_args = {
                 "unroll_len": self.unroll_len(self.period),
-                "p_teacher": p_teacher, **args_common}
+                "p_teacher": p_teacher,
+                "warmup": self.warmup_schedule(self.period),
+                "warmup_rate": self.warmup_rate_schedule(self.period),
+                **args_common
+            }
             validation_args = {
                 "unroll_len": self.validation_unroll,
-                "p_teacher": 0, **args_common}
+                "p_teacher": 0,
+                "warmup": self.validation_warmup,
+                "warmup_rate": self.validation_warmup_rate,
+                **args_common
+            }
             metadata = {"period": self.period, "repeat": self.repeat}
 
             print("--- Period {}, Repetition {} ---".format(
