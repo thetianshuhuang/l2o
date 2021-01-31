@@ -97,11 +97,11 @@ OVERRIDE_PRESETS = {
         (["strategy", "validation_warmup_rate"], 0.05)
     ],
     "warmup_warmup": [
-        (["strategy", "warmup"], 5),
+        (["strategy", "warmup"], {
+            "type": "list", "values": [0, 1, 2, 3, 4, 5]}),
         (["strategy", "warmup_rate"], {
             "type": "list", "values": [0.0, 0.01, 0.02, 0.03, 0.04, 0.05]}),
-        (["strategy", "validation_warmup"], {
-            "type": "list", "values": [0, 1, 2, 3, 4, 5]}),
+        (["strategy", "validation_warmup"], 5),
         (["strategy", "validation_warmup_rate"], 0.05)
     ]
 }
