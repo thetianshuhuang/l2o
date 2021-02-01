@@ -15,7 +15,8 @@ class ChoiceExtendedOptimizer(RNNPropOptimizer):
 
     def init_layers(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.999,
-            epsilon=1e-10, learning_rate=0.001, hardness=0.0, **kwargs):
+            epsilon=1e-10, sgd_lr_multiplier=10., learning_rate_sgd=0.01,
+            hardness=0.0, **kwargs):
         """Initialize Layers."""
         self.beta_1 = beta_1
         self.beta_2 = beta_2
@@ -23,6 +24,7 @@ class ChoiceExtendedOptimizer(RNNPropOptimizer):
 
         self.hardness = hardness
         self.learning_rate = learning_rate
+        self.sgd_lr_multiplier = sgd_lr_multiplier
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
         self.choice = Dense(3, input_shape=(layers[-1] + 3,))
@@ -55,6 +57,9 @@ class ChoiceExtendedOptimizer(RNNPropOptimizer):
             hardness=self.hardness, train=self.train, epsilon=self.epsilon)
 
         # Combine softmax
+        options = tf.concat([
+            tf.reshape(f, [-1, 1])
+            for f in [inputs * self.sgd_lr_multiplier, m_tilde, g_tilde]], 1)
         update = self.learning_rate * tf.math.reduce_sum(
             opt_weights * inputs_augmented, axis=1)
 

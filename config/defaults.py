@@ -218,6 +218,7 @@ POLICY = {
             "beta_1": 0.9,
             "beta_2": 0.999,
             "learning_rate": 0.001,
+            "sgd_lr_multiplier": 10.,
             "epsilon": 1e-10,
             "hardness": 0.0,
             "name": "ChoiceExtendedOptimizer",
