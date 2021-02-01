@@ -96,11 +96,10 @@ class RepeatStrategy(BaseStrategy):
 
         self.validation_epochs = _default(validation_epochs, epochs)
         self.validation_depth = _default(validation_depth, depth)
-        validation_unroll = _default(validation_unroll, unroll_len)
+        self.validation_unroll = _default(validation_unroll, unroll_len)
 
         self.epochs = epochs
         self.depth = deserialize.integer_schedule(depth, name="depth")
-        self.validation_unroll = validation_unroll
         self.unroll_len = deserialize.integer_schedule(
             unroll_len, name="unroll")
         self.annealing_schedule = deserialize.float_schedule(
