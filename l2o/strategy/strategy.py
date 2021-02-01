@@ -242,8 +242,9 @@ class BaseStrategy:
             print("Evaluation Training {}/{}".format(i + 1, repeat))
             opt = self.learner.network.architecture(
                 self.learner.network,
-                warmup=self.learner.warmup * int(self.unroll_distribution()),
-                warmup_rate=self.learner.warmup_rate,
+                warmup=(
+                    self.validation_warmup * int(self.unroll_distribution())),
+                warmup_rate=self.validation_warmup_rate,
                 name="OptimizerEvaluation")
             results.append(evaluate(opt, **kwargs))
         results = {k: np.stack([d[k] for d in results]) for k in results[0]}
