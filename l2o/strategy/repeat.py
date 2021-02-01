@@ -161,7 +161,7 @@ class RepeatStrategy(BaseStrategy):
             path = os.path.join("checkpoint", "period_{}.{}".format(*args))
         elif dtype == "log":
             path = os.path.join("log", "period_{}.{}".format(*args))
-        elif dtype == "evaluations":
+        elif dtype == "eval":
             path = os.path.join("eval", file, "period_{}.{}".format(*args))
         else:
             raise ValueError("Invalid dtype {}.".format(dtype))
