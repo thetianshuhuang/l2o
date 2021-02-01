@@ -142,6 +142,8 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
                 tf.cast(self.warmup, tf.int64), self.iterations)
             dparam = tf.cond(
                 in_warmup, lambda: grad * self.warmup_rate, lambda: dparam_)
+        else:
+            dparam = dparam_
 
         # Track ops for tf.group
         ops = nested_assign(state, new_state)
