@@ -55,6 +55,7 @@ class StepMixin:
                     meta_loss_weight * results[0]
                     + imitation_loss_weight * results[1])
             grads = tape.gradient(loss, self.network.trainable_variables)
+
             self.optimizer.apply_gradients(
                 zip(grads, self.network.trainable_variables))
 
