@@ -34,7 +34,7 @@ distribute = create_distribute(vgpus=vgpus)
 initialize_only = args.pop_check("--initialize")
 
 # Default params
-strategy = args.pop_get("--strategy", "simple")
+strategy = args.pop_get("--strategy", "repeat")
 policy = args.pop_get("--policy", "rnnprop")
 default = get_default(strategy=strategy, policy=policy)
 

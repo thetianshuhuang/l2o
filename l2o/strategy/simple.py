@@ -1,4 +1,7 @@
-"""Simple Training Strategy."""
+"""Simple Training Strategy.
+
+TODO: update API & fix to reflect new changes.
+"""
 
 import os
 

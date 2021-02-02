@@ -17,6 +17,9 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         Set to True when training, and False during evaluation. Used for
         policies with gradient estimation (i.e. gumbel softmax); can be ignored
         by most policies.
+    debug : bool
+        If True, sets a debug flag that indicates to optimizers they should log
+        debug information in their optimizer states.
     weights_file : str or None
         Optional filepath to load optimizer network weights from.
     kwargs : dict
@@ -26,14 +29,15 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
     default_name = "LearnedOptimizer"
 
     def __init__(
-            self, name=None, distribute=None, train=True, weights_file=None,
-            **kwargs):
+            self, name=None, distribute=None, train=True, debug=False,
+            weights_file=None, **kwargs):
 
         if name is None:
             name = self.default_name
         super().__init__(name)
 
         self.train = train
+        self.debug = debug
         self.config = kwargs
 
         if distribute is None:
@@ -133,6 +137,52 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         See ```call_global``` for reason why we return 0.
         """
         return tf.constant(0.)
+
+    def debug(self, param, states):
+        """Get debug information.
+
+        Parameters
+        ----------
+        param : tf.Tensor
+            Parameter variable. This should not be modified.
+        states : object
+            Nested structure of optimizer states, including debug.
+
+        Returns
+        -------
+        dict
+            Debug information. Empty unless implemented by the policy.
+        """
+        return {}
+
+    def debug_global(self, global_state):
+        """Get global debug information.
+
+        Parameters
+        ----------
+        global_state : object
+            Nested structure of global optimizer state.
+
+        Returns
+        -------
+        dict
+            Debug information. Empty unless implemented by the policy.
+        """
+        return {}
+
+    def debug_summarize(self, params, debug_states, debug_global):
+        """Summarize debug information.
+
+        Parameters
+        ----------
+        params : tf.Variable[]
+            List of problem variables to fetch summary for.
+        debug_states : dict[]
+            List of debug data for each variable.
+        debug_global : dict
+            Global debug information.
+        """
+        return {}
 
 
 class BaseCoordinateWisePolicy(BaseLearnToOptimizePolicy):

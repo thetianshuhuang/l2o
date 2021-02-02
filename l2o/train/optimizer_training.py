@@ -97,10 +97,8 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin, WarmupMixin):
         self.optimizer = deserialize.optimizer(optimizer)
 
         # Checkpoints
-        self.checkpoints = {
-            "network": tf.train.Checkpoint(network=self.network),
-            "optimizer": tf.train.Checkpoint(optimizer=self.optimizer)
-        }
+        self.checkpoint = tf.train.Checkpoint(
+            network=self.network, optimizer=self.optimizer)
 
         # Scaling & Transformation
         self.use_log_objective = use_log_objective
@@ -133,35 +131,3 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin, WarmupMixin):
     def __str__(self):
         """As string -> <TrainableOptimizerName:NetworkName>."""
         return "<{}:{}>".format(self.name, self.network.name)
-
-    def save_state(self, path):
-        """Save learner and optimizer state.
-
-        Parameters
-        ----------
-        path : str
-            Directory to save to. Will create new if ``path`` does not exist.
-        """
-        os.makedirs(path, exist_ok=True)
-
-        # Network config (use to initialize network when loading)
-        with open(os.path.join(path, "config.json"), 'w') as f:
-            json.dump(self.network.get_config(), f)
-
-        # Weights
-        for prefix, checkpoint in self.checkpoints.items():
-            checkpoint.write(os.path.join(path, prefix))
-
-        print("Saved training state: {}  -->  {}".format(str(self), path))
-
-    def load_state(self, path):
-        """Load learner and optimzier state.
-
-        Parameters
-        ----------
-        path : str
-            Directory to load from.
-        """
-        for prefix, checkpoint in self.checkpoints.items():
-            checkpoint.read(os.path.join(path, prefix))
-        print("Loaded training state: {}  -->  {}".format(path, str(self)))

@@ -51,6 +51,7 @@ class BaseStrategy:
             name="BaseStrategy"):
 
         self.learner = learner
+        self.name = name
 
         self.problems = deserialize.problems(problems)
         self.validation_problems = deserialize.problems(
@@ -90,7 +91,7 @@ class BaseStrategy:
 
     def _path(self, dtype="checkpoints", file="test", **kwargs):
         """Get saved model file path.
-        
+
         Parameters
         ----------
         dtype : str
@@ -103,11 +104,17 @@ class BaseStrategy:
 
     def _save_network(self, **kwargs):
         """Wrapper for ``self.learner.save_state`` with ``self._path``."""
-        self.learner.save_state(self._path(dtype="checkpoint", **kwargs))
+        path = self._path(dtype="checkpoint", **kwargs)
+        self.learner.checkpoint.write(path)
+        print("Saved training state: {}  -->  {}".format(
+            str(self.learner), path))
 
     def _load_network(self, **kwargs):
         """Wrapper for ``self.learner.load_state`` with ``self._path``."""
-        self.learner.load_state(self._path(dtype="checkpoint", **kwargs))
+        path = self._path(dtype="checkpoint", **kwargs)
+        self.learner.checkpoint.read(path).expect_partial()
+        print("Loaded training state: {}  -->  {}".format(
+            path, str(self.learner)))
 
     def _filter(self, **kwargs):
         """Get filtered view of summary dataframe."""
@@ -122,13 +129,6 @@ class BaseStrategy:
             return self._filter(**kwargs).iloc[0]
         except IndexError:
             raise Exception("Entry not found: {}".format(kwargs))
-
-    def _save_np(self, dst, data):
-        """Save data to .npz, creating folders if needed."""
-        parent = os.path.dirname(dst)
-        if not os.path.exists(parent):
-            os.makedirs(parent)
-        np.savez(dst, **data)
 
     def _append(self, train_args, training_stats, validation_stats, metadata):
         """Save training and validation statistics.
@@ -158,9 +158,10 @@ class BaseStrategy:
 
         # Save other values
         if len(self.learner.stack_stats) > 0:
-            self._save_np(
-                self._path(dtype="log", **metadata),
-                {k: training_stats[k] for k in self.learner.stack_stats})
+            data = {k: training_stats[k] for k in self.learner.stack_stats}
+            dst = self._path(dtype="log", **metadata)
+            os.path.makedirs(os.path.dirname(dst), exist_ok=True)
+            np.savez(dst, **data)
 
     def _training_period(
             self, train_args, validation_args, metadata, eval_file=None,
@@ -249,7 +250,8 @@ class BaseStrategy:
         results = {k: np.stack([d[k] for d in results]) for k in results[0]}
 
         if file is not None:
-            self._save_np(
-                self._path(dtype="eval", file=file, **metadata), results)
+            dst = self._path(dtype="eval", file=file, **metadata)
+            os.path.makedirs(os.path.dirname(dst), exist_ok=True)
+            np.savez(dst, **results)
 
         return results

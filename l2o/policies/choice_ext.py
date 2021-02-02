@@ -3,12 +3,12 @@
 import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
 
-from .rnnprop_2016 import RNNPropOptimizer
+from .architectures import BaseCoordinateWisePolicy
 from .moments import rms_momentum
 from .softmax import softmax
 
 
-class ChoiceExtendedOptimizer(RNNPropOptimizer):
+class ChoiceExtendedOptimizer(BaseCoordinateWisePolicy):
     """Extended version of ChoiceOptimizer, similar to RNNPropExtended."""
 
     default_name = "ChoiceExtended"
@@ -63,4 +63,38 @@ class ChoiceExtendedOptimizer(RNNPropOptimizer):
         update = self.learning_rate * tf.math.reduce_sum(
             opt_weights * inputs_augmented, axis=1)
 
+        # Debug
+        if self.debug:
+            states_new["choice"] = tf.math.reduce_mean(opt_weights, axis=0)
+
         return tf.reshape(update, tf.shape(param)), states_new
+
+    def get_initial_state(self, var):
+        """Get initial model state as a dictionary."""
+        # RNN state
+        batch_size = tf.size(var)
+        rnn_state = {
+            "rnn_{}".format(i): layer.get_initial_state(
+                batch_size=batch_size, dtype=tf.float32)
+            for i, layer in enumerate(self.recurrent)
+        }
+
+        # State for analytical computations
+        analytical_state = {
+            "m": tf.zeros(tf.shape(var)),
+            "v": tf.zeros(tf.shape(var))
+        }
+
+        # Debug
+        if self.debug:
+            analytical_state["choice"] = tf.constant([3])
+
+        return dict(**rnn_state, **analytical_state)
+
+    def debug(self, param, states):
+        """Get debug information."""
+        return {"choice": states["choice"]}
+
+    def debug_summarize(self, params, debug_states, debug_global):
+        """Summarize debug information."""
+        return {"choice": tf.stack([s["choice"] for s in debug_states])}

@@ -184,3 +184,22 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
         Override of base method to use _state_dict instead of _weights.
         """
         return tf.nest.flatten(self._state_dict)
+
+    def get_debug_summary(self, params):
+        """Fetch debug summary.
+
+        Parameters
+        ----------
+        params : tf.Variable[]
+            List of problem variables to fetch summary for.
+
+        Returns
+        -------
+        dict
+            Summarized debug data.
+        """
+        debug_states = [
+            self.network.debug(var, self.get_state(var)) for var in params]
+        debug_global = self.network.debug_global(
+            self._state_dict["__global__"])
+        return self.network.debug_summarize(params, debug_states, debug_global)
