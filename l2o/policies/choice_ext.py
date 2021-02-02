@@ -15,7 +15,7 @@ class ChoiceExtendedOptimizer(RNNPropOptimizer):
 
     def init_layers(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.999,
-            epsilon=1e-10, sgd_lr_multiplier=10., learing_rate=0.001,
+            epsilon=1e-10, sgd_lr_multiplier=10., learning_rate=0.001,
             hardness=0.0, **kwargs):
         """Initialize Layers."""
         self.beta_1 = beta_1
