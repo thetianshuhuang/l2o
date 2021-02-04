@@ -113,7 +113,7 @@ class UnrollStateManager:
             tf.math.reduce_any(tf.math.is_nan(dp))
             for dp in dparams])
         if nan_gradients:
-            tf.print("[Warning] Received NaN inner gradients")
+            tf.print("[Warning] Received NaN inner update")
             return unroll_state
         else:
             return unroll_state_new

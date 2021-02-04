@@ -10,7 +10,7 @@ python3 train.py \\
     --presets={presets} \\
     --policy={policy} \\
     --strategy={strategy} \\
-    --directory=results/{policy}/{flags} \\
+    --directory=results/{policy}/{flags}
 python3 evaluate.py \\
     --problem={problem} \\
     --directory=results/{policy}/{flags} \\

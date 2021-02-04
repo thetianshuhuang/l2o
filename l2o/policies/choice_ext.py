@@ -1,7 +1,7 @@
 """Extended version of ChoiceOptimizer."""
 
 import tensorflow as tf
-from tensorflow.keras.layers import LSTMCell, Dense
+from tensorflow.keras.layers import LSTMCell, Dense, LayerNormalization
 
 from .architectures import BaseCoordinateWisePolicy
 from .moments import rms_momentum
@@ -16,7 +16,7 @@ class ChoiceExtendedOptimizer(BaseCoordinateWisePolicy):
     def init_layers(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.999,
             epsilon=1e-10, sgd_lr_multiplier=10., learning_rate=0.001,
-            hardness=0.0, **kwargs):
+            hardness=0.0, layer_normaliziation=False, **kwargs):
         """Initialize Layers."""
         self.beta_1 = beta_1
         self.beta_2 = beta_2
@@ -27,6 +27,11 @@ class ChoiceExtendedOptimizer(BaseCoordinateWisePolicy):
         self.sgd_lr_multiplier = sgd_lr_multiplier
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
+
+        self.layer_normalization = layer_normaliziation
+        if layer_normalization:
+            self.norm = [LayerNormalization(axis=1) for hsize in layers]
+
         self.choice = Dense(3, input_shape=(layers[-1] + 3,))
 
     def call(self, param, inputs, states, global_state):
@@ -49,6 +54,8 @@ class ChoiceExtendedOptimizer(BaseCoordinateWisePolicy):
         for i, layer in enumerate(self.recurrent):
             hidden_name = "rnn_{}".format(i)
             x, states_new[hidden_name] = layer(x, states[hidden_name])
+            if self.layer_normalization:
+                x = self.norm[i](x)
             x = tf.concat([x, inputs_augmented], 1)
 
         # Make choice

@@ -13,7 +13,7 @@ import tensorflow as tf
 
 import l2o
 from config import ArgParser, get_eval_problem
-from gpu_steup import create_distribute
+from gpu_setup import create_distribute
 
 
 args = ArgParser(sys.argv[1:])

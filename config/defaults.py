@@ -221,6 +221,7 @@ POLICY = {
             "sgd_lr_multiplier": 10.,
             "epsilon": 1e-10,
             "hardness": 0.0,
+            "layer_normalization": False,
             "name": "ChoiceExtendedOptimizer",
             # LSTMCell Args
             "activation": "tanh",

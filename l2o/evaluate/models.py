@@ -56,6 +56,6 @@ def mlp_classifier(info, activation=tf.nn.relu, layers=[32]):
     """MLP classifier (identical to mlp_classifier problem)."""
     return tf.keras.Sequential(
         [tf.keras.layers.Flatten(input_shape=info.features['image'].shape)]
-        + [tf.keras.layers.Dense(u) for u in layers]
+        + [tf.keras.layers.Dense(u, activation=activation) for u in layers]
         + [tf.keras.layers.Dense(10, activation="softmax")]
     )
