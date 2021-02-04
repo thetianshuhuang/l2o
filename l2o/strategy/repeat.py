@@ -167,6 +167,17 @@ class RepeatStrategy(BaseStrategy):
             raise ValueError("Invalid dtype {}.".format(dtype))
         return os.path.join(self.directory, path)
 
+    def _complete_metadata(self, metadata):
+        """Complete metadata with strategy-dependent fields."""
+        if "repeat" not in metadata:
+            return {
+                "period": metadata["period"],
+                "repeat": self._filter(
+                    period=metadata["period"])["repeat"].max()
+            }
+        else:
+            return metadata
+
     def _resume(self):
         """Resume current optimization."""
         self.period = int(self.summary["period"].max())

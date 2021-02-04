@@ -220,6 +220,21 @@ class BaseStrategy:
         if eval_file is not None:
             self.evaluate(metadata=metadata, file=eval_file, **eval_args)
 
+    def _complete_metadata(self, metadata):
+        """Complete metadata with strategy-dependent fields.
+
+        Parameters
+        ----------
+        metadata : dict
+            Incomplete training period metadata.
+
+        Returns
+        -------
+        dict
+            Dict with additional fields (or input)
+        """
+        return metadata
+
     def evaluate(self, metadata=None, repeat=1, file="eval", **kwargs):
         """Evaluate network.
 

@@ -32,7 +32,7 @@ def conv_classifier(
 
     if head_type == "dense":
         return tf.keras.Sequential(
-            [tf.keras.layers.Input(shape=info.features['image'].shape)] 
+            [tf.keras.layers.Input(shape=info.features['image'].shape)]
             + [_deserialize(x) for x in layers]
             + [tf.keras.layers.Flatten()]
             + [tf.keras.layers.Dense(

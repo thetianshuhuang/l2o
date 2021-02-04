@@ -8,15 +8,13 @@ class BaseStepCallback:
 
     Parameters
     ----------
-    keys : dict
-        Keys are the names of statistic names that will be logged.
-        Values are callables that reduce a list of values to a single value:
-        np.stack, np.mean, np.sum, etc.
+    parent : train.OptimizerTraining
+        Parent training class.
     """
 
     keys = {}
 
-    def __init__(self, unroll, n_teachers):
+    def __init__(self, parent):
         pass
 
     def on_step_end(self, index, current_obj, teacher_loss):

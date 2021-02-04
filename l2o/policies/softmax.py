@@ -35,5 +35,6 @@ def softmax(weights, hardness=0.0, train=True, epsilon=1e-10):
             return tf.one_hot(tf.math.argmax(weights, axis=1), dim)
     # Soft Choice
     else:
-        return weights / (
-            tf.reduce_sum(tf.exp(weights), axis=1, keepdims=True) + epsilon)
+        weights_exp = tf.exp(weights)
+        return weights_exp / (
+            tf.reduce_sum(weights_exp, axis=1, keepdims=True) + epsilon)
