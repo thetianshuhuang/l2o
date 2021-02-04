@@ -160,7 +160,7 @@ class BaseStrategy:
         if len(self.learner.stack_stats) > 0:
             data = {k: training_stats[k] for k in self.learner.stack_stats}
             dst = self._path(dtype="log", **metadata)
-            os.path.makedirs(os.path.dirname(dst), exist_ok=True)
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
             np.savez(dst, **data)
 
     def _training_period(
@@ -266,7 +266,7 @@ class BaseStrategy:
 
         if file is not None:
             dst = self._path(dtype="eval", file=file, **metadata)
-            os.path.makedirs(os.path.dirname(dst), exist_ok=True)
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
             np.savez(dst, **results)
 
         return results
