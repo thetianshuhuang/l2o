@@ -16,7 +16,7 @@ class ChoiceExtendedOptimizer(BaseCoordinateWisePolicy):
     def init_layers(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.999,
             epsilon=1e-10, sgd_lr_multiplier=10., learning_rate=0.001,
-            hardness=0.0, layer_normaliziation=False, **kwargs):
+            hardness=0.0, layer_normalization=False, **kwargs):
         """Initialize Layers."""
         self.beta_1 = beta_1
         self.beta_2 = beta_2
@@ -28,7 +28,7 @@ class ChoiceExtendedOptimizer(BaseCoordinateWisePolicy):
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
 
-        self.layer_normalization = layer_normaliziation
+        self.layer_normalization = layer_normalization
         if layer_normalization:
             self.norm = [LayerNormalization(axis=1) for hsize in layers]
 
