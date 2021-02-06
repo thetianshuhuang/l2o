@@ -95,6 +95,9 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
             input structure. This means that tuples and lists cannot be used
             interchangeably. The starting value will be the structure returned
             by ``get_initial_state``.
+        (4) Due to straange behavior when returning python objects such as
+            constant int, None, etc, return tf.constant(0.) when the state is
+            empty.
         """
         raise NotImplementedError()
 

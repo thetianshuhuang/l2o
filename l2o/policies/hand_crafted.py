@@ -68,11 +68,13 @@ class SGDOptimizer(BaseCoordinateWisePolicy):
 
     def call(self, param, inputs, states, global_state):
         """Policy call override."""
-        return inputs * self.learning_rate, 0.
+        # See BaseLearnToOptimizePolicy for why we need tf.constant(0.) instead
+        # of None.
+        return inputs * self.learning_rate, tf.constant(0.)
 
     def get_initial_state(self, var):
         """SGD has no state."""
-        return 0.
+        return tf.constant(0.)
 
 
 class RectifiedAdamOptimizer(BaseHierarchicalPolicy):
