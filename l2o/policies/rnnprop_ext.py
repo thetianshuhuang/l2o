@@ -25,8 +25,6 @@ class RNNPropExtendedOptimizer(RNNPropOptimizer):
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
 
-        self.learning_rate = Dense(
-            1, input_shape=(layers[-1] + 3,), activation=None)
         self.delta = Dense(
             1, input_shape=(layers[-1] + 3,), activation=None)
 
@@ -53,7 +51,6 @@ class RNNPropExtendedOptimizer(RNNPropOptimizer):
             x = tf.concat([x, inputs_augmented], 1)
 
         # Update
-        update = tf.reshape(
-            tf.exp(self.learning_rate(x)) * self.delta(x), tf.shape(param))
+        update = tf.reshape(self.delta(x), tf.shape(param))
 
         return update, states_new
