@@ -155,8 +155,9 @@ class UnrollStateManager:
 
 
 def state_distance(s1, s2):
-    """Compute parameter l2 distance between two states."""
-    return tf.add_n([
-        tf.nn.l2_loss(self_p - ref_p)
+    """Compute log parameter l2 distance between two states."""
+    return tf.math.reduce_logsumexp([
+        tf.math.reduce_logsumexp(
+            2 * tf.math.log(tf.math.abs(self_p - ref_p)))
         for self_p, ref_p in zip(s1.params, s2.params)
     ])
