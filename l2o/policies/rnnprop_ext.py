@@ -21,6 +21,7 @@ class RNNPropExtendedOptimizer(RNNPropOptimizer):
         """Initialize Layers."""
         self.beta_1 = beta_1
         self.beta_2 = beta_2
+        self.learning_rate = learning_rate
         self.epsilon = epsilon
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
