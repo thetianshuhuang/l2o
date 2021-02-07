@@ -11,6 +11,31 @@ class RNNPropExtendedOptimizer(RNNPropOptimizer):
     """Extended version of RNNProp.
 
     Includes an additional feature and shortcut connections to each layer.
+
+    Keyword Args
+    ------------
+    layers : int[]
+        Size of LSTM layers.
+    beta_1 : float
+        Momentum decay constant (table 1)
+    beta_2 : float
+        Variance decay constant (table 1)
+    learning_rate : float
+        Learning rate multiplier.
+    epsilon : float
+        Denominator epsilon for normalization operation in case input is 0.
+    name : str
+        Name of optimizer network.
+    **kwargs : dict
+        Passed onto tf.keras.layers.LSTMCell
+
+    Notes
+    -----
+      - Gradients are added as an input, and the inputs are provided as a
+        shortcut connection to each subsequent layer.
+      - The output layer has no activation.
+      - The output layer has zero initialization; this seems to be critical for
+        initial stability.
     """
 
     default_name = "RNNPropExtended"
@@ -27,7 +52,8 @@ class RNNPropExtendedOptimizer(RNNPropOptimizer):
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
 
         self.delta = Dense(
-            1, input_shape=(layers[-1] + 3,), activation=None)
+            1, input_shape=(layers[-1] + 3,), activation=None,
+            kernel_initializer="zeros", bias_initializer="zeros")
 
     def call(self, param, inputs, states, global_state):
         """Policy call override."""

@@ -154,11 +154,11 @@ class UnrollStateManager:
             global_state=dstate.global_state)
 
 
-def state_distance(s1, s2):
+def state_distance(s1, s2, epsilon=1e-10):
     """Compute mean log parameter l2 distance between two states."""
     dist = tf.math.reduce_logsumexp([
         tf.math.reduce_logsumexp(
-            2 * tf.math.log(tf.math.abs(self_p - ref_p)))
+            2 * tf.math.log(tf.math.abs(self_p - ref_p) + epsilon))
         for self_p, ref_p in zip(s1.params, s2.params)
     ])
     size = tf.math.reduce_sum([tf.size(p) for p in s1.params])
