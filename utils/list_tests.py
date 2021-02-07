@@ -8,10 +8,13 @@ def crawl_experiments(d):
 
     contents = os.listdir(d)
     if "config.json" in contents:
+        tests = []
         if "eval" in contents:
-            tests = os.path.listdir(os.path.join(d, "eval"))
-        else:
-            tests = []
+            test_types = os.listdir(os.path.join(d, "eval"))
+            for t in test_types:
+                tests += [
+                    os.path.join(t, f)
+                    for f in os.path.listdir(os.path.join(d, "eval", t))]
         return [(d, tests)]
     else:
         res = []
