@@ -35,7 +35,7 @@ class RNNPropExtendedOptimizer(RNNPropOptimizer):
         shortcut connection to each subsequent layer.
       - The output layer has no activation.
       - The output layer has zero initialization; this seems to be critical for
-        initial stability.
+        initial stability when training with IL.
     """
 
     default_name = "RNNPropExtended"

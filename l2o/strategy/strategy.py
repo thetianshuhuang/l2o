@@ -250,6 +250,8 @@ class BaseStrategy:
         kwargs : dict
             Additional arguments to pass to ``evaluate.evaluate``.
         """
+
+        metadata = self._complete_metadata(metadata)
         self._load_network(**metadata)
         self.learner.network.train = False
 
