@@ -4,7 +4,7 @@
 OVERRIDE_PRESETS = {
     "sgd": [(
         ["training", "teachers", "*"],
-        {"class_name": "SGD", "config": {"learning_rate": 0.01}}
+        {"class_name": "SGD", "config": {"learning_rate": 0.05}}
     )],
     "adam": [(
         ["training", "teachers", "*"],
@@ -70,25 +70,15 @@ OVERRIDE_PRESETS = {
         (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
         (["training", "stack_stats", "*"], "teacher_counts")
     ],
-    "il_fast": [(
-        ["strategy", "annealing_schedule"],
-        {"type": "exponential", "alpha": 0.1, "base": 1.0}
-    )],
-    "il_slow": [(
-        ["strategy", "annealing_schedule"],
-        {"type": "exponential", "alpha": 0.05, "base": 1.0}
-    )],
-    "il_more": [(
-        ["strategy", "annealing_schedule"],
-        {"type": "exponential", "alpha": 0.05, "base": 10.0}
-    )],
-    "il_slower": [(
-        ["strategy", "annealing_schedule"],
-        {"type": "exponential", "alpha": 0.02, "base": 10.0}
-    )],
-    "il_constant": [(
-        ["strategy", "annealing_schedule"],
-        {"type": "constant", "value": 2.0}
+    "il_standard": [
+        (["strategy", "annealing_schedule"],
+         {"type": "exponential", "alpha": 0.2, "base": 1.0}),
+        (["strategy", "depth"],
+         {"type": "list", "values": [1, 2, 4, 8, 16, 25]})
+    ],
+    "depth_warmup": [(
+        ["strategy", "depth"],
+        {"type": "list", "values": [1, 2, 5, 10, 25]}
     )],
     "warmup_constant": [
         (["strategy", "warmup"], 5),
