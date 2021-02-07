@@ -78,7 +78,8 @@ class RepeatStrategy(BaseStrategy):
         "warmup_rate": float,
         "p_teacher": float,
         "depth": int,
-        "unroll_len": int
+        "unroll_len": int,
+        "epochs": int,
     }
 
     def __init__(
@@ -98,7 +99,7 @@ class RepeatStrategy(BaseStrategy):
         self.validation_depth = _default(validation_depth, depth)
         self.validation_unroll = _default(validation_unroll, unroll_len)
 
-        self.epochs = epochs
+        self.epochs = deserialize.integer_schedule(epochs, name="epochs")
         self.depth = deserialize.integer_schedule(depth, name="depth")
         self.unroll_len = deserialize.integer_schedule(
             unroll_len, name="unroll")
@@ -205,7 +206,8 @@ class RepeatStrategy(BaseStrategy):
 
             p_teacher = self.annealing_schedule(self.period)
             args_common = {
-                "depth": self.depth(self.period), "epochs": self.epochs}
+                "depth": self.depth(self.period),
+                "epochs": self.epochs(self.period)}
 
             train_args = {
                 "unroll_len": self.unroll_len(self.period),

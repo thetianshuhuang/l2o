@@ -74,7 +74,9 @@ OVERRIDE_PRESETS = {
         (["strategy", "annealing_schedule"],
          {"type": "exponential", "alpha": 0.2, "base": 1.0}),
         (["strategy", "depth"],
-         {"type": "list", "values": [1, 2, 4, 8, 16, 25]})
+         {"type": "list", "values": [1, 2, 5, 10, 25]}),
+        (["strategy", "epochs"],
+         {"type": "list", "values": [625, 312, 125, 62, 25]}),
     ],
     "depth_warmup": [(
         ["strategy", "depth"],
