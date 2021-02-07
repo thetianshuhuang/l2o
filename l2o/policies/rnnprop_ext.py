@@ -17,7 +17,7 @@ class RNNPropExtendedOptimizer(RNNPropOptimizer):
 
     def init_layers(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.999,
-            epsilon=1e-10, **kwargs):
+            epsilon=1e-10, learning_rate=0.001, **kwargs):
         """Initialize Layers."""
         self.beta_1 = beta_1
         self.beta_2 = beta_2
@@ -51,6 +51,7 @@ class RNNPropExtendedOptimizer(RNNPropOptimizer):
             x = tf.concat([x, inputs_augmented], 1)
 
         # Update
-        update = tf.reshape(self.delta(x), tf.shape(param))
+        update = tf.reshape(
+            self.learning_rate * self.delta(x), tf.shape(param))
 
         return update, states_new
