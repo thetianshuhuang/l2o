@@ -14,7 +14,7 @@ def crawl_experiments(d):
             for t in test_types:
                 tests += [
                     os.path.join(t, f)
-                    for f in os.path.listdir(os.path.join(d, "eval", t))]
+                    for f in os.listdir(os.path.join(d, "eval", t))]
         return [(d, tests)]
     else:
         res = []

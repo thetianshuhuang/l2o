@@ -20,8 +20,8 @@ python3 evaluate.py \\
 """
 
 BASE_RUNNER = (
-    "sbatch -p gtx -N 1 -n 1 -o {policy}-{flags}.log -t 12:00:00 -A "
-    "{allocation} -J {shortname} {policy}-{flags}.sh")
+    "sbatch -p gtx -N 1 -n 1 -o logs/{policy}-{flags}.log -t 12:00:00 -A "
+    "{allocation} -J {shortname} scripts/{policy}-{flags}.sh")
 
 args = ArgParser(sys.argv[1:])
 
