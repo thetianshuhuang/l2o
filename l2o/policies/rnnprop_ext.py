@@ -54,7 +54,7 @@ class RNNPropExtendedOptimizer(RNNPropOptimizer):
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
 
         self.delta = Dense(
-            1, input_shape=(layers[-1] + 3,), activation=None,
+            1, input_shape=(layers[-1] + 3,), activation=out_activation,
             kernel_initializer="zeros", bias_initializer="zeros")
 
     def call(self, param, inputs, states, global_state):
