@@ -199,6 +199,7 @@ POLICY = {
             "beta_1": 0.9,
             "beta_2": 0.999,
             "learning_rate": 0.001,
+            "out_activation": "tanh",
             "epsilon": 1e-10,
             "name": "RNNPropExtended",
             # LSTMCell Args

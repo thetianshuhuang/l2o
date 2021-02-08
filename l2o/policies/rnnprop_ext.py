@@ -22,6 +22,8 @@ class RNNPropExtendedOptimizer(RNNPropOptimizer):
         Variance decay constant (table 1)
     learning_rate : float
         Learning rate multiplier.
+    out_activation : object
+        Output activation. Defaults to 'None'.
     epsilon : float
         Denominator epsilon for normalization operation in case input is 0.
     name : str
@@ -42,7 +44,7 @@ class RNNPropExtendedOptimizer(RNNPropOptimizer):
 
     def init_layers(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.999,
-            epsilon=1e-10, learning_rate=0.001, **kwargs):
+            epsilon=1e-10, learning_rate=0.001, out_activation=None, **kwargs):
         """Initialize Layers."""
         self.beta_1 = beta_1
         self.beta_2 = beta_2

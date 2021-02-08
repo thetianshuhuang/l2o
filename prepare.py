@@ -37,7 +37,7 @@ ctx = {
 ctx["shortname"] = ctx["policy"][0].upper() + ctx["flags"]
 
 
-with open("{policy}-{flags}.sh".format(**ctx), "w") as f:
+with open("scripts/{policy}-{flags}.sh".format(**ctx), "w") as f:
     f.write(BASE_SCRIPT.format(**ctx))
 
 print(BASE_RUNNER.format(**ctx))
