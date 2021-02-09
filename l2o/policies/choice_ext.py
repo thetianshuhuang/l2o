@@ -68,7 +68,7 @@ class ChoiceExtendedOptimizer(BaseCoordinateWisePolicy):
             tf.reshape(f, [-1, 1])
             for f in [inputs * self.sgd_lr_multiplier, m_tilde, g_tilde]], 1)
         update = self.learning_rate * tf.math.reduce_sum(
-            opt_weights * inputs_augmented, axis=1)
+            opt_weights * options, axis=1)
 
         # Debug
         if self.debug:
