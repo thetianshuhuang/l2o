@@ -191,6 +191,28 @@ POLICY = {
             "unit_forget_bias": True,
         }
     },
+    "choice_sgd": {
+        "policy_constructor": "ChoiceSGDOptimizer",
+        "policy": {
+            # RNNProp
+            "layers": [20, 20],
+            "beta_1": 0.9,
+            "beta_2": 0.999,
+            "learning_rate": 0.001,
+            "sgd_lr_multiplier": 10.,
+            "epsilon": 1e-10,
+            "hardness": 0.0,
+            "name": "ChoiceExtendedOptimizer",
+            # LSTMCell Args
+            "activation": "tanh",
+            "recurrent_activation": "sigmoid",
+            "use_bias": True,
+            "kernel_initializer": "glorot_uniform",
+            "recurrent_initializer": "orthogonal",
+            "bias_initializer": "zeros",
+            "unit_forget_bias": True,
+        }
+    },
     "rnnprop_ext": {
         "policy_constructor": "RNNPropExtendedOptimizer",
         "policy": {

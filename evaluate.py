@@ -28,8 +28,9 @@ periods = [int(x) for x in args.pop_get("--periods", "99").split(",")]
 
 with distribute.scope():
     for tg in targets:
-        for pd in periods for pr in problems:
-            strategy = l2o.strategy.build_from_config(tg)
-            config = get_eval_problem(pr)
-            strategy.evaluate(
-                metadata={"period": pd}, repeat=repeat, file=pr, **config)
+        for pd in periods:
+            for pr in problems:
+                strategy = l2o.strategy.build_from_config(tg)
+                config = get_eval_problem(pr)
+                strategy.evaluate(
+                    metadata={"period": pd}, repeat=repeat, file=pr, **config)
