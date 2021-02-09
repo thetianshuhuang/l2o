@@ -14,7 +14,6 @@ python3 train.py \\
 python3 evaluate.py \\
     --problem={problem} \\
     --directory=results/{policy}/{flags} \\
-    --out={problem} \\
     --repeat=10 \\
     --periods=49
 """

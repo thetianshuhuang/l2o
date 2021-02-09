@@ -33,7 +33,7 @@ EVALUATION_PROBLEMS = {
         "epochs": 25,
         "batch_size": 128
     },
-    "different_dataset": {
+    "conv_kmnist": {
         "config": {
             "layers": [[16, 3, 1], 2, [32, 5, 1], 2],
             "activation": "relu"
@@ -43,7 +43,7 @@ EVALUATION_PROBLEMS = {
         "epochs": 25,
         "batch_size": 128
     },
-    "smaller_batch": {
+    "conv_smallbatch": {
         "config": {
             "layers": [[16, 3, 1], 2, [32, 5, 1], 2],
             "activation": "relu"
