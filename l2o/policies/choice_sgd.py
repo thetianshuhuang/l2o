@@ -85,8 +85,4 @@ class ChoiceSGDOptimizer(BaseCoordinateWisePolicy):
             "v": tf.zeros(tf.shape(var))
         }
 
-        # Debug
-        if self.debug:
-            analytical_state["choice"] = tf.constant([3])
-
         return dict(**rnn_state, **analytical_state)

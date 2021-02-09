@@ -39,6 +39,7 @@ from .choice import ChoiceOptimizer
 from .hand_crafted import AdamOptimizer, RMSPropOptimizer, SGDOptimizer
 from .rnnprop_ext import RNNPropExtendedOptimizer
 from .choice_ext import ChoiceExtendedOptimizer
+from .choice_sgd import ChoiceSGDOptimizer
 from .load import load
 
 __all__ = [
@@ -47,11 +48,12 @@ __all__ = [
     "RMSPropOptimizer",
     "SGDOptimizer",
     "DMOptimizer",
-    "RNNPropOptimizer",
     "ScaleBasicOptimizer",
     "ScaleHierarchicalOptimizer",
-    "ChoiceOptimizer",
+    "RNNPropOptimizer",
     "RNNPropExtendedOptimizer",
+    "ChoiceOptimizer",
+    "ChoiceSGDOptimizer",
     "ChoiceExtendedOptimizer",
     "load"
 ]
