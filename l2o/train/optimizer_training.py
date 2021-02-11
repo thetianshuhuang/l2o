@@ -65,6 +65,11 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin, WarmupMixin):
         The maximum multiplier for the increase in the objective before
         meta-training is stopped. If <= 0, meta-training is not stopped
         early.
+    huber_delta : float
+        Delta parameter for huber loss used for imitation loss (applied
+        parameterwise). If <0, ordinary l2 loss is used instead.
+    clip_grads : float
+        Gradient clipping magnitude. If <= 0., no clipping is performed.
     epsilon : float
         Epsilon value.
     step_callbacks : str[] or BaseStepCallback[]
@@ -86,7 +91,8 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin, WarmupMixin):
             use_log_objective=True, scale_objective=False,
             parameter_scale_spread=3.0, loss_reduce=tf.math.reduce_max,
             il_mode='switch', unroll_weight="sum", teachers=[],
-            obj_train_max_multiplier=-1, epsilon=1e-10, step_callbacks=[],
+            obj_train_max_multiplier=-1, huber_delta=-1, clip_grads=-1,
+            epsilon=1e-10, step_callbacks=[],
             pbar_values=["meta_loss", "imitation_loss"],
             mean_stats=["meta_loss", "imitation_loss"],
             stack_stats=[]):
@@ -115,6 +121,8 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin, WarmupMixin):
 
         # Numerical stability
         self.obj_train_max_multiplier = obj_train_max_multiplier
+        self.huber_delta = huber_delta
+        self.clip_grads = clip_grads
         self.epsilon = epsilon
 
         # Tracking

@@ -20,6 +20,8 @@ BASE = {
         "unroll_weight": "mean",
         "teachers": [],
         "obj_train_max_multiplier": -1,
+        "huber_delta": -1,
+        "clip_grads": -1,
         "epsilon": 1e-10,
         "step_callbacks": [],
         "pbar_values": ["meta_loss", "imitation_loss"],

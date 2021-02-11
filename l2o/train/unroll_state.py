@@ -154,12 +154,33 @@ class UnrollStateManager:
             global_state=dstate.global_state)
 
 
-def state_distance(s1, s2, epsilon=1e-10):
-    """Compute mean log parameter l2 distance between two states."""
-    dist = tf.math.reduce_logsumexp([
-        tf.math.reduce_logsumexp(
-            2 * tf.math.log(tf.math.abs(self_p - ref_p) + epsilon))
+def _huber_loss(a, delta=-1.):
+    """Parameter-wise huber loss."""
+    if delta < 0:
+        return 0.5 * tf.math.square(a)
+    else:
+        return tf.where(
+            tf.math.abs(a) < delta,
+            0.5 * tf.math.square(a),
+            delta * (tf.math.abs(a) - 0.5 * delta))
+
+
+def state_distance(s1, s2, delta=-1.):
+    """Compute mean log parameter l2 distance between two states.
+
+    Parameters
+    ----------
+    s1, s2 : object
+        States.
+    epsilon : float
+        Epsilon for log
+    delta : float
+        Huber loss delta. If delta < 0, then ordinary l2 loss (delta=inf) is
+        used.
+    """
+    dist = tf.math.reduce_sum([
+        _huber_loss(self_p - ref_p, delta=delta)
         for self_p, ref_p in zip(s1.params, s2.params)
     ])
     size = tf.math.reduce_sum([tf.size(p) for p in s1.params])
-    return dist - tf.math.log(tf.cast(size, tf.float32))
+    return tf.math.log(dist + epsilon) - tf.math.log(tf.cast(size, tf.float32))

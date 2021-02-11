@@ -133,7 +133,8 @@ class LossMixin:
 
             # Add imitation loss
             teacher_loss = [
-                state_distance(states[0], s, epsilon=self.epsilon)
+                state_distance(
+                    states[0], s, epsilon=self.epsilon, delta=self.huber_delta)
                 for s in states[1:]]
             imitation_loss += weight * self._imitation_objective(teacher_loss)
 

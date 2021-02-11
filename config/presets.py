@@ -108,6 +108,10 @@ OVERRIDE_PRESETS = {
         (["strategy", "validation_warmup"], 5),
         (["strategy", "validation_warmup_rate"], 0.1)
     ],
+    "clip": [
+        (["training", "huber_delta"], 0.01),
+        (["training", "clip_grads"], 10.0)
+    ]
 }
 
 
