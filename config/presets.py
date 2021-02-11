@@ -74,6 +74,14 @@ OVERRIDE_PRESETS = {
         (["strategy", "annealing_schedule"],
          {"type": "exponential", "alpha": 0.2, "base": 1.0})
     ],
+    "il_constant": [
+        (["strategy", "annealing_schedule"],
+         {"type": "constant", "value": 0.01}),
+    ],
+    "il_constant_less": [
+        (["strategy", "annealing_schedule"],
+         {"type": "constant", "value": 0.001}),
+    ],
     "depth_warmup": [(
         ["strategy", "depth"],
         {"type": "list", "values": [1, 2, 5, 10, 25]}
