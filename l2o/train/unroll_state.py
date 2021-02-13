@@ -165,7 +165,7 @@ def _huber_loss(a, delta=-1.):
             delta * (tf.math.abs(a) - 0.5 * delta))
 
 
-def state_distance(s1, s2, delta=-1.):
+def state_distance(s1, s2, delta=-1., epsilon=1e-10):
     """Compute mean log parameter l2 distance between two states.
 
     Parameters
@@ -179,7 +179,7 @@ def state_distance(s1, s2, delta=-1.):
         used.
     """
     dist = tf.math.reduce_sum([
-        _huber_loss(self_p - ref_p, delta=delta)
+        tf.math.reduce_sum(_huber_loss(self_p - ref_p, delta=delta))
         for self_p, ref_p in zip(s1.params, s2.params)
     ])
     size = tf.math.reduce_sum([tf.size(p) for p in s1.params])
