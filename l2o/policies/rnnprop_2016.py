@@ -1,7 +1,7 @@
 """RNNProp Implementation."""
 
 import tensorflow as tf
-from tensorflow.keras.layers import LSTMCell, Dense
+from tensorflow.keras.layers import LSTMCell, Dense, LayerNormalization
 
 from .architectures import BaseCoordinateWisePolicy
 from .moments import rms_momentum
