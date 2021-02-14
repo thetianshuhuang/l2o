@@ -36,12 +36,16 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
 
     def init_layers(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.999, alpha=0.1,
-            epsilon=1e-10, **kwargs):
+            epsilon=1e-10, layer_normalization=False, **kwargs):
         """Initialize layers."""
         self.beta_1 = beta_1
         self.beta_2 = beta_2
         self.alpha = alpha
         self.epsilon = epsilon
+
+        self.layer_normalization = layer_normalization
+        if layer_normalization:
+            self.norm = [LayerNormalization(axis=1) for _ in layers]
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
         self.delta = Dense(1, input_shape=(layers[-1],), activation="tanh")
@@ -69,6 +73,8 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
         for i, layer in enumerate(self.recurrent):
             hidden_name = "rnn_{}".format(i)
             x, states_new[hidden_name] = layer(x, states[hidden_name])
+            if self.layer_normalization:
+                x = self.norm[i](x)
         # Delta
         update = tf.reshape(self.alpha * self.delta(x), tf.shape(param))
 

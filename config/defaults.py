@@ -145,6 +145,7 @@ POLICY = {
             "beta_2": 0.999,
             "alpha": 0.1,
             "epsilon": 1e-10,
+            "layer_normalization": False,
             "name": "RNNPropOptimizer",
             # LSTMCell Args
             "activation": "tanh",

@@ -61,6 +61,10 @@ class StepMixin:
                     tf.clip_by_value(g, -self.clip_grads, self.clip_grads)
                     for g in grads]
 
+            tf.print(
+                tf.reduce_max([tf.reduce_max(g) for g in grads]),
+                [tf.reduce_mean(g) for g in grads])
+
             self.optimizer.apply_gradients(
                 zip(grads, self.network.trainable_variables))
 
