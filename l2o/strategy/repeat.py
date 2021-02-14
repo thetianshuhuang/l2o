@@ -204,14 +204,9 @@ class RepeatStrategy(BaseStrategy):
 
         while self.period < self.num_periods:
 
-            p_teacher = self.annealing_schedule(self.period)
-            args_common = {
-                "depth": self.depth(self.period),
-                "epochs": self.epochs(self.period)}
-
             train_args = {
                 "unroll_len": self.unroll_len(self.period),
-                "p_teacher": p_teacher,
+                "p_teacher": self.annealing_schedule(self.period),
                 "warmup": self.warmup_schedule(self.period),
                 "warmup_rate": self.warmup_rate_schedule(self.period),
                 "depth": self.depth(self.period),

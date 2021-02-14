@@ -64,7 +64,7 @@ STRATEGY = {
             "annealing_schedule": {"type": "constant", "value": 0.0},
             "validation_epochs": 5,
             "validation_unroll": 20,
-            "validation_depth": 50,
+            "validation_depth": 25,
             "name": "SimpleStrategy",
         }
     },
