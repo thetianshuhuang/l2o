@@ -214,14 +214,16 @@ class RepeatStrategy(BaseStrategy):
                 "p_teacher": p_teacher,
                 "warmup": self.warmup_schedule(self.period),
                 "warmup_rate": self.warmup_rate_schedule(self.period),
-                **args_common
+                "depth": self.depth(self.period),
+                "epochs": self.epochs(self.period)
             }
             validation_args = {
                 "unroll_len": self.validation_unroll,
                 "p_teacher": 0,
                 "warmup": self.validation_warmup,
                 "warmup_rate": self.validation_warmup_rate,
-                **args_common
+                "depth": self.validation_depth,
+                "epochs": self.validation_epochs
             }
             metadata = {"period": self.period, "repeat": self.repeat}
 

@@ -148,7 +148,7 @@ class TrainingMixin:
                 pbar.add(1, values=[(k, stats[k]) for k in self.pbar_values])
 
             # Dataset size doesn't always line up
-            if i >= depth * (epochs + meta.warmup):
+            if i >= epochs * (depth + meta.warmup):
                 break
 
         meta.problem.save_step(step, meta)

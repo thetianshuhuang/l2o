@@ -83,7 +83,7 @@ STRATEGY = {
             "validation_unroll": 20,
             "validation_depth": 50,
             "max_repeat": 4,
-            "repeat_threshold": 0.25,
+            "repeat_threshold": 0.5,
             "warmup": {"type": "constant", "value": 0},
             "warmup_rate": {"type": "constant", "value": 0.01},
             "validation_warmup": 0,
