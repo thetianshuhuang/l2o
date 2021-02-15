@@ -114,6 +114,10 @@ OVERRIDE_PRESETS = {
     "clip": [
         (["training", "clip_grads"], 10.0)
     ],
+    "noscale": [
+        (["training", "scale_objective"], False),
+        (["strategy", "annealing_schedule", "value"], 0.25)
+    ]
 }
 
 

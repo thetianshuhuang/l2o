@@ -26,11 +26,12 @@ args = ArgParser(sys.argv[1:])
 
 ctx = {
     "presets": args.pop_get("--presets", "conv_train"),
-    "policy": args.pop_get("--policy", "rnnprop_ext"),
+    "policy": args.pop_get("--policy", "rnnprop"),
     "flags": args.pop_get("--flags", "test"),
-    "problem": args.pop_get("--problem", "conv_train"),
     "strategy": args.pop_get("--strategy", "repeat"),
-    "allocation": args.pop_get("--alloc", "Senior-Design_UT-ECE")
+    "allocation": args.pop_get("--alloc", "Senior-Design_UT-ECE"),
+    "problem": args.pop_get(
+        "--problem", "conv_train,conv_kmnist,conv_avg,conv_wider")
 }
 
 ctx["shortname"] = ctx["policy"][0].upper() + ctx["flags"]
