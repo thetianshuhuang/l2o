@@ -9,6 +9,8 @@ from .step_mixins import StepMixin
 from .train_mixins import TrainingMixin
 from .warmup_mixins import WarmupMixin
 
+from . import gradient_clipping as gradient_clipping_module
+from .gradient_clipping import SimpleGC
 from . import step_callbacks as step_callbacks_module
 from .step_callbacks import BaseStepCallback, is_callback
 
@@ -68,8 +70,8 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin, WarmupMixin):
     huber_delta : float
         Delta parameter for huber loss used for imitation loss (applied
         parameterwise). If <0, ordinary l2 loss is used instead.
-    clip_grads : float
-        Gradient clipping magnitude. If <= 0., no clipping is performed.
+    gradient_clipping : dict
+        Gradient clipping configuration.
     epsilon : float
         Epsilon value.
     step_callbacks : str[] or BaseStepCallback[]
@@ -91,7 +93,8 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin, WarmupMixin):
             use_log_objective=True, scale_objective=False,
             parameter_scale_spread=3.0, loss_reduce=tf.math.reduce_max,
             il_mode='switch', unroll_weight="sum", teachers=[],
-            obj_train_max_multiplier=-1, huber_delta=-1, clip_grads=-1,
+            obj_train_max_multiplier=-1, huber_delta=-1,
+            gradient_clipping={"class_name": "SimpleGC", "clip_value": -1},
             epsilon=1e-10, step_callbacks=[],
             pbar_values=["meta_loss", "imitation_loss"],
             mean_stats=["meta_loss", "imitation_loss"],
@@ -122,8 +125,10 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin, WarmupMixin):
         # Numerical stability
         self.obj_train_max_multiplier = obj_train_max_multiplier
         self.huber_delta = huber_delta
-        self.clip_grads = clip_grads
         self.epsilon = epsilon
+        self.gradient_clipping = deserialize.generic(
+            gradient_clipping["class_name"], gradient_clipping_module,
+            message="gradient clipping")(**gradient_clipping["config"])
 
         # Tracking
         self.step_callbacks = [

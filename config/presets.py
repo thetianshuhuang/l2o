@@ -111,9 +111,11 @@ OVERRIDE_PRESETS = {
     "huber": [
         (["training", "huber_delta"], 0.01)
     ],
-    "clip": [
-        (["training", "clip_grads"], 10.0)
-    ],
+    "clip": [(
+        ["training", "gradient_clipping"],
+        {"class_name": "AdaptiveGC",
+         "config": {"clip_ratio": 0.001, "epsilon": 1e-3}}
+    )],
     "noscale": [
         (["training", "scale_objective"], False),
         (["strategy", "annealing_schedule", "value"], 0.25)
