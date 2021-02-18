@@ -56,9 +56,11 @@ class StepMixin:
                     + imitation_loss_weight * results[1])
             grads = tape.gradient(loss, self.network.trainable_variables)
 
-            self.optimizer.apply_gradients(zip(
-                self.gradient_clipping.clip(grads),
-                self.network.trainable_variables))
+            clipped = self.gradient_clipping.clip(
+                self.network.trainable_variables, grads)
+
+            self.optimizer.apply_gradients(
+                zip(clipped, self.network.trainable_variables))
 
             return results
 
