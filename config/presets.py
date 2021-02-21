@@ -114,7 +114,7 @@ OVERRIDE_PRESETS = {
     "clip": [(
         ["training", "gradient_clipping"],
         {"class_name": "AdaptiveGC",
-         "config": {"clip_ratio": 0.001, "epsilon": 1e-3}}
+         "config": {"clip_ratio": 0.1, "epsilon": 1e-3}}
     )],
     "noscale": [
         (["training", "scale_objective"], False),

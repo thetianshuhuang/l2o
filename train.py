@@ -15,8 +15,6 @@ Optional flags:
 
 import os
 import sys
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-import tensorflow as tf
 
 import l2o
 from config import get_default, get_preset, ArgParser
@@ -32,6 +30,7 @@ distribute = create_distribute(vgpus=vgpus)
 
 # Pick up flags first
 initialize_only = args.pop_check("--initialize")
+gpu_number = args.pop_get("--target_gpu", None)
 
 # Default params
 strategy = args.pop_get("--strategy", "repeat")
@@ -45,6 +44,12 @@ if presets != "":
     for p in presets.split(','):
         overrides += get_preset(p)
 overrides += args.to_overrides()
+
+# Finally ready to import tensorflow
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+if gpu_number is not None:
+    os.environ["CUDA_VISIBLE_DEVICES"] = gpu_number
+import tensorflow as tf
 
 with distribute.scope():
     # Build strategy

@@ -58,7 +58,6 @@ class StepMixin:
 
             clipped = self.gradient_clipping.clip(
                 self.network.trainable_variables, grads)
-
             self.optimizer.apply_gradients(
                 zip(clipped, self.network.trainable_variables))
 
