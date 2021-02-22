@@ -161,7 +161,9 @@ class Problem:
                     tf.stack(d) for d in list(zip(*[x for x in self.dataset]))]
 
             def value_fn():
-                return [tf.random.shuffle(dim) for dim in self.dataset_array]
+                return [
+                    tf.random.shuffle(dim)[:self.batch_size * unroll]
+                    for dim in self.dataset_array]
 
             @tf.function
             def inner():

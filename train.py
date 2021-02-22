@@ -16,7 +16,6 @@ Optional flags:
 import os
 import sys
 
-import l2o
 from config import get_default, get_preset, ArgParser
 from gpu_setup import create_distribute
 
@@ -50,6 +49,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 if gpu_number is not None:
     os.environ["CUDA_VISIBLE_DEVICES"] = gpu_number
 import tensorflow as tf
+import l2o
 
 with distribute.scope():
     # Build strategy
