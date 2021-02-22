@@ -113,7 +113,8 @@ class TrainingMixin:
 
         # Dataset includes warmup
         dataset = meta.problem.get_dataset(
-            meta.unroll_len, epochs * (depth + meta.warmup), seed=meta.seed)
+            meta.unroll_len, epochs * (depth + meta.warmup), seed=meta.seed,
+            load_all=True)
 
         # NOTE: Random seeds are totally fucked
         # (I have no idea what is going on)

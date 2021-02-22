@@ -119,7 +119,19 @@ OVERRIDE_PRESETS = {
     "noscale": [
         (["training", "scale_objective"], False),
         (["strategy", "annealing_schedule", "value"], 0.25)
-    ]
+    ],
+    "long": [
+        (["strategy", "unroll_len"], 100),
+        (["strategy", "depth"], 5),
+        (["strategy", "validation_unroll"], 100),
+        (["strategy", "validation_depth"], 5),
+        (["strategy", "warmup"], {
+            "type": "list", "values": [0, 1]}),
+        (["strategy", "warmup_rate"], {
+            "type": "list", "values": [0.0, 0.05]}),
+        (["strategy", "validation_warmup"], 1),
+        (["strategy", "validation_warmup_rate"], 0.05)
+    ],
 }
 
 

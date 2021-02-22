@@ -46,6 +46,7 @@ class Problem:
             shuffle_buffer=None, batch_size=32, size=None, config=None):
 
         self.dataset = dataset
+        self.dataset_array = None
         self.model = model
         self.loss = loss
 
@@ -126,7 +127,7 @@ class Problem:
         distribute = tf.distribute.get_strategy()
         return self._get_parameters(distribute, seed=seed)
 
-    def get_dataset(self, unroll, length, seed=None):
+    def get_dataset(self, unroll, length, seed=None, load_all=True):
         """Get problem dataset.
 
         Parameters
@@ -140,6 +141,9 @@ class Problem:
         ------------
         seed : int
             Random seed to intialize with.
+        load_all : bool
+            If True, loads all data into memory and returns shuffled views for
+            each replica. Otherwise, uses traditional tf.data pipeline.
 
         Returns
         -------
@@ -150,16 +154,34 @@ class Problem:
         """
         distribute = tf.distribute.get_strategy()
 
-        dataset = self.dataset.repeat(math.ceil(
-            self._adjusted_size(unroll) * length / self._size))
-        if self.shuffle_buffer is not None:
-            dataset = dataset.shuffle(
-                self.shuffle_buffer, seed=seed, reshuffle_each_iteration=True)
-        return distribute.experimental_distribute_dataset(
-            dataset
-            .batch(self._adjusted_size(unroll), drop_remainder=True)
-            .take(length)
-            .prefetch(tf.data.experimental.AUTOTUNE))
+        # Load & view
+        if load_all:
+            if self.dataset_array is None:
+                self.dataset_array = [
+                    tf.stack(d) for d in list(zip(*[x for x in self.dataset]))]
+
+            def value_fn():
+                return [tf.random.shuffle(dim) for dim in self.dataset_array]
+
+            @tf.function
+            def inner():
+                return distribute.run(value_fn)
+
+            return (inner() for _ in range(length))
+
+        # Traditional pipeline
+        else:
+            dataset = self.dataset.repeat(math.ceil(
+                self._adjusted_size(unroll) * length / self._size))
+            if self.shuffle_buffer is not None:
+                dataset = dataset.shuffle(
+                    self.shuffle_buffer, seed=seed,
+                    reshuffle_each_iteration=True)
+            return distribute.experimental_distribute_dataset(
+                dataset
+                .batch(self._adjusted_size(unroll), drop_remainder=True)
+                .take(length)
+                .prefetch(tf.data.experimental.AUTOTUNE))
 
     def objective(self, parameters, data):
         """Objective function.
