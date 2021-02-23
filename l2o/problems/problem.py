@@ -157,23 +157,20 @@ class Problem:
         # Load & view
         if load_all:
             if self.dataset_array is None:
-
-                def value_make():
-                    return [
-                        tf.stack(d) for d in
-                        list(zip(*[x for x in self.dataset]))]
+                tmp = [
+                    tf.stack(d) for d in
+                    list(zip(*[x for x in self.dataset]))]
 
                 @tf.function
                 def inner_make():
-                    return distribute.run(value_make)
+                    return distribute.run(lambda: tmp)
 
                 self.dataset_array = inner_make()
 
             def value_get(arr):
                 return [
                     tf.random.shuffle(dim)[:self.batch_size * unroll]
-                    for dim in arr
-                ]
+                    for dim in arr]
 
             @tf.function
             def inner_get():
