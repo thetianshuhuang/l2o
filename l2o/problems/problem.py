@@ -168,9 +168,10 @@ class Problem:
                 self.dataset_array = inner_make()
 
             def value_get(arr):
-                return [
-                    tf.random.shuffle(dim)[:self.batch_size * unroll]
-                    for dim in arr]
+                indices = tf.random.shuffle(tf.range(
+                    start=0, limit=tf.shape(arr[0])[0], dtype=tf.int32)
+                )[:self.batch_size * unroll]
+                return [tf.gather(dim, indices) for dim in arr]
 
             @tf.function
             def inner_get():
