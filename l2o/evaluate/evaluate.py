@@ -114,7 +114,8 @@ def evaluate(
     batch_tracking = BatchTracker()
 
     results = model.fit(
-        _batch(ds_train.shuffle(buffer_size=batch_size * 16)),
+        _batch(ds_train.shuffle(
+            buffer_size=batch_size * 16, reshuffle_each_iteration=True)),
         validation_data=_batch(ds_val),
         epochs=epochs,
         callbacks=[time_tracking, batch_tracking])
