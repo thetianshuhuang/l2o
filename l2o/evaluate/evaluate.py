@@ -1,64 +1,11 @@
 """Optimizer evaluation."""
 
-import json
-import time
-
 import tensorflow as tf
-import numpy as np
 
 from l2o.problems import load_images
 from l2o import deserialize
 from . import models
-
-
-class EpochTimeTracker(tf.keras.callbacks.Callback):
-    """Callback to add time tracking to tf.keras.Model.fit."""
-
-    def on_train_begin(self, logs=None):
-        """Called at the beginning of training."""
-        self.times = []
-        self.start_time = time.time()
-
-    def on_epoch_end(self, epoch, logs=None):
-        """Called at the end of an epoch."""
-        self.times.append(time.time() - self.start_time)
-
-
-class BatchTracker(tf.keras.callbacks.Callback):
-    """Callback to track loss and accuracy on a per-batch basis."""
-
-    def on_epoch_begin(self, epoch, logs=None):
-        """Count iterations within each epoch."""
-        self.idx = 0
-        self._prev = {}
-
-    def _subtract(self, logs, key):
-        """Get loss for batch n from average.
-
-        Since tensorflow is fucking stupid and doesn't expose the current
-        batch loss and only the current epoch cumulative average, we must
-        reverse engineer it here.
-        """
-        x = logs.get(key)
-        if key in self._prev:
-            val = (self.idx * x) - ((self.idx - 1) * self._prev[key])
-            self._prev[key] = x
-            return val
-        else:
-            self._prev[key] = x
-            return x
-
-    def on_train_begin(self, logs=None):
-        """Called at the beginning of training."""
-        self.loss = []
-        self.accuracy = []
-
-    def on_train_batch_end(self, batch, logs=None):
-        """Called after training each batch."""
-        self.idx += 1
-        self.loss.append(self._subtract(logs, "loss"))
-        self.accuracy.append(
-            self._subtract(logs, "sparse_categorical_accuracy"))
+from .fit import model_fit
 
 
 def evaluate(
@@ -87,12 +34,14 @@ def evaluate(
 
     Returns
     -------
-    dict
-        Tensorflow "history" object.
+    dict, with keys:
         loss: float[]
+        batch_loss: float[]
         sparse_categorical_accuracy: float[]
         val_loss: float[]
         val_sparse_categorical_accuracy: float[]
+        batch_time : float[]
+        epoch_time : float[]
     """
     ds_train, info_train = load_images(dataset, split="train")
     ds_val, info_val = load_images(dataset, split="test")
@@ -102,27 +51,15 @@ def evaluate(
         message="training model", default="simple_conv")
     model = model(info_train, **config)
     model.compile(
-        optimizer=opt,
-        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-        metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
+        optimizer=opt, loss=tf.keras.losses.SparseCategoricalCrossentropy())
 
     def _batch(ds):
         return ds.batch(
             batch_size=batch_size).prefetch(tf.data.experimental.AUTOTUNE)
 
-    time_tracking = EpochTimeTracker()
-    batch_tracking = BatchTracker()
-
-    results = model.fit(
+    return model_fit(
+        model,
         _batch(ds_train.shuffle(
             buffer_size=batch_size * 16, reshuffle_each_iteration=True)),
-        validation_data=_batch(ds_val),
-        epochs=epochs,
-        callbacks=[time_tracking, batch_tracking])
-
-    # Add custom tracking for time, per-batch stats
-    results = dict(
-        **results.history, epoch_time=time_tracking.times,
-        batch_loss=batch_tracking.loss, batch_accuracy=batch_tracking.accuracy)
-    # numpy-ify lists
-    return {k: np.array(v, dtype=np.float32) for k, v in results.items()}
+        _batch(ds_val), epochs=epochs,
+        metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
