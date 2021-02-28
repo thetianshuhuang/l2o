@@ -3,9 +3,7 @@
 import time
 import tensorflow as tf
 import numpy as np
-import tqdm
-
-from tensorflow.keras.utils import Progbar
+from tqdm import tqdm
 
 
 def model_fit(model, train, test, epochs=1, metrics=[]):
