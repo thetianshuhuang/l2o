@@ -1,6 +1,7 @@
 """Learned optimizer training strategy."""
 
 import os
+import time
 import pandas as pd
 import numpy as np
 import tensorflow as tf
@@ -63,7 +64,7 @@ class BaseStrategy:
             self._resume()
         except FileNotFoundError:
             columns = dict(
-                validation=float,
+                validation=float, time=float, duration=float,
                 **self.metadata_columns,
                 **self.hyperparameter_columns,
                 **{k: float for k in self.learner.mean_stats})
@@ -126,7 +127,9 @@ class BaseStrategy:
         except IndexError:
             raise Exception("Entry not found: {}".format(kwargs))
 
-    def _append(self, train_args, training_stats, validation_stats, metadata):
+    def _append(
+            self, train_args, training_stats, validation_stats, metadata,
+            start_time):
         """Save training and validation statistics.
 
         Parameters
@@ -142,10 +145,14 @@ class BaseStrategy:
             Validation statistics; ``meta`` is saved.
         metadata : dict
             Strategy metadata; also determines saved filepath (if applicable).
+        start_time : float
+            Period start time.
         """
         # Save scalar summary values
         new_row = dict(
-            validation=validation_stats["meta_loss"], **metadata,
+            validation=validation_stats["meta_loss"],
+            time=time.time(), duration=time.time() - start_time,
+            **metadata,
             **{k: train_args[k] for k in self.hyperparameter_columns},
             **{k: training_stats[k] for k in self.learner.mean_stats})
         self.summary = self.summary.append(new_row, ignore_index=True)
@@ -185,6 +192,8 @@ class BaseStrategy:
         eval_args : dict
             If eval_file is not None, pass these arguments to evaluate.
         """
+        start_time = time.time()
+
         # Train for ``epochs_per_period`` meta-epochs
         print("Training:")
         self.learner.network.train = True
@@ -203,7 +212,8 @@ class BaseStrategy:
             training_stats["imitation_loss"], training_stats["meta_loss"],
             validation_stats["meta_loss"]))
         self._save_network(**metadata)
-        self._append(train_args, training_stats, validation_stats, metadata)
+        self._append(
+            train_args, training_stats, validation_stats, metadata, start_time)
 
         # Evaluate (if applicable)
         if eval_file is not None:
@@ -245,13 +255,13 @@ class BaseStrategy:
 
         results = []
         for i in range(repeat):
-            print("Evaluation Training {}/{}".format(i + 1, repeat))
             opt = self.learner.network.architecture(
                 self.learner.network,
                 warmup=self.validation_warmup * self.validation_unroll,
                 warmup_rate=self.validation_warmup_rate,
                 name="OptimizerEvaluation")
-            results.append(evaluate(opt, **kwargs))
+            results.append(evaluate(
+                opt, desc="{}/{}".format(i + 1, repeat), **kwargs))
         results = {k: np.stack([d[k] for d in results]) for k in results[0]}
 
         if file is not None:

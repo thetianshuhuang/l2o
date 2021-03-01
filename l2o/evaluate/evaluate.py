@@ -10,7 +10,7 @@ from .fit import model_fit
 
 def evaluate(
         opt, config={}, target="conv_classifier", dataset="mnist", epochs=20,
-        batch_size=32):
+        batch_size=32, desc=None):
     """Evaluate L2O.
 
     Parameters
@@ -31,6 +31,8 @@ def evaluate(
         Number of epochs to train for
     batch_size : int
         Batch size for dataset.
+    desc : float
+        Evaluation description.
 
     Returns
     -------
@@ -61,5 +63,5 @@ def evaluate(
         model,
         _batch(ds_train.shuffle(
             buffer_size=batch_size * 100, reshuffle_each_iteration=True)),
-        _batch(ds_val), epochs=epochs,
+        _batch(ds_val), epochs=epochs, desc=desc,
         metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])

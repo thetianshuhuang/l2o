@@ -69,7 +69,7 @@ class RepeatStrategy(BaseStrategy):
 
     metadata_columns = {
         "period": int,
-        "repeat": int
+        "repeat": int,
     }
     hyperparameter_columns = {
         "warmup": int,
@@ -220,11 +220,11 @@ class RepeatStrategy(BaseStrategy):
             }
             metadata = {"period": self.period, "repeat": self.repeat}
 
-            print("--- Period {}, Repetition {} ---".format(
-                self.period, self.repeat))
-            print(", ".join([
+            hypers = ", ".join([
                 "{}={}".format(k, train_args[k])
-                for k in self.hyperparameter_columns]))
+                for k in self.hyperparameter_columns])
+            print("\nPeriod {}.{}: {}".format(
+                self.period, self.repeat, hypers))
 
             self._training_period(train_args, validation_args, metadata)
 

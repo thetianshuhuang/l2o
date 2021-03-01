@@ -28,6 +28,7 @@ OVERRIDE_PRESETS = {
         }
     )],
     "debug": [
+        (["strategy", "num_periods"], 3),
         (["strategy", "unroll_len"], 20),
         (["strategy", "depth"], 20),
         (["strategy", "epochs"], 2),
@@ -69,7 +70,7 @@ OVERRIDE_PRESETS = {
     "il_constant": [
         (["strategy", "annealing_schedule"],
          {"type": "constant", "value": 0.01}),
-        (["strategy", "num_periods"], 50)
+        (["strategy", "num_periods"], 50),
         (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
         (["training", "stack_stats", "*"], "teacher_counts"),
     ],

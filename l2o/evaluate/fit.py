@@ -6,7 +6,7 @@ import numpy as np
 from tqdm import tqdm
 
 
-def model_fit(model, train, test, epochs=1, metrics=[]):
+def model_fit(model, train, test, epochs=1, metrics=[], desc=None):
     """Custom implementation of tf.keras.models.Model.fit.
 
     See https://github.com/tensorflow/tensorflow/issues/39448
@@ -27,6 +27,8 @@ def model_fit(model, train, test, epochs=1, metrics=[]):
         Number of epochs to run.
     metrics : [callable(tf.Tensor, tf.Tensor) -> float]
         List of tensorflow metrics to evaluate.
+    desc : str
+        Description for display.
     """
     strategy = tf.distribute.get_strategy()
 
@@ -94,7 +96,7 @@ def model_fit(model, train, test, epochs=1, metrics=[]):
         stats["val_" + m.name] = []
 
     # Epoch loop
-    for _ in tqdm(range(epochs)):
+    for _ in tqdm(range(epochs), desc=desc):
         train_loss, train_time, train_metrics = run_loop(train, train_step)
         stats["batch_loss"] += train_loss
         stats["batch_time"] += train_time
