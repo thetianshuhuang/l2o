@@ -60,6 +60,6 @@ def evaluate(
     return model_fit(
         model,
         _batch(ds_train.shuffle(
-            buffer_size=batch_size * 16, reshuffle_each_iteration=True)),
+            buffer_size=batch_size * 100, reshuffle_each_iteration=True)),
         _batch(ds_val), epochs=epochs,
         metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])

@@ -25,8 +25,6 @@ class BaseStrategy:
     validation_problems : problems.Problem[] or None.
         List of problems to validate with. If None, validates on the training
         problem set.
-    epochs_per_period : int
-        Number of meta-epochs to train per training period
     validation_seed : int
         Seed for optimizee initialization during validation
     directory : str
@@ -47,8 +45,7 @@ class BaseStrategy:
 
     def __init__(
             self, learner, problems, validation_problems=None,
-            epochs_per_period=10, validation_seed=12345, directory="weights",
-            name="BaseStrategy"):
+            validation_seed=12345, directory="weights", name="BaseStrategy"):
 
         self.learner = learner
         self.name = name
@@ -57,7 +54,6 @@ class BaseStrategy:
         self.validation_problems = deserialize.problems(
             validation_problems, default=self.problems)
 
-        self.epochs_per_period = epochs_per_period
         self.validation_seed = validation_seed
         self.directory = directory
 
@@ -158,7 +154,10 @@ class BaseStrategy:
 
         # Save other values
         if len(self.learner.stack_stats) > 0:
-            data = {k: training_stats[k] for k in self.learner.stack_stats}
+            data = {
+                k: training_stats["__stack_" + k]
+                for k in self.learner.stack_stats
+            }
             dst = self._path(dtype="log", **metadata)
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             np.savez(dst, **data)
@@ -167,12 +166,6 @@ class BaseStrategy:
             self, train_args, validation_args, metadata, eval_file=None,
             eval_args={}):
         """Run a single training period.
-
-        1. Train for ``self.epochs_per_period`` outer epochs.
-        2. Validate for a single epoch, possibly using different problems and
-            settings.
-        3. Save network and optimizer state.
-        4. Save summary statistics.
 
         Parameters
         ----------
@@ -195,16 +188,12 @@ class BaseStrategy:
         # Train for ``epochs_per_period`` meta-epochs
         print("Training:")
         self.learner.network.train = True
-        training_stats = LossTracker()
-        for i in range(self.epochs_per_period):
-            print("Meta-Epoch {}/{}".format(i + 1, self.epochs_per_period))
-            training_stats.append(self.learner.train(
-                self.problems, validation=False, **train_args))
-        training_stats = training_stats.summarize(
-            self.learner.stack_stats, self.learner.mean_stats)
+        training_stats = self.learner.train(
+            self.problems, validation=False, **train_args)
 
         # Compute validation loss
         print("Validating:")
+        self.learner.network.train = False
         validation_stats = self.learner.train(
             self.validation_problems, validation=True,
             seed=self.validation_seed, **validation_args)

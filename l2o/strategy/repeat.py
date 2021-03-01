@@ -22,8 +22,6 @@ class RepeatStrategy(BaseStrategy):
     validation_problems : problems.ProblemSpec[] or None.
         List of problems to validate with. If None, validates on the training
         problem set.
-    epochs_per_period : int
-        Number of meta-epochs to train per training period
     validation_seed : int
         Seed for optimizee initialization during validation
     directory : str

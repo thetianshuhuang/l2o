@@ -40,8 +40,22 @@ class LossTracker:
                 self.data[k] = []
             self.data[k].append(self.to_numpy(v))
 
+    def __get_stack(self, k):
+        """Helper to get stacked key."""
+        try:
+            return self.data["__stack_" + k]
+        except KeyError:
+            return self.data[k]
+
     def summarize(self, stack_stats=[], mean_stats=[]):
         """Summarize data.
+
+        NOTE
+        ----
+        (1) Keys for stack_stats are mutated to allow the same key to appear in
+            both stack_stats and mean_stats.
+        (2) When stacking a value that appears in both stack_stats and
+            mean_stats, the already-stacked value is preferred if present.
 
         Parameters
         ----------
@@ -57,7 +71,8 @@ class LossTracker:
             whether key is in stack_stats or mean_stats. Statistics can be
             reduced with both ``stack`` and ``mean``.
         """
-        stack = {k: np.stack(self.data[k]) for k in stack_stats}
+        stack = {
+            "__stack_" + k: np.stack(self.__get_stack(k)) for k in stack_stats}
         mean = {k: np.mean(self.data[k]) for k in mean_stats}
 
         return {**stack, **mean}

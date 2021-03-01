@@ -66,47 +66,18 @@ OVERRIDE_PRESETS = {
             }
         }]
     )],
-    "log_teachers": [
-        (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
-        (["training", "stack_stats", "*"], "teacher_counts")
-    ],
-    "il_standard": [
-        (["strategy", "annealing_schedule"],
-         {"type": "exponential", "alpha": 0.2, "base": 1.0})
-    ],
     "il_constant": [
         (["strategy", "annealing_schedule"],
          {"type": "constant", "value": 0.01}),
+        (["strategy", "num_periods"], 50)
+        (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
+        (["training", "stack_stats", "*"], "teacher_counts"),
     ],
-    "il_constant_less": [
-        (["strategy", "annealing_schedule"],
-         {"type": "constant", "value": 0.001}),
-    ],
-    "depth_warmup": [(
-        ["strategy", "depth"],
-        {"type": "list", "values": [1, 2, 5, 10, 25]}
-    )],
-    "warmup_constant": [
-        (["strategy", "warmup"], 5),
-        (["strategy", "warmup_rate"], 0.05),
+    "warmup": [
+        (["strategy", "warmup"], {"type": "list", "values": [0, 5]}),
+        (["strategy", "warmup_rate"], {"type": "list", "values": [0.0, 0.05]}),
         (["strategy", "validation_warmup"], 5),
         (["strategy", "validation_warmup_rate"], 0.05)
-    ],
-    "warmup_warmup": [
-        (["strategy", "warmup"], {
-            "type": "list", "values": [0, 1, 2, 3, 4, 5]}),
-        (["strategy", "warmup_rate"], {
-            "type": "list", "values": [0.0, 0.01, 0.02, 0.03, 0.04, 0.05]}),
-        (["strategy", "validation_warmup"], 5),
-        (["strategy", "validation_warmup_rate"], 0.05)
-    ],
-    "warmup_more": [
-        (["strategy", "warmup"], {
-            "type": "list", "values": [0, 1, 2, 3, 4, 5]}),
-        (["strategy", "warmup_rate"], {
-            "type": "list", "values": [0.0, 0.02, 0.04, 0.06, 0.08, 0.1]}),
-        (["strategy", "validation_warmup"], 5),
-        (["strategy", "validation_warmup_rate"], 0.1)
     ],
     "huber": [
         (["training", "huber_delta"], 0.01)
@@ -125,10 +96,8 @@ OVERRIDE_PRESETS = {
         (["strategy", "depth"], 5),
         (["strategy", "validation_unroll"], 100),
         (["strategy", "validation_depth"], 5),
-        (["strategy", "warmup"], {
-            "type": "list", "values": [0, 1]}),
-        (["strategy", "warmup_rate"], {
-            "type": "list", "values": [0.0, 0.05]}),
+        (["strategy", "warmup"], {"type": "list", "values": [0, 1]}),
+        (["strategy", "warmup_rate"], {"type": "list", "values": [0.0, 0.05]}),
         (["strategy", "validation_warmup"], 1),
         (["strategy", "validation_warmup_rate"], 0.05)
     ],

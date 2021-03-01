@@ -44,7 +44,7 @@ def load_images(dataset, split="train"):
         [1] tfds info object.
     """
     dataset, info = tfds.load(
-        dataset, split=split, shuffle_files=False,
+        dataset, split=split, shuffle_files=True,
         with_info=True, as_supervised=True)
 
     def _cast(x, y):
