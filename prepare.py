@@ -17,7 +17,7 @@ python3 evaluate.py \\
     --problem={problem} \\
     --directory=results/{policy}/{flags} \\
     --repeat=10 \\
-    --periods=49
+    --periods=24
 """
 
 BASE_RUNNER = (

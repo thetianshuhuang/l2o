@@ -53,7 +53,7 @@ def model_fit(model, train, test, epochs=1, metrics=[], desc=None):
     @tf.function
     def train_step(batch):
         losses = strategy.run(_train_step, args=(batch,))
-        return strategy.reduce(tf.distribute.ReduceOp.MEAN, losses, axis=None)
+        return strategy.reduce(tf.distribute.ReduceOp.SUM, losses, axis=None)
 
     # Test
     def _test_step(batch):
@@ -67,7 +67,7 @@ def model_fit(model, train, test, epochs=1, metrics=[], desc=None):
     @tf.function
     def test_step(batch):
         losses = strategy.run(_test_step, args=(batch,))
-        return strategy.reduce(tf.distribute.ReduceOp.MEAN, losses, axis=None)
+        return strategy.reduce(tf.distribute.ReduceOp.SUM, losses, axis=None)
 
     # Train/test loop
     def run_loop(dataset, step):
