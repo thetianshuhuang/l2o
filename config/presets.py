@@ -109,7 +109,29 @@ OVERRIDE_PRESETS = {
         (["strategy", "validation_depth"], 5),
     ],
     "2x": [(["strategy", "epochs"], 20)],
-    "5x": [(["strategy", "epochs"], 50)]
+    "5x": [(["strategy", "epochs"], 50)],
+    "ultrashort": [(
+        ["strategy"],
+        {
+            "validation_problems": None,
+            "validation_seed": 12345,
+            "num_periods": 25,
+            "unroll_len": 100,
+            "depth": 5,
+            "epochs": 2,
+            "annealing_schedule": {"type": "constant", "value": 0.0},
+            "validation_epochs": 1,
+            "validation_unroll": 100,
+            "validation_depth": 5,
+            "max_repeat": 4,
+            "repeat_threshold": 0.9,
+            "warmup": {"type": "list", "values": [0, 1]},
+            "warmup_rate": {"type": "list", "values": [0.0, 0.05]},
+            "validation_warmup": 0,
+            "validation_warmup_rate": 0.01,
+            "name": "RepeatStrategy"
+        }
+    )],
 }
 
 
