@@ -127,8 +127,8 @@ OVERRIDE_PRESETS = {
             "repeat_threshold": 0.9,
             "warmup": {"type": "list", "values": [0, 1]},
             "warmup_rate": {"type": "list", "values": [0.0, 0.05]},
-            "validation_warmup": 0,
-            "validation_warmup_rate": 0.01,
+            "validation_warmup": 1,
+            "validation_warmup_rate": 0.05,
             "name": "RepeatStrategy"
         }
     )],
