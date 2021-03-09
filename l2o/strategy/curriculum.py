@@ -106,7 +106,7 @@ class CurriculumLearningStrategy(BaseStrategy):
         if self.period == 0:
             return False
 
-        p_last = self._get(**self.complete_metadata(
+        p_last = self._get(**self._complete_metadata(
             {"stage": self.stage, "period": self.period - 1}))
         p_current = self._get(**self._complete_metadata(
             {"stage": self.stage, "period": self.period}))
@@ -124,8 +124,8 @@ class CurriculumLearningStrategy(BaseStrategy):
         if self.period < self.num_periods:
             return True
 
-        _df = self._filter(stage=metadata["stage"])
-        stage_best = _df.iloc[df["validation"].idxmin()]
+        _df = self._filter(stage=self.stage)
+        stage_best = _df.iloc[_df["validation"].idxmin()]
         return self.period - stage_best["period"] < self.num_chances
 
     def _complete_metadata(self, metadata):
@@ -155,7 +155,16 @@ class CurriculumLearningStrategy(BaseStrategy):
 
     def _resume(self):
         """Resume current optimization."""
-        pass
+        self.stage = self.summary["stage"].max()
+        self.period = self._filter(stage=self.stage)["period"].max()
+        self.repeat = self._filter(
+            stage=self.stage, period=self.period)["repeat"].max()
+
+        if self._check_repeat():
+            self.repeat += 1
+        else:
+            self.period += 1
+            self.repeat = 0
 
     def _start(self):
         """Start new optimization."""
