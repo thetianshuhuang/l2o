@@ -1,16 +1,14 @@
-"""Simple Training Strategy.
-
-TODO: update API & fix to reflect new changes.
-"""
+"""Simple Iterative Training Strategy."""
 
 import os
+import numpy as np
 
 from .strategy import BaseStrategy
 from l2o import deserialize
 
 
 class SimpleStrategy(BaseStrategy):
-    """Basic Iterative Training Strategy.
+    """Simple Iterative Training Strategy.
 
     Parameters
     ----------
@@ -32,38 +30,49 @@ class SimpleStrategy(BaseStrategy):
         Strategy name.
     num_periods : int
         Number of periods to train for
-    unroll_distribution : callable(() -> int) or int or float
-        callable: function returning the the unroll length; is rerolled each
-            epoch within each training problem.
-        int: fixed unroll length.
-        float: sets unroll_distribution ~ Geometric(x)
-    depth : int
-        Number of outer steps per outer epoch (number of outer steps
-        before resetting training problem)
-    epochs : int
-        Number of outer epochs to run.
-    annealing_schedule : callable(int -> float) or float or float[]
-        callable: function returning the probability of choosing imitation
-            learning for a given period. The idea is to anneal this to 0.
-        float: sets annealing_schedule ~ exp(-i * x)
-        float[]: specify the annealing schedule explicitly as a list or tuple.
+    unroll_len : integer_schedule
+        Specifies unroll length for each period.
+    depth : integer_schedule
+        Specifies number of outer steps per outer epoch for each period
+        (number of outer steps before resetting training problem)
+    epochs : integer_schedule
+        Specifies number of outer epochs to run for each period.
+    annealing_schedule : float_schedule
+        Specifies p_teacher for each period.
     validation_epochs : int
         Number of outer epochs during validation.
     validation_depth : int
         Depth during validation.
     validation_unroll : int
         Unroll length to use for validation.
+    warmup : integer_schedule
+        Number of iterations for warmup; if 0, no warmup is applied.
+    warmup_rate : float_schedule
+        SGD Learning rate during warmup period.
+    validation_warmup : int
+        Number of iterations for warmup during validation.
+    validation_warmup_rate : float
+        SGD learning rate during warmup for validation.
     """
 
-    metadata_columns = {"period": int}
+    metadata_columns = {
+        "period": int,
+    }
+    hyperparameter_columns = {
+        "warmup": int,
+        "warmup_rate": float,
+        "p_teacher": float,
+        "depth": int,
+        "unroll_len": int,
+        "epochs": int,
+    }
 
     def __init__(
-            self, *args, num_periods=100, unroll_distribution=200, epochs=1,
+            self, *args, num_periods=100, unroll_len=200, epochs=1,
             depth=1, annealing_schedule=0.1, validation_epochs=None,
-            validation_depth=None, validation_unroll=None,
+            validation_depth=None, validation_unroll=None, warmup=0,
+            warmup_rate=0.01, validation_warmup=0, validation_warmup_rate=0.01,
             name="SimpleStrategy", **kwargs):
-
-        super().__init__(*args, name=name, **kwargs)
 
         self.num_periods = num_periods
 
@@ -72,21 +81,27 @@ class SimpleStrategy(BaseStrategy):
 
         self.validation_epochs = _default(validation_epochs, epochs)
         self.validation_depth = _default(validation_depth, depth)
-        validation_unroll = _default(validation_unroll, unroll_distribution)
+        self.validation_unroll = _default(validation_unroll, unroll_len)
 
-        self.epochs = epochs
-        self.depth = depth
-
-        self.validation_unroll = deserialize.integer_distribution(
-            validation_unroll, name="validation_unroll")
-        self.unroll_distribution = deserialize.integer_distribution(
-            unroll_distribution, name="unroll")
+        self.epochs = deserialize.integer_schedule(epochs, name="epochs")
+        self.depth = deserialize.integer_schedule(depth, name="depth")
+        self.unroll_len = deserialize.integer_schedule(
+            unroll_len, name="unroll")
         self.annealing_schedule = deserialize.float_schedule(
             annealing_schedule, name="annealing")
 
-    def _path(self, period=0):
+        self.warmup_schedule = deserialize.integer_schedule(
+            warmup, name="warmup")
+        self.warmup_rate_schedule = deserialize.float_schedule(
+            warmup_rate, name="warmup_rate")
+        self.validation_warmup = validation_warmup
+        self.validation_warmup_rate = validation_warmup_rate
+
+        super().__init__(*args, name=name, **kwargs)
+
+    def _path(self, period=0, dtype="checkpoint", file="test"):
         """Get file path for the given metadata."""
-        return os.path.join(self.directory, "period_{}".format(int(period)))
+        return self._base_path("period_{:n}".format(period), dtype)
 
     def _resume(self):
         """Resume current optimization."""
@@ -103,18 +118,28 @@ class SimpleStrategy(BaseStrategy):
 
         while self.period < self.num_periods:
 
-            p_teacher = self.annealing_schedule(self.period)
-            print("--- Period {} [p_teacher={}] ---".format(
-                self.period, p_teacher))
-
             train_args = {
-                "unroll_len": self.unroll_distribution, "p_teacher": p_teacher,
-                "depth": self.depth, "epochs": self.epochs}
+                "unroll_len": self.unroll_len(self.period),
+                "p_teacher": self.annealing_schedule(self.period),
+                "warmup": self.warmup_schedule(self.period),
+                "warmup_rate": self.warmup_rate_schedule(self.period),
+                "depth": self.depth(self.period),
+                "epochs": self.epochs(self.period)
+            }
             validation_args = {
-                "unroll_len": self.validation_unroll, "p_teacher": 0,
+                "unroll_len": self.validation_unroll,
+                "p_teacher": 0,
+                "warmup": self.validation_warmup,
+                "warmup_rate": self.validation_warmup_rate,
                 "depth": self.validation_depth,
-                "epochs": self.validation_epochs}
+                "epochs": self.validation_epochs
+            }
             metadata = {"period": self.period}
+
+            hypers = ", ".join([
+                "{}={}".format(k, train_args[k])
+                for k in self.hyperparameter_columns])
+            print("\nPeriod {}: {}".format(self.period, hypers))
 
             self._training_period(train_args, validation_args, metadata)
             self.period += 1

@@ -1,4 +1,4 @@
-"""Period Repetition (Checkpoint Reversion) Strategy."""
+"""Curriculum Learning Strategy."""
 
 import os
 import numpy as np
@@ -7,8 +7,8 @@ from .strategy import BaseStrategy
 from l2o import deserialize
 
 
-class RepeatStrategy(BaseStrategy):
-    """Iterative training strategy with period repetition if loss explodes.
+class CurriculumLearningStrategy(BaseStrategy):
+    """Curriculum Learning Strategy.
 
     Parameters
     ----------
@@ -28,31 +28,26 @@ class RepeatStrategy(BaseStrategy):
         Directory to save weights and other data to
     name : str
         Strategy name.
+    num_stages : int
+        Number of curriculum stages.
     num_periods : int
-        Number of periods to train for
+        Minimum number of periods per stage.
+    num_chances : int
+        Number of tries to decrease best validation loss before giving up.
     unroll_len : integer_schedule
-        Specifies unroll length for each period.
+        Specifies unroll length for each stage.
     depth : integer_schedule
-        Specifies number of outer steps per outer epoch for each period
-        (number of outer steps before resetting training problem)
+        Specifies number of outer steps per outer epoch for each stage.
     epochs : integer_schedule
         Specifies number of outer epochs to run for each period.
     annealing_schedule : float_schedule
-        Specifies p_teacher for each period.
+        Specifies p_teacher for each stage.
     validation_epochs : int
         Number of outer epochs during validation.
-    validation_depth : int
-        Depth during validation.
-    validation_unroll : int
-        Unroll length to use for validation.
     warmup : integer_schedule
         Number of iterations for warmup; if 0, no warmup is applied.
     warmup_rate : float_schedule
         SGD Learning rate during warmup period.
-    validation_warmup : int
-        Number of iterations for warmup during validation.
-    validation_warmup_rate : float
-        SGD learning rate during warmup for validation.
     max_repeat : int
         Maximum number of times to repeat period if loss explodes. If
         max_repeat is 0, will repeat indefinitely.
@@ -62,8 +57,9 @@ class RepeatStrategy(BaseStrategy):
     """
 
     metadata_columns = {
+        "stage": int,
         "period": int,
-        "repeat": int,
+        "repeat": int
     }
     hyperparameter_columns = {
         "warmup": int,
@@ -75,22 +71,19 @@ class RepeatStrategy(BaseStrategy):
     }
 
     def __init__(
-            self, *args, num_periods=100, unroll_len=200, epochs=1,
-            depth=1, annealing_schedule=0.1, validation_epochs=None,
-            validation_depth=None, validation_unroll=None, max_repeat=0,
-            repeat_threshold=0.1, warmup=0, warmup_rate=0.01,
-            validation_warmup=0, validation_warmup_rate=0.01,
-            name="RepeatStrategy", **kwargs):
+            self, *args, num_stages=5, num_periods=10, num_chances=3,
+            unroll_len=200, epochs=1, depth=1, annealing_schedule=0.1,
+            validation_epochs=None, max_repeat=0, repeat_threshold=0.1,
+            warmup=0, warmup_rate=0.01, name="CurriculumLearningStrategy",
+            **kwargs):
 
+        self.num_stages = num_stages
         self.num_periods = num_periods
 
         def _default(val, default):
             return val if val is not None else default
 
         self.validation_epochs = _default(validation_epochs, epochs)
-        self.validation_depth = _default(validation_depth, depth)
-        self.validation_unroll = _default(validation_unroll, unroll_len)
-
         self.epochs = deserialize.integer_schedule(epochs, name="epochs")
         self.depth = deserialize.integer_schedule(depth, name="depth")
         self.unroll_len = deserialize.integer_schedule(
@@ -105,72 +98,68 @@ class RepeatStrategy(BaseStrategy):
             warmup, name="warmup")
         self.warmup_rate_schedule = deserialize.float_schedule(
             warmup_rate, name="warmup_rate")
-        self.validation_warmup = validation_warmup
-        self.validation_warmup_rate = validation_warmup_rate
 
         super().__init__(*args, name=name, **kwargs)
 
     def _check_repeat(self):
         """Check if current period should be repeated."""
-        # Never repeat first period
         if self.period == 0:
             return False
 
-        # Get loss for current and previous period
-        p_last = self._get(
-            period=self.period - 1,
-            repeat=self._filter(period=self.period - 1)["repeat"].max())
-        p_current = self._get(
-            period=self.period,
-            repeat=self._filter(period=self.period)["repeat"].max())
+        p_last = self._get(**self.complete_metadata(
+            {"stage": self.stage, "period": self.period - 1}))
+        p_current = self._get(**self._complete_metadata(
+            {"stage": self.stage, "period": self.period}))
 
-        # Check for exceeding max_repeat limit
         if self.max_repeat > 0 and p_current["repeat"] >= self.max_repeat:
             return False
 
-        # Check explosion
         max_loss = (
             np.abs(p_last["validation"]) * self.repeat_threshold
             + p_last["validation"])
         return max_loss < p_current["validation"]
 
-    def _load_previous(self):
-        """Load network from previous period for resuming or repeating."""
-        self._load_network(
-            period=self.period - 1,
-            repeat=self._filter(period=self.period - 1)["repeat"].max())
+    def _continue_stage(self):
+        """Check if current stage should continue."""
+        if self.period < self.num_periods:
+            return True
 
-    def _path(self, period=0, repeat=0, dtype="checkpoint", file="test"):
-        """Get file path for the given metadata."""
-        return self._base_path(
-            "period_{:n}.{:n}".format(period, repeat), dtype)
+        _df = self._filter(stage=metadata["stage"])
+        stage_best = _df.iloc[df["validation"].idxmin()]
+        return self.period - stage_best["period"] < self.num_chances
 
     def _complete_metadata(self, metadata):
         """Complete metadata with strategy-dependent fields."""
+        if "stage" not in metadata:
+            metadata["stage"] = self.stage
+        if "period" not in metadata:
+            _df = self._filter(stage=metadata["stage"])
+            metadata["period"] = _df.iloc[_df["validation"].idxmin()]
         if "repeat" not in metadata:
-            return {
-                "period": metadata["period"],
-                "repeat": self._filter(
-                    period=metadata["period"])["repeat"].max()
-            }
-        else:
-            return metadata
+            metadata["repeat"] = self._filter(
+                stage=metadata["stage"], period=metadata["period"]
+            )["repeat"].max()
+        return metadata
+
+    def _load_previous(self):
+        """Load network from previous period for resuming or repeating."""
+        self._load_network(
+            **self._complete_metadata(
+                {"stage": self.stage, "period": self.period - 1}))
+
+    def _path(
+            self, stage=0, period=0, repeat=0,
+            dtype="checkpoint", file="test"):
+        return self._base_path(
+            "stage_{:n}.{:n}.{:n}".format(stage, period, repeat), dtype)
 
     def _resume(self):
         """Resume current optimization."""
-        self.period = int(self.summary["period"].max())
-        self.repeat = self._filter(period=self.period)["repeat"].max()
-
-        # Repeat this period
-        if self._check_repeat():
-            self.repeat += 1
-        # Move on to next period
-        else:
-            self.period += 1
-            self.repeat = 0
+        pass
 
     def _start(self):
         """Start new optimization."""
+        self.stage = 0
         self.period = 0
         self.repeat = 0
 
@@ -179,38 +168,48 @@ class RepeatStrategy(BaseStrategy):
         if self.period > 0:
             self._load_previous()
 
-        while self.period < self.num_periods:
+        while self.stage < self.num_stages:
 
             train_args = {
-                "unroll_len": self.unroll_len(self.period),
-                "p_teacher": self.annealing_schedule(self.period),
-                "warmup": self.warmup_schedule(self.period),
-                "warmup_rate": self.warmup_rate_schedule(self.period),
-                "depth": self.depth(self.period),
-                "epochs": self.epochs(self.period)
+                "unroll_len": self.unroll_len(self.stage),
+                "p_teacher": self.annealing_schedule(self.stage),
+                "warmup": self.warmup_schedule(self.stage),
+                "warmup_rate": self.warmup_rate_schedule(self.stage),
+                "depth": self.depth(self.stage),
+                "epochs": self.epochs(self.stage)
             }
             validation_args = {
-                "unroll_len": self.validation_unroll,
+                "unroll_len": self.unroll_len(self.stage + 1),
                 "p_teacher": 0,
-                "warmup": self.validation_warmup,
-                "warmup_rate": self.validation_warmup_rate,
-                "depth": self.validation_depth,
-                "epochs": self.validation_epochs
+                "warmup": self.warmup_schedule(self.stage + 1),
+                "warmup_rate": self.warmup_rate_schedule(self.stage + 1),
+                "depth": self.depth(self.stage + 1),
+                "epochs": self.epochs(self.stage + 1)
             }
-            metadata = {"period": self.period, "repeat": self.repeat}
+            metadata = {
+                "stage": self.stage,
+                "period": self.period,
+                "repeat": self.repeat
+            }
 
             hypers = ", ".join([
                 "{}={}".format(k, train_args[k])
                 for k in self.hyperparameter_columns])
-            print("\nPeriod {}.{}: {}".format(
-                self.period, self.repeat, hypers))
+            print("\nStage {}.{}.{}: {}".format(
+                self.stage, self.period, self.repeat, hypers))
 
             self._training_period(train_args, validation_args, metadata)
 
-            # Handle repetition
+            # Stage/Period/Repeat logic
             if self._check_repeat():
                 self.repeat += 1
                 self._load_previous()
-            else:
+            elif self._continue_stage():
                 self.period += 1
+                self.repeat = 0
+            else:
+                self._load_network(
+                    **self._complete_metadata({"stage": self.stage}))
+                self.stage += 1
+                self.period = 0
                 self.repeat = 0

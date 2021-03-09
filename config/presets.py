@@ -80,14 +80,6 @@ OVERRIDE_PRESETS = {
         (["strategy", "validation_warmup"], 5),
         (["strategy", "validation_warmup_rate"], 0.05)
     ],
-    "huber": [
-        (["training", "huber_delta"], 0.01)
-    ],
-    "clip": [(
-        ["training", "gradient_clipping"],
-        {"class_name": "AdaptiveGC",
-         "config": {"clip_ratio": 0.1, "epsilon": 1e-3}}
-    )],
     "noscale": [
         (["training", "scale_objective"], False),
         (["strategy", "annealing_schedule", "value"], 0.25)
@@ -110,17 +102,17 @@ OVERRIDE_PRESETS = {
     ],
     "2x": [(["strategy", "epochs"], 20)],
     "5x": [(["strategy", "epochs"], 50)],
-    "ultrashort": [(
+    "final": [(
         ["strategy"],
         {
             "validation_problems": None,
             "validation_seed": 12345,
-            "num_periods": 25,
+            "num_periods": 3,
             "unroll_len": 100,
             "depth": 5,
-            "epochs": 2,
+            "epochs": {"type": "list", "values": [2, 100]},
             "annealing_schedule": {"type": "constant", "value": 0.0},
-            "validation_epochs": 1,
+            "validation_epochs": 5,
             "validation_unroll": 100,
             "validation_depth": 5,
             "max_repeat": 4,

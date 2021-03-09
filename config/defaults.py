@@ -22,8 +22,8 @@ BASE = {
         "obj_train_max_multiplier": -1,
         "huber_delta": -1,
         "gradient_clipping": {
-            "class_name": "SimpleGC",
-            "config": {"clip_value": -1}
+            "class_name": "AdaptiveGC",
+            "config": {"clip_ratio": 0.1, "epsilon": 1e-3}
         },
         "epsilon": 1e-10,
         "step_callbacks": [],
@@ -67,6 +67,10 @@ STRATEGY = {
             "validation_epochs": 2,
             "validation_unroll": 20,
             "validation_depth": 25,
+            "warmup": {"type": "constant", "value": 0},
+            "warmup_rate": {"type": "constant", "value": 0.01},
+            "validation_warmup": 0,
+            "validation_warmup_rate": 0.01,
             "name": "SimpleStrategy",
         }
     },
@@ -90,6 +94,26 @@ STRATEGY = {
             "validation_warmup": 0,
             "validation_warmup_rate": 0.01,
             "name": "RepeatStrategy",
+        }
+    },
+    "curriculum": {
+        "strategy_constructor": "CurriculumLearningStrategy",
+        "strategy": {
+            "validation_problems": None,
+            "validation_seed": 12345,
+            "num_stages": 5,
+            "num_periods": 2,
+            "num_chances": 3,
+            "unroll_len": {"type": "list", "value": [25, 50, 100, 200]},
+            "depth": 5,
+            "epochs": 10,
+            "annealing_schedule": {"type": "constant", "value": 0.0},
+            "validation_epochs": 10,
+            "max_repeat": 2,
+            "repeat_threshold": 0.8,
+            "warmup": {"type": "list", "value": [0, 1]},
+            "warmup_rate": {"type": "list", "value": [0, 0.05]},
+            "name": "CurriculumLearningStrategy"
         }
     }
 }

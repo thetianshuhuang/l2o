@@ -86,6 +86,17 @@ class BaseStrategy:
         """Start new optimization."""
         raise NotImplementedError()
 
+    def _base_path(self, base, dtype):
+        """Helper to handle path types using the standard filepath."""
+        if dtype == "checkpoint":
+            return os.path.join(self.directory, "checkpoint", base)
+        elif dtype == "log":
+            return os.path.join(self.directory, "log", base)
+        elif dtype == "eval":
+            return os.path.join(self.directory, "eval", file, base)
+        else:
+            raise ValueError("Invalid dtype {}.".format(dtype))
+
     def _path(self, dtype="checkpoints", file="test", **kwargs):
         """Get saved model file path.
 
