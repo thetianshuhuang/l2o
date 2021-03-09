@@ -79,6 +79,7 @@ class CurriculumLearningStrategy(BaseStrategy):
 
         self.num_stages = num_stages
         self.num_periods = num_periods
+        self.num_chances = num_chances
 
         def _default(val, default):
             return val if val is not None else default
@@ -124,8 +125,8 @@ class CurriculumLearningStrategy(BaseStrategy):
         if self.period < self.num_periods:
             return True
 
-        _df = self._filter(stage=self.stage)
-        stage_best = _df.iloc[_df["validation"].idxmin()]
+        stage_best = self.summary.iloc[
+            self._filter(stage=self.stage)["validation"].idxmin()]
         return self.period - stage_best["period"] < self.num_chances
 
     def _complete_metadata(self, metadata):
@@ -133,8 +134,9 @@ class CurriculumLearningStrategy(BaseStrategy):
         if "stage" not in metadata:
             metadata["stage"] = self.stage
         if "period" not in metadata:
-            _df = self._filter(stage=metadata["stage"])
-            metadata["period"] = _df.iloc[_df["validation"].idxmin()]
+            metadata["period"] = self.summary.iloc[
+                self._filter(stage=metadata["stage"])["validation"].idxmin()
+            ]["period"]
         if "repeat" not in metadata:
             metadata["repeat"] = self._filter(
                 stage=metadata["stage"], period=metadata["period"]
