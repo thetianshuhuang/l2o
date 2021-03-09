@@ -104,15 +104,15 @@ STRATEGY = {
             "num_stages": 5,
             "num_periods": 2,
             "num_chances": 3,
-            "unroll_len": {"type": "list", "value": [25, 50, 100, 200]},
+            "unroll_len": {"type": "list", "values": [25, 50, 100, 200]},
             "depth": 5,
             "epochs": 10,
             "annealing_schedule": {"type": "constant", "value": 0.0},
             "validation_epochs": 10,
             "max_repeat": 2,
             "repeat_threshold": 0.8,
-            "warmup": {"type": "list", "value": [0, 1]},
-            "warmup_rate": {"type": "list", "value": [0, 0.05]},
+            "warmup": {"type": "list", "values": [0, 1]},
+            "warmup_rate": {"type": "list", "values": [0, 0.05]},
             "name": "CurriculumLearningStrategy"
         }
     }
