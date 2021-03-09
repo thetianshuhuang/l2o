@@ -159,7 +159,7 @@ class RepeatStrategy(BaseStrategy):
     def _resume(self):
         """Resume current optimization."""
         self.period = int(self.summary["period"].max())
-        self.repeat = self._filter(period=self.period)["repeat"].max()
+        self.repeat = int(self._filter(period=self.period)["repeat"].max())
 
         # Repeat this period
         if self._check_repeat():

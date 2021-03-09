@@ -155,10 +155,10 @@ class CurriculumLearningStrategy(BaseStrategy):
 
     def _resume(self):
         """Resume current optimization."""
-        self.stage = self.summary["stage"].max()
-        self.period = self._filter(stage=self.stage)["period"].max()
-        self.repeat = self._filter(
-            stage=self.stage, period=self.period)["repeat"].max()
+        self.stage = int(self.summary["stage"].max())
+        self.period = int(self._filter(stage=self.stage)["period"].max())
+        self.repeat = int(self._filter(
+            stage=self.stage, period=self.period)["repeat"].max())
 
         if self._check_repeat():
             self.repeat += 1
