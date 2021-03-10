@@ -147,14 +147,12 @@ class RepeatStrategy(BaseStrategy):
 
     def _complete_metadata(self, metadata):
         """Complete metadata with strategy-dependent fields."""
+        if "period" not in metadata:
+            metadata["period"] = int(self.summary["period"].max())
         if "repeat" not in metadata:
-            return {
-                "period": metadata["period"],
-                "repeat": self._filter(
-                    period=metadata["period"])["repeat"].max()
-            }
-        else:
-            return metadata
+            metadata["repeat"] = int(self._filter(
+                period=metadata["period"])["repeat"].max())
+        return metadata
 
     def _resume(self):
         """Resume current optimization."""

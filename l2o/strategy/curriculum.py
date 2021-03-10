@@ -84,7 +84,6 @@ class CurriculumLearningStrategy(BaseStrategy):
         def _default(val, default):
             return val if val is not None else default
 
-        self.validation_epochs = _default(validation_epochs, epochs)
         self.epochs = deserialize.integer_schedule(epochs, name="epochs")
         self.depth = deserialize.integer_schedule(depth, name="depth")
         self.unroll_len = deserialize.integer_schedule(
@@ -99,6 +98,11 @@ class CurriculumLearningStrategy(BaseStrategy):
             warmup, name="warmup")
         self.warmup_rate_schedule = deserialize.float_schedule(
             warmup_rate, name="warmup_rate")
+
+        self.validation_epochs = _default(validation_epochs, epochs)
+        self.validation_warmup = self.warmup_schedule(self.num_stages)
+        self.validation_warmup_rate = self.warmup_rate_schedule(
+            self.num_stages)
 
         super().__init__(*args, name=name, **kwargs)
 

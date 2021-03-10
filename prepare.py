@@ -16,8 +16,7 @@ BASE_BLOCK = """python3 train.py \\
 python3 evaluate.py \\
     --problem={problem} \\
     --directory=results/{policy}/{flags} \\
-    --repeat=10 \\
-    --periods=24
+    --repeat=10
 """
 
 BASE_RUNNER = (

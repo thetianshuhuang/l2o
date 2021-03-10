@@ -74,7 +74,7 @@ def deep_warn_equal(d1, d2, d1name, d2name, strict=False):
             print("Warning: " + wstring)
 
 
-def build(config, overrides, directory="weights", strict=True):
+def build(config, overrides, directory="weights", strict=True, info=True):
     """Build learner, training, and strategy.
 
     Parameters
@@ -91,6 +91,8 @@ def build(config, overrides, directory="weights", strict=True):
     strict : bool
         If True, raises exception if config.json is already present and does
         not match ``config``.
+    info : bool
+        Flag to disable printing out config. Warnings/errors are not affected.
 
     Returns
     -------
@@ -113,8 +115,9 @@ def build(config, overrides, directory="weights", strict=True):
             json.dump(config, f, indent=4)
         print("Config saved to <{}/config.json>.".format(directory))
 
-    print("Configuration:")
-    pprint.pprint(config)
+    if info:
+        print("Configuration:")
+        pprint.pprint(config)
 
     # Build optimizer policy
     policy_constructor = l2o.deserialize.generic(

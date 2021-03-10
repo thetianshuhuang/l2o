@@ -23,14 +23,35 @@ distribute = create_distribute(vgpus=vgpus)
 problems = args.pop_get("--problem", "conv_train").split(",")
 targets = args.pop_get("--directory", "weights").split(",")
 repeat = int(args.pop_get("--repeat", 10))
-periods = [int(x) for x in args.pop_get("--periods", "99").split(",")]
+strategy = args.pop_get("--strategy", "repeat")
 
+if strategy == "repeat":
+    periods = args.pop_get("--periods", None)
+    if periods is None:
+        metadata = [{}]
+    else:
+        metadata = [{"period": int(pd)} for pd in periods.split(",")]
+
+if strategy == "curriculum":
+    stages = args.pop_get("--stages", None)
+    periods = args.pop_get("--periods", None)
+    if stages is None:
+        metadata = [{}]
+    elif periods is None:
+        metadata = [{"stage": int(s)} for s in stages.split(",")]
+    else:
+        metadata = [
+            {"stage": int(s), "period": int(p)}
+            for s, p in zip(stages.split(","), periods.split(","))
+        ]
 
 with distribute.scope():
     for tg in targets:
+        print("Strategy: {}".format(tg))
         strategy = l2o.strategy.build_from_config(tg)
-        for pd in periods:
+        for m in metadata:
+            print("Checkpoint: {}".format(m))
             for pr in problems:
+                print("Problem: {}".format(pr))
                 config = get_eval_problem(pr)
-                strategy.evaluate(
-                    metadata={"period": pd}, repeat=repeat, file=pr, **config)
+                strategy.evaluate(metadata=m, repeat=repeat, file=pr, **config)
