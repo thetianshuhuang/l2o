@@ -143,7 +143,7 @@ class RepeatStrategy(BaseStrategy):
     def _path(self, period=0, repeat=0, dtype="checkpoint", file="test"):
         """Get file path for the given metadata."""
         return self._base_path(
-            "period_{:n}.{:n}".format(period, repeat), dtype)
+            "period_{:n}.{:n}".format(period, repeat), dtype, file=file)
 
     def _complete_metadata(self, metadata):
         """Complete metadata with strategy-dependent fields."""

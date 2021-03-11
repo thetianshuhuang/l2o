@@ -86,7 +86,7 @@ class BaseStrategy:
         """Start new optimization."""
         raise NotImplementedError()
 
-    def _base_path(self, base, dtype):
+    def _base_path(self, base, dtype, file="test"):
         """Helper to handle path types using the standard filepath."""
         if dtype == "checkpoint":
             return os.path.join(self.directory, "checkpoint", base)

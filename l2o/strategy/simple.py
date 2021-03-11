@@ -101,7 +101,7 @@ class SimpleStrategy(BaseStrategy):
 
     def _path(self, period=0, dtype="checkpoint", file="test"):
         """Get file path for the given metadata."""
-        return self._base_path("period_{:n}".format(period), dtype)
+        return self._base_path("period_{:n}".format(period), dtype, file=file)
 
     def _resume(self):
         """Resume current optimization."""

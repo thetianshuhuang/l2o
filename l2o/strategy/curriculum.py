@@ -158,7 +158,8 @@ class CurriculumLearningStrategy(BaseStrategy):
             self, stage=0, period=0, repeat=0,
             dtype="checkpoint", file="test"):
         return self._base_path(
-            "stage_{:n}.{:n}.{:n}".format(stage, period, repeat), dtype)
+            "stage_{:n}.{:n}.{:n}".format(stage, period, repeat),
+            dtype, file=file)
 
     def _resume(self):
         """Resume current optimization."""
