@@ -103,6 +103,7 @@ class CurriculumLearningStrategy(BaseStrategy):
         self.validation_warmup = self.warmup_schedule(self.num_stages)
         self.validation_warmup_rate = self.warmup_rate_schedule(
             self.num_stages)
+        self.validation_unroll = self.unroll_len(self.num_stages)
 
         super().__init__(*args, name=name, **kwargs)
 
