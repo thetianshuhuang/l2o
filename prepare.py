@@ -31,8 +31,7 @@ ctx = {
     "policy": args.pop_get("--policy", "rnnprop"),
     "strategy": args.pop_get("--strategy", "repeat"),
     "allocation": args.pop_get("--alloc", "Senior-Design_UT-ECE"),
-    "problem": args.pop_get(
-        "--problem", "conv_train,conv_kmnist,conv_avg,conv_wider")
+    "problem": args.pop_get("--problem", "conv_train")
 }
 
 
