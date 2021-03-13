@@ -167,7 +167,7 @@ class BaseResults:
                 x[:-1], y[:-1], x[1:] - x[:-1], y[1:] - y[:-1],
                 width=0.002, headwidth=5, headlength=5, color='C' + str(i),
                 scale_units="xy", angles="xy", scale=1,
-                label=self.get_name(t, **metadata))
+                label=self.get_name(name, **metadata))
         if loss:
             ax.set_xlabel("Log Train Loss")
             ax.set_ylabel("Log Validation Loss")
@@ -186,7 +186,7 @@ class BaseResults:
             for ax, val in zip([*axs[0], *axs[1]], self._keys):
                 y_val = np.log(d[val]) if val.endswith("loss") else d[val]
                 plot_band(
-                    ax, np.arange(25), y_val, label=self.get_name(t, **meta))
+                    ax, np.arange(25), y_val, label=self.get_name(name, **meta))
 
         for ax in [*axs[0], *axs[1]]:
             ax.set_xticks(np.arange(25))
@@ -206,7 +206,7 @@ class BaseResults:
             d = self.get_eval(name, problem=problem, **meta)
             plot_band(
                 ax, np.arange(25), np.log(d["loss"]),
-                label=self.get_name(t, **meta))
+                label=self.get_name(name, **meta))
         ax.legend()
         ax.set_ylabel("Log Training Loss")
         ax.set_xlabel("Epochs")
@@ -236,7 +236,7 @@ class BaseResults:
             else:
                 y = d["batch_accuracy"][:, start:end]
 
-            plot_band(ax, x, y, label=self.get_name(t, **meta), sma=sma)
+            plot_band(ax, x, y, label=self.get_name(name, **meta), sma=sma)
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel("Log Training Loss" if loss else "Training Accuracy")

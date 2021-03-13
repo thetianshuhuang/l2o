@@ -1,5 +1,6 @@
 """Plotting utilities."""
 
+import numpy as np
 from .base import BaseResults
 
 
@@ -50,3 +51,22 @@ class CurriculumResults(BaseResults):
     # ----- Data Loaders ------------------------------------------------------
 
     # ----- Plots -------------------------------------------------------------
+
+    def plot_training(self, test, ax, discard_rejected=True, validation=False):
+        """Plot training stages."""
+        ax.set_title(self.get_name(test))
+        ax.set_xlabel("Training Period by Stage")
+        ax.set_ylabel("Loss normalized by best loss")
+
+        df = self.get_summary(test, discard_rejected=discard_rejected)
+        stages = df["stage"].unique()
+
+        key = "validation" if validation else "meta_loss"
+
+        for s in stages:
+            f = df[df["stage"] == s]
+            best = np.abs(np.min(f[key]))
+            ax.plot(
+                f["period"], f[key] / best,
+                label="Stage {:n} [x{:.3f}]".format(s, best))
+        ax.legend()

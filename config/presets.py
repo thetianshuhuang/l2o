@@ -70,7 +70,6 @@ OVERRIDE_PRESETS = {
     "il_constant": [
         (["strategy", "annealing_schedule"],
          {"type": "constant", "value": 0.01}),
-        (["strategy", "num_periods"], 50),
         (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
         (["training", "stack_stats", "*"], "teacher_counts"),
     ],
@@ -124,6 +123,26 @@ OVERRIDE_PRESETS = {
             "name": "RepeatStrategy"
         }
     )],
+    "cl_unroll": [(
+        ["strategy"], {
+            "validation_problems": None,
+            "validation_seed": 12345,
+            "num_stages": 5,
+            "num_periods": 2,
+            "num_chances": 3,
+            "unroll_len": {
+                "type": "list", "values": [10, 20, 50, 100, 200, 300]},
+            "depth": 5,
+            "epochs": 10,
+            "annealing_schedule": 0.0,
+            "validation_epochs": 10,
+            "max_repeat": 2,
+            "repeat_threshold": 0.8,
+            "warmup": {"type": "list", "values": [0, 1]},
+            "warmup_rate": {"type": "list", "values": [0, 0.05]},
+            "name": "CurriculumLearningStrategy"
+        }
+    )]
 }
 
 
