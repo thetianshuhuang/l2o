@@ -70,6 +70,8 @@ class BaseResults:
         self._summary_cache = {}
         self._test_cache = {}
 
+    def summary(self):
+        """Print summary of results."""
         for k, v in self.results.items():
             print("{}: {}".format(k, v))
 

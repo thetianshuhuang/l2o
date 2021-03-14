@@ -101,17 +101,17 @@ OVERRIDE_PRESETS = {
     ],
     "2x": [(["strategy", "epochs"], 20)],
     "5x": [(["strategy", "epochs"], 50)],
-    "final": [(
+    "cl_fixed": [(
         ["strategy"],
         {
             "validation_problems": None,
             "validation_seed": 12345,
-            "num_periods": 3,
+            "num_periods": 4,
             "unroll_len": 100,
-            "depth": 5,
-            "epochs": {"type": "list", "values": [2, 100]},
+            "depth": {"type": "list", "values": [1, 2, 5]},
+            "epochs": 10,
             "annealing_schedule": {"type": "constant", "value": 0.0},
-            "validation_epochs": 5,
+            "validation_epochs": 1,
             "validation_unroll": 100,
             "validation_depth": 5,
             "max_repeat": 4,
