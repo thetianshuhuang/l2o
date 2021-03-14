@@ -139,15 +139,21 @@ def build(config, overrides, directory="weights", strict=True, info=True):
     return strategy
 
 
-def build_from_config(directory):
+def build_from_config(directory, info=True):
     """Build from saved configuration.
 
     Parameters
     ----------
     directory : str
         Directory containing saved configuration and data.
+
+    Keyword Args
+    ------------
+    info : bool
+        Flag to disable printing out config. Warnings/errors are not affected.
+
     """
     with open(os.path.join(directory, "config.json")) as x:
         config = json.load(x)
 
-    return build(config, [], directory=directory, strict=False)
+    return build(config, [], directory=directory, strict=False, info=info)
