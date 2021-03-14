@@ -136,6 +136,7 @@ class CurriculumLearningStrategy(BaseStrategy):
 
     def _complete_metadata(self, metadata):
         """Complete metadata with strategy-dependent fields."""
+        metadata = metadata.copy()
         if "stage" not in metadata:
             metadata["stage"] = self.stage
         if "period" not in metadata:

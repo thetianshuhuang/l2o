@@ -48,7 +48,7 @@ if strategy == "curriculum":
 with distribute.scope():
     for tg in targets:
         print("Strategy: {}".format(tg))
-        strategy = l2o.strategy.build_from_config(tg)
+        strategy = l2o.strategy.build_from_config(tg, info=False)
         for m in metadata:
             print("Checkpoint: {}".format(m))
             for pr in problems:

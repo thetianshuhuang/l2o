@@ -147,6 +147,7 @@ class RepeatStrategy(BaseStrategy):
 
     def _complete_metadata(self, metadata):
         """Complete metadata with strategy-dependent fields."""
+        metadata = metadata.copy()
         if "period" not in metadata:
             metadata["period"] = int(self.summary["period"].max())
         if "repeat" not in metadata:
