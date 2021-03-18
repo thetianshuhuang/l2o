@@ -158,6 +158,7 @@ class CurriculumLearningStrategy(BaseStrategy):
     def _path(
             self, stage=0, period=0, repeat=0,
             dtype="checkpoint", file="test"):
+        """Get file path for saved data."""
         return self._base_path(
             "stage_{:n}.{:n}.{:n}".format(stage, period, repeat),
             dtype, file=file)

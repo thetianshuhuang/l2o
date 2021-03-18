@@ -1,6 +1,5 @@
 """Plotting and analysis functions."""
 
-from .repeat import RepeatResults
-from .curriculum import CurriculumResults
+from .results import Results
 
-__all__ = ["RepeatResults", "CurriculumResults"]
+__all__ = ["Results"]

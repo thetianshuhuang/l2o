@@ -73,6 +73,12 @@ OVERRIDE_PRESETS = {
         (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
         (["training", "stack_stats", "*"], "teacher_counts"),
     ],
+    "il_curriculum": [
+        (["strategy", "annealing_schedule"],
+         {"type": "list", "value": [0.1, 0.01, 0.0]}),
+        (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
+        (["training", "stack_stats", "*"], "teacher_counts"),
+    ],
     "warmup": [
         (["strategy", "warmup"], {"type": "list", "values": [0, 5]}),
         (["strategy", "warmup_rate"], {"type": "list", "values": [0.0, 0.05]}),

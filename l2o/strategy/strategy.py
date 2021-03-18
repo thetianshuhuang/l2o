@@ -98,7 +98,7 @@ class BaseStrategy:
             raise ValueError("Invalid dtype {}.".format(dtype))
 
     def _path(self, dtype="checkpoints", file="test", **kwargs):
-        """Get saved model file path.
+        """Get file path for saved data.
 
         Parameters
         ----------
@@ -107,6 +107,11 @@ class BaseStrategy:
             "checkpoint" (training saved states)
         file : str
             File name for evaluation type.
+
+        Returns
+        -------
+        str
+            Absolute file path.
         """
         raise NotImplementedError()
 
