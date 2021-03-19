@@ -187,6 +187,12 @@ OVERRIDE_PRESETS = {
             "name": "CurriculumLearningStrategy"
         }
     )],
+    "il_scaled": [
+        (["strategy", "annealing_schedule"],
+         {"type": "list", "values": [0.1, 0.05, 0.01]}),
+        (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
+        (["training", "stack_stats", "*"], "teacher_counts"),
+    ],
 }
 
 
