@@ -172,11 +172,11 @@ OVERRIDE_PRESETS = {
         ["strategy"], {
             "validation_problems": None,
             "validation_seed": 12345,
-            "num_stages": 4,
+            "num_stages": 5,
             "num_periods": 2,
             "num_chances": 3,
             "unroll_len": 100,
-            "depth": {"type": "list", "values": [1, 2, 3, 5, 10]},
+            "depth": {"type": "list", "values": [1, 2, 3, 4, 5, 10]},
             "epochs": 10,
             "annealing_schedule": 0.0,
             "validation_epochs": 10,
