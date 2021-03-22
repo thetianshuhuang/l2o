@@ -142,6 +142,7 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
                 tf.cast(self.warmup, tf.int64), self.iterations)
             dparam = tf.cond(
                 in_warmup, lambda: grad * self.warmup_rate, lambda: dparam_)
+            new_state = self.network.warmup_mask(state, new_state, in_warmup)
         else:
             dparam = dparam_
 

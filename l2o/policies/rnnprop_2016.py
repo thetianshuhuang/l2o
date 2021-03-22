@@ -28,6 +28,8 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
         Denominator epsilon for normalization operation in case input is 0.
     name : str
         Name of optimizer network.
+    warmup_lstm_update : bool
+        Update LSTM during warmup?
     **kwargs : dict
         Passed onto tf.keras.layers.LSTMCell
     """
@@ -36,7 +38,7 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
 
     def init_layers(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.999, alpha=0.1,
-            epsilon=1e-10, **kwargs):
+            epsilon=1e-10, warmup_lstm_update=True, **kwargs):
         """Initialize layers."""
         self.beta_1 = beta_1
         self.beta_2 = beta_2
@@ -73,6 +75,18 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
         update = tf.reshape(self.alpha * self.delta(x), tf.shape(param))
 
         return update, states_new
+
+    def warmup_mask(self, state, new_state, in_warmup):
+        """Mask state when in warmup to disable a portion of the update."""
+        if self.warmup_lstm_update:
+            rnn_state = {
+                k: tf.cond(in_warmup, lambda: state, lambda: new_state)
+                for k in state if k.startswith("rnn")
+            }
+            analytical_state = {"m": new_state["m"], "v": new_state["v"]}
+            return dic(**rnn_state, **analytical_state)
+        else:
+            return new_state
 
     def get_initial_state(self, var):
         """Get initial model state as a dictionary."""

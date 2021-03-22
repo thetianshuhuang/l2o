@@ -141,6 +141,28 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         """
         return tf.constant(0.)
 
+    def warmup_mask(self, state, new_state, in_warmup):
+        """Mask state when in warmup to disable a portion of the update.
+
+        Must be implemented with tf.cond due to @tf.function in update.
+
+        Parameters
+        ----------
+        state : object
+            Nested structure containing previous optimizer state.
+        new_state : object
+            Nested structure containing new optimizer state; can be assigned
+            conditionally based on in_warmup.
+        in_warmup : tf.bool
+            Tensorflow bool indicating whether the optimizer is in warmup.
+
+        Returns
+        -------
+        object
+            New optimizer state with masked attributes
+        """
+        return new_state
+
     def debug(self, param, states):
         """Get debug information.
 
