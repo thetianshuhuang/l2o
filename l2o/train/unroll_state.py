@@ -91,7 +91,7 @@ class UnrollStateManager:
         else:
             return self.policy_ref.call(*args)
 
-    def apply_gradients(self, unroll_state, grads):
+    def apply_gradients(self, unroll_state, grads, warmup=False):
         """Apply gradients."""
         # delta p, state <- policy(params, grads, local, global)
         dparams, states_new = list(map(list, zip(*[
@@ -100,6 +100,11 @@ class UnrollStateManager:
                 self.mask,
                 zip(unroll_state.params, grads, unroll_state.states))
         ])))
+
+        if warmup:
+            states_new = [
+                self.policy.warmup_mask(s, ns, tf.constant(True))
+                for s, ns in zip(unroll_state.states, states_new)]
 
         # global_state <- global_policy(local states, global state)
         global_state_new = self.policy.call_global(

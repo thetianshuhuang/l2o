@@ -63,7 +63,7 @@ class WarmupMixin:
 
             # Apply gradients to update optimizer internal states
             states = [
-                mgr.apply_gradients(st, grads)
+                mgr.apply_gradients(st, grads, warmup=True)
                 for st, mgr in zip(states, policy_managers)]
 
         # Wipe states.params on return

@@ -44,6 +44,7 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
         self.beta_2 = beta_2
         self.alpha = alpha
         self.epsilon = epsilon
+        self.warmup_lstm_update = warmup_lstm_update
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
         self.delta = Dense(1, input_shape=(layers[-1],), activation="tanh")
@@ -79,14 +80,14 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
     def warmup_mask(self, state, new_state, in_warmup):
         """Mask state when in warmup to disable a portion of the update."""
         if self.warmup_lstm_update:
+            return new_state
+        else:
             rnn_state = {
-                k: tf.cond(in_warmup, lambda: state, lambda: new_state)
+                k: tf.cond(in_warmup, lambda: state[k], lambda: new_state[k])
                 for k in state if k.startswith("rnn")
             }
             analytical_state = {"m": new_state["m"], "v": new_state["v"]}
-            return dic(**rnn_state, **analytical_state)
-        else:
-            return new_state
+            return dict(**rnn_state, **analytical_state)
 
     def get_initial_state(self, var):
         """Get initial model state as a dictionary."""
