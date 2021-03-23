@@ -75,13 +75,13 @@ OVERRIDE_PRESETS = {
     ],
     "il_adjusted": [
         (["strategy", "annealing_schedule"],
-         {"type": "list", "value": [0.2, 0.04, 0.02]}),
+         {"type": "list", "values": [0.2, 0.04, 0.02]}),
         (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
         (["training", "stack_stats", "*"], "teacher_counts"),
     ],
     "il_annealed": [
         (["strategy", "annealing_schedule"],
-         {"type": "list", "value": [0.2, 0.04, 0.02]}),
+         {"type": "list", "values": [0.2, 0.04, 0.02]}),
         (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
         (["training", "stack_stats", "*"], "teacher_counts"),
     ],
