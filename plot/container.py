@@ -195,19 +195,25 @@ class Results:
         axs[1][0].set_ylabel("Training Accuracy")
         axs[1][1].set_ylabel("Validation Accuracy")
 
-    def plot_loss(self, tests, ax, problem="conv_train", validation=False):
+    def plot_loss(
+            self, tests, ax,
+            problem="conv_train", validation=False, time=False):
         """Plot loss curve by epoch."""
         key = "val_loss" if validation else "loss"
 
         for t in tests:
             name, meta = self._expand_name(t)
             d = self.get_eval(name, problem=problem, **meta)
-            plot_band(
-                ax, np.arange(25), np.log(d[key]),
-                label=self.get_name(name, **meta))
+
+            if time:
+                x = np.mean(d["epoch_time"], axis=0)
+            else:
+                x = np.arange(d["epoch_time"].shape[1])
+
+            plot_band(ax, x, np.log(d[key]), label=self.get_name(name, **meta))
         ax.legend()
         ax.set_ylabel("Log Val Loss" if validation else "Log Training Loss")
-        ax.set_xlabel("Epochs")
+        ax.set_xlabel("Time (s)" if time else "Epochs")
 
     def plot_stats_batch(
             self, tests, ax, start=0, end=0, use_time=False, sma=0, loss=True,

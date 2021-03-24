@@ -51,13 +51,15 @@ def plot_stats_batch(ctx, tests, sma=100, **kwargs):
     fig.tight_layout()
 
 
-def plot_loss(ctx, tests):
+def plot_loss(ctx, tests, **kwargs):
     """Calls ctx.plot_loss (1 row per test, val on left, train on right)."""
     vh = len(tests)
     fig, axs = plt.subplots(vh, 2, figsize=(16, 4 * vh))
+    kwargs_ = {"problem": "conv_train"}
+    kwargs_.update(kwargs)
     for base, row in zip(tests, axs):
         ctx.plot_loss(
-            _expand(base), row[0], problem="conv_train", validation=True)
+            _expand(base), row[0], validation=True, **kwargs_)
         ctx.plot_loss(
-            _expand(base), row[1], problem="conv_train", validation=False)
+            _expand(base), row[1], validation=False, **kwargs_)
     fig.tight_layout()

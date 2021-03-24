@@ -66,7 +66,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         Parameters
         ----------
         param : tf.Variable
-            Corresponding input variable.
+            Corresponding input variable. Should be used as read-only.
         inputs : tf.Tensor
             Inputs; should be gradients.
         states : object
@@ -95,7 +95,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
             input structure. This means that tuples and lists cannot be used
             interchangeably. The starting value will be the structure returned
             by ``get_initial_state``.
-        (4) Due to straange behavior when returning python objects such as
+        (4) Due to strange behavior when returning python objects such as
             constant int, None, etc, return tf.constant(0.) when the state is
             empty.
         """
