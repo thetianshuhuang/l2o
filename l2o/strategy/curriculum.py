@@ -159,8 +159,11 @@ class CurriculumLearningStrategy(BaseStrategy):
 
     def _load_previous(self):
         """Load network from previous period for resuming or repeating."""
-        self._load_network(
-            **self._complete_metadata(
+        if self.period == 0:
+            self._load_network(**self._complete_metadata(
+                {"stage": self.stage - 1}))
+        else:
+            self._load_network(**self._complete_metadata(
                 {"stage": self.stage, "period": self.period - 1}))
 
     def _path(
