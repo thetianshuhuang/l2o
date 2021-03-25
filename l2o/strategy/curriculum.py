@@ -123,15 +123,17 @@ class CurriculumLearningStrategy(BaseStrategy):
         # First period of stage -> use previous stage best train loss
         if self.period == 0:
             loss_ref = self._get(**self._complete_metadata(
-                {"stage": self.stage - 1}))["meta_loss"]
+                {"stage": self.stage - 1}))["validation"]
+            loss_current = p_current["meta_loss"]
         # Not first period -> use current stage best validation loss
         else:
             loss_ref = self._get(**self._complete_metadata(
                 {"stage": self.stage, "period": self.period - 1})
             )["validation"]
+            loss_current = p_current["validation"]
 
         max_loss = np.abs(loss_ref) * self.repeat_threshold + loss_ref
-        return max_loss < p_current["validation"]
+        return max_loss < loss_current
 
     def _continue_stage(self):
         """Check if current stage should continue."""
