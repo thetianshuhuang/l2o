@@ -218,6 +218,11 @@ OVERRIDE_PRESETS = {
         (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
         (["training", "stack_stats", "*"], "teacher_counts"),
     ],
+    "forgiving": [
+        (["strategy", "num_periods", 5]),
+        (["strategy", "num_chances", 3]),
+        (["strategy", "max_repeat", 4])
+    ]
 }
 
 
