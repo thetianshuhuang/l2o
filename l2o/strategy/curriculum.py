@@ -109,20 +109,28 @@ class CurriculumLearningStrategy(BaseStrategy):
 
     def _check_repeat(self):
         """Check if current period should be repeated."""
-        if self.period == 0:
-            return False
-
-        p_last = self._get(**self._complete_metadata(
-            {"stage": self.stage, "period": self.period - 1}))
+        # First, check repeat limits:
         p_current = self._get(**self._complete_metadata(
             {"stage": self.stage, "period": self.period}))
-
         if self.max_repeat > 0 and p_current["repeat"] >= self.max_repeat:
             return False
 
-        max_loss = (
-            np.abs(p_last["validation"]) * self.repeat_threshold
-            + p_last["validation"])
+        # Exception to never repeat first checkpoint
+        if self.period == 0 and self.stage == 0:
+            return False
+
+        # Loss-based checks
+        # First period of stage -> use previous stage best train loss
+        if self.period == 0:
+            loss_ref = self._get(**self._complete_metadata(
+                {"stage": self.stage - 1}))["meta_loss"]
+        # Not first period -> use current stage best validation loss
+        else:
+            loss_ref = self._get(**self._complete_metadata(
+                {"stage": self.stage, "period": self.period - 1})
+            )["validation"]
+
+        max_loss = np.abs(loss_ref) * self.repeat_threshold + loss_ref
         return max_loss < p_current["validation"]
 
     def _continue_stage(self):
