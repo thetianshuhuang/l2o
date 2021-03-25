@@ -219,9 +219,9 @@ OVERRIDE_PRESETS = {
         (["training", "stack_stats", "*"], "teacher_counts"),
     ],
     "forgiving": [
-        (["strategy", "num_periods", 5]),
-        (["strategy", "num_chances", 3]),
-        (["strategy", "max_repeat", 4])
+        (["strategy", "num_periods"], 5),
+        (["strategy", "num_chances"], 3),
+        (["strategy", "max_repeat"], 4)
     ]
 }
 
