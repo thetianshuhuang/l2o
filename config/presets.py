@@ -159,6 +159,11 @@ OVERRIDE_PRESETS = {
         (["strategy", "num_stages"], 3),
         (["strategy", "depth"], {"type": "list", "values": [1, 2, 5, 10]})
     ],
+    "cl_long": [
+        (["strategy", "num_stages"], 5),
+        (["strategy", "depth"],
+         {"type": "list", "values": [1, 2, 5, 10, 20, 50]})
+    ]
 }
 
 

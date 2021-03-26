@@ -111,7 +111,7 @@ STRATEGY = {
             "validation_epochs": 10,
             "max_repeat": 4,
             "repeat_threshold": 0.5,
-            "warmup": 0,
+            "warmup": 1,
             "warmup_rate": 0.05,
             "name": "CurriculumLearningStrategy"
         }
