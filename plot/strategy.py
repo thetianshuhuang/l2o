@@ -92,16 +92,17 @@ class BaseResult:
 
     def get_summary(self, discard_rejected=False, **kwargs):
         """Get summary csv as DataFrame with filtering applied."""
-        # Filter
         df = self.summary
-        for k, v in kwargs.items():
-            df = df[df[k] == v]
         # Discard
         if discard_rejected:
-            return df.iloc[
+            df = df.iloc[
                 df.reset_index().groupby(
                     [df[g] for g in self._groupby]
                 )['index'].idxmax()]
+        # Filter
+        for k, v in kwargs.items():
+            df = df[df[k] == v]
+
         return df
 
     def get_eval(self, problem="conv_train", **meta):

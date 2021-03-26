@@ -155,68 +155,9 @@ OVERRIDE_PRESETS = {
             "name": "CurriculumLearningStrategy"
         }
     )],
-    "cl_short": [(
-        ["strategy"], {
-            "validation_problems": None,
-            "validation_seed": 12345,
-            "num_stages": 3,
-            "num_periods": 2,
-            "num_chances": 3,
-            "unroll_len": 100,
-            "depth": {"type": "list", "values": [1, 2, 5, 10]},
-            "epochs": 10,
-            "annealing_schedule": 0.0,
-            "validation_epochs": 10,
-            "max_repeat": 2,
-            "repeat_threshold": 0.8,
-            "warmup": {"type": "list", "values": [0, 1]},
-            "warmup_rate": {"type": "list", "values": [0, 0.05]},
-            "name": "CurriculumLearningStrategy"
-        }
-    )],
-    "cl_shorter": [(
-        ["strategy"], {
-            "validation_problems": None,
-            "validation_seed": 12345,
-            "num_stages": 2,
-            "num_periods": 2,
-            "num_chances": 3,
-            "unroll_len": 100,
-            "depth": {"type": "list", "values": [1, 2, 5]},
-            "epochs": 10,
-            "annealing_schedule": 0.0,
-            "validation_epochs": 10,
-            "max_repeat": 2,
-            "repeat_threshold": 0.8,
-            "warmup": {"type": "list", "values": [0, 1]},
-            "warmup_rate": {"type": "list", "values": [0, 0.05]},
-            "name": "CurriculumLearningStrategy"
-        }
-    )],
-    "cl_slow": [(
-        ["strategy"], {
-            "validation_problems": None,
-            "validation_seed": 12345,
-            "num_stages": 5,
-            "num_periods": 2,
-            "num_chances": 3,
-            "unroll_len": 100,
-            "depth": {"type": "list", "values": [1, 2, 3, 4, 5, 10]},
-            "epochs": 10,
-            "annealing_schedule": 0.0,
-            "validation_epochs": 10,
-            "max_repeat": 2,
-            "repeat_threshold": 0.8,
-            "warmup": {"type": "list", "values": [0, 1]},
-            "warmup_rate": {"type": "list", "values": [0, 0.05]},
-            "name": "CurriculumLearningStrategy"
-        }
-    )],
-    "il_scaled": [
-        (["strategy", "annealing_schedule"],
-         {"type": "list", "values": [0.1, 0.05, 0.01]}),
-        (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
-        (["training", "stack_stats", "*"], "teacher_counts"),
+    "cl_short": [
+        (["strategy", "num_stages"], 3),
+        (["strategy", "depth"], {"type": "list", "values": [1, 2, 5, 10]})
     ],
 }
 

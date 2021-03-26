@@ -4,8 +4,8 @@ import math
 from matplotlib import pyplot as plt
 
 
-def _expand(base, baselines=["adam"]):
-    return baselines + ["{}{}".format(base, x + 1) for x in range(4)]
+def _expand(base, baselines=["adam"], sfx=""):
+    return baselines + ["{}{}{}".format(base, x + 1, sfx) for x in range(4)]
 
 
 def plot_training(ctx, tests, limit=False):
@@ -21,49 +21,49 @@ def plot_training(ctx, tests, limit=False):
     fig.tight_layout()
 
 
-def plot_phase(ctx, tests, limit=False):
+def plot_phase(ctx, tests, limit=False, sfx=""):
     """Calls plot_phase (3 columns)."""
     vh = math.ceil(len(tests) / 3)
     fig, axs = plt.subplots(vh, 3, figsize=(16, 4 * vh))
     for base, ax in zip(tests, axs.reshape(-1)):
-        ctx.plot_phase(_expand(base), ax, problem="conv_train", loss=True)
+        ctx.plot_phase(_expand(
+            base, sfx=sfx), ax, problem="conv_train", loss=True)
         if limit:
             ax.set_xlim(-6, -2)
             ax.set_ylim(-3.5, -2.4)
 
 
-def plot_phase_swarm(ctx, tests, limit=False):
+def plot_phase_swarm(ctx, tests, limit=False, sfx=""):
     """Alias for ctx.plot_phase_swarm (3 columns)."""
     vh = math.ceil(len(tests) / 3)
     fig, axs = plt.subplots(vh, 3, figsize=(16, 4 * vh))
     for base, ax in zip(tests, axs.reshape(-1)):
         ctx.plot_phase_swarm(
-            _expand(base), ax, problem="conv_train", loss=True)
+            _expand(base, sfx=sfx), ax, problem="conv_train", loss=True)
         if limit:
             ax.set_xlim(-6, -2)
             ax.set_ylim(-3.5, -2.4)
 
 
-def plot_stats_batch(ctx, tests, sma=100, limit=False, **kwargs):
+def plot_stats_batch(ctx, tests, sma=100, limit=False, sfx="", **kwargs):
     """Calls ctx.plot_stats_batch (2 columns)."""
     vh = math.ceil(len(tests) / 2)
     fig, axs = plt.subplots(vh, 2, figsize=(16, 4 * vh))
     for base, ax in zip(tests, axs.reshape(-1)):
-        ctx.plot_stats_batch(_expand(base), ax, sma=sma, **kwargs)
+        ctx.plot_stats_batch(_expand(base, sfx=sfx), ax, sma=sma, **kwargs)
         if limit:
             ax.set_ylim(-8, 0)
     fig.tight_layout()
 
 
-def plot_loss(ctx, tests, **kwargs):
+def plot_loss(ctx, tests, sfx="", **kwargs):
     """Calls ctx.plot_loss (1 row per test, val on left, train on right)."""
     vh = len(tests)
     fig, axs = plt.subplots(vh, 2, figsize=(16, 4 * vh))
     kwargs_ = {"problem": "conv_train"}
     kwargs_.update(kwargs)
     for base, row in zip(tests, axs):
-        ctx.plot_loss(
-            _expand(base), row[0], validation=True, **kwargs_)
-        ctx.plot_loss(
-            _expand(base), row[1], validation=False, **kwargs_)
+        t = _expand(base, sfx=sfx)
+        ctx.plot_loss(t, row[0], validation=True, **kwargs_)
+        ctx.plot_loss(t, row[1], validation=False, **kwargs_)
     fig.tight_layout()

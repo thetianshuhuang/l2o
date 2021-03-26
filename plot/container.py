@@ -182,7 +182,8 @@ class Results:
             for ax, val in zip([*axs[0], *axs[1]], self._keys):
                 y_val = np.log(d[val]) if val.endswith("loss") else d[val]
                 plot_band(
-                    ax, np.arange(25), y_val, label=self.get_name(name, **meta))
+                    ax, np.arange(25), y_val,
+                    label=self.get_name(name, **meta))
 
         for ax in [*axs[0], *axs[1]]:
             ax.set_xticks(np.arange(25))
