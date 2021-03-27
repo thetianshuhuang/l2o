@@ -19,12 +19,44 @@ def running_mean(x, N):
     return (cumsum[N:] - cumsum[:-N]) / float(N)
 
 
-def plot_band(ax, x, y, label=None, color=None, sma=0):
-    """Plot mean and min-to-max color band for stacked data y."""
+def plot_band(ax, x, y, band_scale=0, label=None, color=None, sma=0):
+    """Plot mean and min-to-max color band for stacked data y.
+
+    Parameters
+    ----------
+    ax : plt.axes.Axes
+        Target plot.
+    x : np.array
+        x data array, with shape (time).
+    y : np.array
+        y data array, with shape (trajectory idx, time).
+
+    Keyword Args
+    ------------
+    band_scale : float
+        Lower and upper band variance multiplier. If 0, uses min/max instead.
+    label : str
+        Line label for legend.
+    color : str
+        Line/shading color.
+    sma : int
+        Simple moving average width to be applied to data pre-averaging.
+    """
     if sma > 0:
         y = np.stack([running_mean(y_i, sma) for y_i in y])
         x = x[:y.shape[1]]
-    lower, upper, mean = [f(y, axis=0) for f in [np.min, np.max, np.mean]]
+
+    mean = np.mean(y, axis=0)
+
+    if band_scale == 0:
+        lower = np.min(y, axis=0)
+        upper = np.max(y, axis=0)
+    else:
+        stddev = np.sqrt(np.var(y, axis=0))
+        mean = np.mean(y, axis=0)
+        lower = mean - band_scale * stddev
+        upper = mean + band_scale * stddev
+
     mean_line, = ax.plot(x, mean, label=label)
     ax.fill_between(x, lower, upper, alpha=0.25, color=mean_line.get_color())
     return mean_line
@@ -174,31 +206,9 @@ class Results:
         if lgd:
             ax.legend()
 
-    def plot_stats(self, tests, axs):
-        """Plot test statistics."""
-        for t in tests:
-            name, meta = self._expand_name(t)
-            d = self.get_eval(name, **meta)
-            for ax, val in zip([*axs[0], *axs[1]], self._keys):
-                y_val = np.log(d[val]) if val.endswith("loss") else d[val]
-                plot_band(
-                    ax, np.arange(25), y_val,
-                    label=self.get_name(name, **meta))
-
-        for ax in [*axs[0], *axs[1]]:
-            ax.set_xticks(np.arange(25))
-            ax.set_xlabel("Epoch")
-
-        axs[1][1].legend()
-
-        axs[0][0].set_ylabel("Log Training Loss")
-        axs[0][1].set_ylabel("Log Validation Loss")
-        axs[1][0].set_ylabel("Training Accuracy")
-        axs[1][1].set_ylabel("Validation Accuracy")
-
     def plot_loss(
-            self, tests, ax,
-            problem="conv_train", validation=False, time=False):
+            self, tests, ax, problem="conv_train", band_scale=0,
+            validation=False, time=False):
         """Plot loss curve by epoch."""
         key = "val_loss" if validation else "loss"
 
@@ -211,14 +221,17 @@ class Results:
             else:
                 x = np.arange(d["epoch_time"].shape[1])
 
-            plot_band(ax, x, np.log(d[key]), label=self.get_name(name, **meta))
+            plot_band(
+                ax, x, np.log(d[key]),
+                label=self.get_name(name, **meta), band_scale=band_scale)
+
         ax.legend()
         ax.set_ylabel("Log Val Loss" if validation else "Log Training Loss")
         ax.set_xlabel("Time (s)" if time else "Epochs")
 
     def plot_stats_batch(
             self, tests, ax, start=0, end=0, use_time=False, sma=0, loss=True,
-            problem="conv_train"):
+            problem="conv_train", band_scale=0):
         """Plot test loss or accuracy, batch-wise."""
         for t in tests:
             name, meta = self._expand_name(t)
@@ -241,7 +254,9 @@ class Results:
             else:
                 y = d["batch_accuracy"][:, start:end]
 
-            plot_band(ax, x, y, label=self.get_name(name, **meta), sma=sma)
+            plot_band(
+                ax, x, y, label=self.get_name(name, **meta),
+                sma=sma, band_scale=band_scale)
 
         ax.set_xlabel(xlabel)
         ax.set_ylabel("Log Training Loss" if loss else "Training Accuracy")

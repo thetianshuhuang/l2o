@@ -23,7 +23,6 @@ distribute = create_distribute(vgpus=vgpus)
 
 problem = args.pop_get("--problem", "conv_train")
 target = args.pop_get("--optimizer", "adam")
-output = args.pop_get("--out", "eval")
 repeat = int(args.pop_get("--repeat", 10))
 
 with distribute.scope():
@@ -33,4 +32,4 @@ with distribute.scope():
         results.append(l2o.evaluate.evaluate(
             tf.keras.optimizers.get(target), **get_eval_problem(problem)))
     results = {k: np.stack([d[k] for d in results]) for k in results[0]}
-    np.savez(output, **results)
+    np.savez(os.path.join("baseline", target, problem), **results)

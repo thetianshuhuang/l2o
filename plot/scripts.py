@@ -9,7 +9,7 @@ def _expand(base, baselines=["adam"], sfx=""):
 
 
 def plot_training(ctx, tests, limit=False):
-    """Calls plot_training (1 row per test, 4 replicas per row)."""
+    """Training summary plot (1 row per test, 4 replicas per row)."""
     vh = len(tests)
     fig, axs = plt.subplots(vh, 4, figsize=(16, 3 * vh))
     for test, row in zip(tests, axs):
@@ -17,12 +17,12 @@ def plot_training(ctx, tests, limit=False):
             ctx.plot_training(
                 "{}{}".format(test, rep + 1), ax, validation=True)
             if limit:
-                ax.set_ylim(-1.1, -0.5)
+                ax.set_ylim(-1.1, 0.1)
     fig.tight_layout()
 
 
 def plot_phase(ctx, tests, limit=False, sfx=""):
-    """Calls plot_phase (3 columns)."""
+    """Phase plot (3 columns)."""
     vh = math.ceil(len(tests) / 3)
     fig, axs = plt.subplots(vh, 3, figsize=(16, 4 * vh))
     for base, ax in zip(tests, axs.reshape(-1)):
@@ -34,7 +34,7 @@ def plot_phase(ctx, tests, limit=False, sfx=""):
 
 
 def plot_phase_swarm(ctx, tests, limit=False, sfx=""):
-    """Alias for ctx.plot_phase_swarm (3 columns)."""
+    """Phase plot, swarm variant (3 columns)."""
     vh = math.ceil(len(tests) / 3)
     fig, axs = plt.subplots(vh, 3, figsize=(16, 4 * vh))
     for base, ax in zip(tests, axs.reshape(-1)):
@@ -46,7 +46,7 @@ def plot_phase_swarm(ctx, tests, limit=False, sfx=""):
 
 
 def plot_stats_batch(ctx, tests, sma=100, limit=False, sfx="", **kwargs):
-    """Calls ctx.plot_stats_batch (2 columns)."""
+    """Batch stats (2 columns)."""
     vh = math.ceil(len(tests) / 2)
     fig, axs = plt.subplots(vh, 2, figsize=(16, 4 * vh))
     for base, ax in zip(tests, axs.reshape(-1)):
@@ -56,8 +56,8 @@ def plot_stats_batch(ctx, tests, sma=100, limit=False, sfx="", **kwargs):
     fig.tight_layout()
 
 
-def plot_loss(ctx, tests, sfx="", **kwargs):
-    """Calls ctx.plot_loss (1 row per test, val on left, train on right)."""
+def plot_loss(ctx, tests, rulers=[], sfx="", **kwargs):
+    """Loss plot (1 row per test, val on left, train on right)."""
     vh = len(tests)
     fig, axs = plt.subplots(vh, 2, figsize=(16, 4 * vh))
     kwargs_ = {"problem": "conv_train"}
@@ -66,4 +66,6 @@ def plot_loss(ctx, tests, sfx="", **kwargs):
         t = _expand(base, sfx=sfx)
         ctx.plot_loss(t, row[0], validation=True, **kwargs_)
         ctx.plot_loss(t, row[1], validation=False, **kwargs_)
+        for r in rulers:
+            row[0].axline(r, color='black')
     fig.tight_layout()
