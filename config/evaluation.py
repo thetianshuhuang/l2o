@@ -45,13 +45,19 @@ EVALUATION_PROBLEMS = {
     },
     "conv_cifar10": {
         "config": {
-            "layers": [[16, 3, 1], 2, [32, 5, 1], 2],
+            "layers": [
+                [16, 3, 1],
+                [32, 3, 2],
+                [32, 3, 1],
+                [64, 3, 2],
+                [64, 3, 1]
+            ],
             "activation": "relu"
         },
         "target": "conv_classifier",
-        "dataset": "mnist",
+        "dataset": "cifar10",
         "epochs": 25,
-        "batch_size": 32
+        "batch_size": 128
     },
     "conv_smallbatch": {
         "config": {
