@@ -98,6 +98,10 @@ class Results:
 
         self._results = {}
 
+    def register_names(self, names):
+        """Register display name aliases not already in names.json."""
+        self.results.update(names)
+
     def summary(self):
         """Print summary of results."""
         for k, v in self.results.items():
@@ -141,6 +145,15 @@ class Results:
     def get_summary(self, t, **metadata):
         """Get test summary data."""
         return self._get_test(t).get_summary(**metadata)
+
+    def adjust_init_time(self, data):
+        """Adjust times to ignore initialization time."""
+        if len(data.shape) == 2:
+            mean_duration = np.mean(np.diff(data, axis=1))
+            return data - data[:, :1] + mean_duration
+        else:
+            mean_duration = np.mean(np.diff(data))
+            return data - data[0] + mean_duration
 
     _phase_args = {
         "width": 0.002, "headwidth": 5, "headlength": 5,
@@ -208,7 +221,7 @@ class Results:
 
     def plot_loss(
             self, tests, ax, problem="conv_train", band_scale=0,
-            validation=False, time=False):
+            validation=False, time=False, adjust_init_time=True):
         """Plot loss curve by epoch."""
         key = "val_loss" if validation else "loss"
 
@@ -218,6 +231,8 @@ class Results:
 
             if time:
                 x = np.mean(d["epoch_time"], axis=0)
+                if adjust_init_time:
+                    x = self.adjust_init_time(x)
             else:
                 x = np.arange(d["epoch_time"].shape[1])
 

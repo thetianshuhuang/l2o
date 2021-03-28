@@ -52,6 +52,21 @@ OVERRIDE_PRESETS = {
             }
         }]
     )],
+    "conv_cifar": [(
+        ["problems"],
+        [{
+            "target": "conv_classifier",
+            "args": [],
+            "kwargs": {
+                "layers": [[16, 3, 1], 2, [32, 5, 1], 2],
+                "head_type": "dense",
+                "activation": "relu",
+                "dataset": "cifar10",
+                "batch_size": 128,
+                "shuffle_buffer": 16384,
+            }
+        }]
+    )],
     "conv_avg": [(
         ["problems"],
         [{
