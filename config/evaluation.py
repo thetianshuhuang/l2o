@@ -105,6 +105,42 @@ EVALUATION_PROBLEMS = {
         "epochs": 25,
         "batch_size": 128
     },
+    "conv_deeper_pool": {
+        "config": {
+            "layers": [
+                [16, 3, 1],
+                2,
+                [32, 3, 1],
+                [32, 3, 1],
+                2,
+                [64, 3, 1],
+                [64, 3, 1]
+            ],
+            "activation": "relu"
+        },
+        "target": "conv_classifier",
+        "dataset": "mnist",
+        "epochs": 25,
+        "batch_size": 128
+    },
+    "conv_cifar10_pool": {
+        "config": {
+            "layers": [
+                [16, 3, 1],
+                2,
+                [32, 3, 1],
+                [32, 3, 1],
+                2,
+                [64, 3, 1],
+                [64, 3, 1]
+            ],
+            "activation": "relu"
+        },
+        "target": "conv_classifier",
+        "dataset": "cifar10",
+        "epochs": 25,
+        "batch_size": 128
+    }
 }
 
 
