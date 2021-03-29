@@ -109,12 +109,12 @@ EVALUATION_PROBLEMS = {
         "config": {
             "layers": [
                 [16, 3, 1],
-                2,
                 [32, 3, 1],
                 [32, 3, 1],
                 2,
                 [64, 3, 1],
-                [64, 3, 1]
+                [64, 3, 1],
+                2
             ],
             "activation": "relu"
         },
@@ -127,12 +127,12 @@ EVALUATION_PROBLEMS = {
         "config": {
             "layers": [
                 [16, 3, 1],
-                2,
                 [32, 3, 1],
                 [32, 3, 1],
                 2,
                 [64, 3, 1],
-                [64, 3, 1]
+                [64, 3, 1],
+                2
             ],
             "activation": "relu"
         },
