@@ -1,4 +1,4 @@
-"""Basic models for evaluation."""
+"""Classification models for SGD evaluation."""
 
 import tensorflow as tf
 

@@ -82,23 +82,21 @@ OVERRIDE_PRESETS = {
             }
         }]
     )],
+    "log_teachers": [
+        (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
+        (["training", "stack_stats", "*"], "teacher_counts"),
+    ],
     "il_constant": [
         (["strategy", "annealing_schedule"],
          {"type": "constant", "value": 0.1}),
-        (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
-        (["training", "stack_stats", "*"], "teacher_counts"),
     ],
     "il_adjusted": [
         (["strategy", "annealing_schedule"],
          {"type": "list", "values": [0.2, 0.04, 0.02, 0.01]}),
-        (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
-        (["training", "stack_stats", "*"], "teacher_counts"),
     ],
     "il_more": [
         (["strategy", "annealing_schedule"],
          {"type": "list", "values": [0.2, 0.1, 0.05, 0.02]}),
-        (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
-        (["training", "stack_stats", "*"], "teacher_counts"),
     ],
     "warmup": [
         (["strategy", "warmup"], {"type": "list", "values": [0, 5]}),
