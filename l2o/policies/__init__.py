@@ -33,6 +33,7 @@ ChoiceExtendedOptimizer
 from .architectures import BaseLearnToOptimizePolicy
 from .deepmind_2016 import DMOptimizer
 from .scale_basic_2017 import ScaleBasicOptimizer
+from .dynamic_rate import AdamLR, RMSPropLR
 from .rnnprop_2016 import RNNPropOptimizer
 from .scale_hierarchical_2017 import ScaleHierarchicalOptimizer
 from .choice import ChoiceOptimizer
@@ -43,17 +44,25 @@ from .choice_sgd import ChoiceSGDOptimizer
 from .load import load
 
 __all__ = [
+    # Utilities & helpers
     "BaseLearnToOptimizePolicy",
+    "load",
+    # Hand-crafted optimizers
     "AdamOptimizer",
     "RMSPropOptimizer",
     "SGDOptimizer",
+    # Deepmind, Google Research
     "DMOptimizer",
     "ScaleBasicOptimizer",
     "ScaleHierarchicalOptimizer",
+    # RNNProp family
     "RNNPropOptimizer",
     "RNNPropExtendedOptimizer",
+    # Resticted Direction
+    "AdamLROptimizer",
+    "RMSPropLROptimizer",
+    # Optimizer Choice
     "ChoiceOptimizer",
     "ChoiceSGDOptimizer",
     "ChoiceExtendedOptimizer",
-    "load"
 ]
