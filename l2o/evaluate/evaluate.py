@@ -5,13 +5,47 @@ import tensorflow as tf
 from l2o.problems import load_images
 from l2o import deserialize
 from . import models
-from .fit import model_fit
+from . import functions
+from .fit import model_fit, function_fit
 
 
-def evaluate(
+def evaluate_function(
+        opt, config={}, target="Rastrigin", steps=1000, desc=None):
+    """Evaluate L2O on a function.
+
+    Parameters
+    ----------
+    opt : tf.keras.optimizers.Optimizer
+        Optimizer to evaluate.
+
+    Keyword Args
+    ------------
+    config : dict
+        Problem configuration; passed to ``target``.
+    target : str or callable(info, **config) -> tf.keras.Model
+        Callable or name of callable in l2o.evaluate.models that creates
+        model to train.
+    steps : int
+        Number of gradient descent steps to perform.
+    desc : float
+        Evaluation description.
+
+    Returns
+    -------
+    dict, with keys:
+        loss : float[]
+    """
+    function = deserialize.generic(
+        target, functions, pass_cond=None, message="target function")
+    function = function(**config)
+
+    return function_fit(function, opt, steps=steps)
+
+
+def evaluate_model(
         opt, config={}, target="conv_classifier", dataset="mnist", epochs=20,
         batch_size=32, desc=None):
-    """Evaluate L2O.
+    """Evaluate L2O on a classifier model.
 
     Parameters
     ----------
@@ -49,8 +83,7 @@ def evaluate(
     ds_val, info_val = load_images(dataset, split="test")
 
     model = deserialize.generic(
-        target, models, pass_cond=None,
-        message="training model", default="simple_conv")
+        target, models, pass_cond=None, message="training model")
     model = model(info_train, **config)
     model.compile(
         optimizer=opt, loss=tf.keras.losses.SparseCategoricalCrossentropy())

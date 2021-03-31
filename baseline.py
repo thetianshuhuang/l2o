@@ -25,11 +25,16 @@ problem = args.pop_get("--problem", "conv_train")
 target = args.pop_get("--optimizer", "adam")
 repeat = int(args.pop_get("--repeat", 10))
 
+kwargs = get_eval_problem(problem)
+if "steps" in kwargs:
+    evaluator = l2o.evaluate.evaluate_function
+else:
+    evaluator = l2o.evaluate.evaluate_model
+
 with distribute.scope():
     results = []
     for i in range(repeat):
         print("Evaluation Training {}/{}".format(i + 1, repeat))
-        results.append(l2o.evaluate.evaluate(
-            tf.keras.optimizers.get(target), **get_eval_problem(problem)))
+        results.append(evaluator(tf.keras.optimizers.get(target), **kwargs))
     results = {k: np.stack([d[k] for d in results]) for k in results[0]}
     np.savez(os.path.join("baseline", target, problem), **results)

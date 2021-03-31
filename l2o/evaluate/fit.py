@@ -111,3 +111,43 @@ def model_fit(model, train, test, epochs=1, metrics=[], desc=None):
             stats["val_" + m.name].append(val)
 
     return {k: np.array(v, dtype=np.float32) for k, v in stats.items()}
+
+
+def function_fit(function, optimizer, steps=1000):
+    """Fit a function using gradient descent.
+
+    NOTE: only a single GPU is supported.
+
+    Parameters
+    ----------
+    function : Object
+        Should have ``loss`` method which computes the loss, and track
+        parameters internally as tf.Variables which are exposed using
+        a trainable_variables attribute.
+    optimizer : tf.keras.optimizers.Optimizer
+        Optimizer to use.
+
+    Keyword Args
+    ------------
+    steps : int
+        Number of gradient descent steps to perform.
+    """
+    strategy = tf.distribute.get_strategy()
+
+    def _train_step():
+        with tf.GradientTape() as tape:
+            loss = function.loss()
+        grads = tape.gradient(loss, function.trainable_variables)
+        optimizer.apply_gradients(zip(grads, function.trainable_variables))
+        return loss
+
+    @tf.function
+    def train_step():
+        losses = strategy.run(_train_step)
+        return strategy.reduce(tf.distribute.ReduceOp.SUM, losses, axis=None)
+
+    losses = []
+    for i in range(steps):
+        losses.append(train_step())
+
+    return {"loss": np.array(losses)}

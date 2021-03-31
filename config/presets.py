@@ -124,8 +124,6 @@ OVERRIDE_PRESETS = {
         (["strategy", "validation_unroll"], 100),
         (["strategy", "validation_depth"], 5),
     ],
-    "2x": [(["strategy", "epochs"], 20)],
-    "5x": [(["strategy", "epochs"], 50)],
     "cl_fixed": [(
         ["strategy"],
         {
@@ -176,6 +174,9 @@ OVERRIDE_PRESETS = {
         (["strategy", "num_stages"], 5),
         (["strategy", "depth"],
          {"type": "list", "values": [1, 2, 5, 10, 20, 50]})
+    ],
+    "half_depth": [
+        (["policy", "layers"], [20])
     ]
 }
 

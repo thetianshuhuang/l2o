@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 
 from l2o.train.loss_tracker import LossTracker
-from l2o.evaluate import evaluate
+from l2o import evaluate
 from l2o import deserialize
 
 
@@ -263,20 +263,28 @@ class BaseStrategy:
         file : str or None
             File to save to. If None, does not save (and only returns).
         kwargs : dict
-            Additional arguments to pass to ``evaluate.evaluate``.
+            Additional arguments to pass to ``evaluate.evaluate`` or
+            ``evaluate.evaluate_function``.
         """
         metadata = self._complete_metadata(metadata)
         self._load_network(**metadata)
         self.learner.network.train = False
 
+        if "steps" in kwargs:
+            evaluator = evaluate.evaluate_function
+            warmup = 0
+        else:
+            evaluator = evaluate.evaluate_model
+            warmup = self.validation_warmup * self.validation_unroll
+
         results = []
         for i in range(repeat):
             opt = self.learner.network.architecture(
                 self.learner.network,
-                warmup=self.validation_warmup * self.validation_unroll,
+                warmup=warmup,
                 warmup_rate=self.validation_warmup_rate,
                 name="OptimizerEvaluation")
-            results.append(evaluate(
+            results.append(evaluator(
                 opt, desc="{}/{}".format(i + 1, repeat), **kwargs))
         results = {k: np.stack([d[k] for d in results]) for k in results[0]}
 

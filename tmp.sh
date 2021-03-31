@@ -1,0 +1,12 @@
+python baseline.py --problem=quadratic10 --optimizer=rmsprop --repeat=100
+python baseline.py --problem=quadratic20 --optimizer=rmsprop --repeat=100
+python baseline.py --problem=quadratic100 --optimizer=rmsprop --repeat=100
+python baseline.py --problem=quadratic10 --optimizer=adam --repeat=100
+python baseline.py --problem=quadratic20 --optimizer=adam --repeat=100
+python baseline.py --problem=quadratic100 --optimizer=adam --repeat=100
+python evaluate.py --problem=quadratic10 --directory=results/choice/layers1 --repeat=100
+python evaluate.py --problem=quadratic20 --directory=results/choice/layers1 --repeat=100
+python evaluate.py --problem=quadratic100 --directory=results/choice/layers1 --repeat=100
+python evaluate.py --problem=quadratic10 --directory=results/rnnprop/mcl1 --repeat=100
+python evaluate.py --problem=quadratic20 --directory=results/rnnprop/mcl1 --repeat=100
+python evaluate.py --problem=quadratic100 --directory=results/rnnprop/mcl1 --repeat=100

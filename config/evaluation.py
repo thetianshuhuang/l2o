@@ -140,7 +140,43 @@ EVALUATION_PROBLEMS = {
         "dataset": "cifar10",
         "epochs": 25,
         "batch_size": 128
-    }
+    },
+    "rastrigin2": {
+        "config": {
+            "n": 2, "alpha": 10,
+        },
+        "target": "Rastrigin",
+        "steps": 1000
+    },
+    "rastrigin10": {
+        "config": {
+            "n": 10, "alpha": 10,
+        },
+        "target": "Rastrigin",
+        "steps": 1000
+    },
+    "rastrigin20": {
+        "config": {
+            "n": 20, "alpha": 10,
+        },
+        "target": "Rastrigin",
+        "steps": 1000
+    },
+    "quadratic10": {
+        "config": {"n": 10},
+        "target": "Quadratic",
+        "steps": 1000
+    },
+    "quadratic20": {
+        "config": {"n": 20},
+        "target": "Quadratic",
+        "steps": 1000
+    },
+    "quadratic100": {
+        "config": {"n": 100},
+        "target": "Quadratic",
+        "steps": 1000
+    },
 }
 
 
