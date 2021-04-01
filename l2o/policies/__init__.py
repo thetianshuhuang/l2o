@@ -33,7 +33,7 @@ ChoiceExtendedOptimizer
 from .architectures import BaseLearnToOptimizePolicy
 from .deepmind_2016 import DMOptimizer
 from .scale_basic_2017 import ScaleBasicOptimizer
-from .dynamic_rate import AdamLR, RMSPropLR
+from .dynamic_rate import AdamLROptimizer, RMSPropLROptimizer
 from .rnnprop_2016 import RNNPropOptimizer
 from .scale_hierarchical_2017 import ScaleHierarchicalOptimizer
 from .choice import ChoiceOptimizer
