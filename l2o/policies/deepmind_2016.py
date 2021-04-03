@@ -32,15 +32,16 @@ class DMOptimizer(BaseCoordinateWisePolicy):
             for i, hsize in enumerate(layers)]
         self.delta = Dense(1, input_shape=(layers[-1],), name="delta")
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Network call override."""
         states_new = {}
 
         x = tf.reshape(inputs, [-1, 1])
         for i, layer in enumerate(self.recurrent):
             hidden_name = "lstm_{}".format(i)
-            x, states_new[hidden_name] = layer(x, states[hidden_name])
-        x = self.delta(x)
+            x, states_new[hidden_name] = layer(
+                x, states[hidden_name], training=training)
+        x = self.delta(x, training=training)
 
         return tf.reshape(x, param.shape), states_new
 

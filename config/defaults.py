@@ -171,6 +171,7 @@ POLICY = {
             "alpha": 0.1,
             "epsilon": 1e-10,
             "warmup_lstm_update": False,
+            "train_noise": 0.01,
             "name": "RNNPropOptimizer",
             # LSTMCell Args
             "activation": "tanh",

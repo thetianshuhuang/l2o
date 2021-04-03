@@ -34,7 +34,7 @@ class AdamLROptimizer(RNNPropOptimizer):
 
     default_name = "AdamLR"
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
         states_new = {}
 
@@ -56,10 +56,12 @@ class AdamLROptimizer(RNNPropOptimizer):
         ], 1)
         for i, layer in enumerate(self.recurrent):
             hidden_name = "rnn_{}".format(i)
-            x, states_new[hidden_name] = layer(x, states[hidden_name])
+            x, states_new[hidden_name] = layer(
+                x, states[hidden_name], training=training)
         # Delta
         update = (
-            tf.reshape(tf.math.exp(self.delta(x)), tf.shape(param))
+            tf.reshape(tf.math.exp(
+                self.delta(x, training=training)), tf.shape(param))
             * m_tilde * self.alpha)
 
         return update, states_new
@@ -92,7 +94,7 @@ class RMSPropLROptimizer(RNNPropOptimizer):
 
     default_name = "AdamLR"
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
         states_new = {}
 
@@ -117,7 +119,8 @@ class RMSPropLROptimizer(RNNPropOptimizer):
             x, states_new[hidden_name] = layer(x, states[hidden_name])
         # Delta
         update = (
-            tf.reshape(tf.math.exp(self.delta(x)), tf.shape(param))
+            tf.reshape(tf.math.exp(
+                self.delta(x, training=training)), tf.shape(param))
             * g_tilde * self.alpha)
 
         return update, states_new

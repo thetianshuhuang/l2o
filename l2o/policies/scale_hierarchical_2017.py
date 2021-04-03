@@ -94,7 +94,7 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
         # Stored as a logit - the actual gamma used will be sigmoid(gamma)
         self.gamma = tf.Variable(tf.zeros(()), trainable=True, name="gamma")
 
-    def call_global(self, states, global_state):
+    def call_global(self, states, global_state, training=False):
         """Equation 12.
 
         Global RNN. Inputs are prepared (except for final mean) in ``call``.
@@ -181,7 +181,7 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
 
         return tf.exp(eta) * tf.reshape(d_theta, tf.shape(param))
 
-    def call(self, param, grads, states, global_state):
+    def call(self, param, grads, states, global_state, training=False):
         """Optimizer Update.
 
         Notes

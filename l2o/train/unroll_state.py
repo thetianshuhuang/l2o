@@ -87,7 +87,7 @@ class UnrollStateManager:
     def advance_param(self, args, mask, global_state):
         """Advance a single parameter, depending on mask."""
         if mask:
-            return self.policy.call(*args, global_state)
+            return self.policy.call(*args, global_state, training=True)
         else:
             return self.policy_ref.call(*args)
 
@@ -109,7 +109,7 @@ class UnrollStateManager:
         # global_state <- global_policy(local states, global state)
         global_state_new = self.policy.call_global(
             [s for s, mask in zip(states_new, self.mask) if mask],
-            unroll_state.global_state)
+            unroll_state.global_state, training=True)
         unroll_state_new = UnrollState(
             params=dparams, states=states_new, global_state=global_state_new)
 

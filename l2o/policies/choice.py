@@ -51,7 +51,7 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
         self.choice = Dense(2, input_shape=(layers[-1],))
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Network call override."""
         states_new = {}
 
@@ -75,7 +75,7 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
         # Factor in softmax of Adam, RMSProp
         opt_weights = softmax(
             tf.reshape(self.choice(x), [-1, 2]),
-            hardness=self.hardness, train=self.train, epsilon=self.epsilon)
+            hardness=self.hardness, train=training, epsilon=self.epsilon)
 
         # Combine softmax
         update = self.learning_rate * (

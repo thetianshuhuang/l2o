@@ -18,7 +18,7 @@ class AdamOptimizer(BaseCoordinateWisePolicy):
         self.beta_2 = beta_2
         self.epsilon = epsilon
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
         states_new = {}
         states_new["m"], states_new["v"] = rms_momentum(
@@ -47,7 +47,7 @@ class RMSPropOptimizer(BaseCoordinateWisePolicy):
         self.rho = rho
         self.epsilon = epsilon
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
         scaled, states_new = rms_scaling(
             inputs, self.rho, states, epsilon=self.epsilon)
@@ -94,7 +94,7 @@ class RectifiedAdamOptimizer(BaseHierarchicalPolicy):
         self.total_steps = total_steps
         self.warmup_proportion = warmup_proportion
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
         # Standard Adam update
         states_new = {}
@@ -129,7 +129,7 @@ class RectifiedAdamOptimizer(BaseHierarchicalPolicy):
             "v": tf.zeros(tf.shape(var))
         }
 
-    def call_global(self, states, global_state):
+    def call_global(self, states, global_state, training=False):
         """Increment iteration count."""
         return global_state + 1
 

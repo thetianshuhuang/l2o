@@ -34,7 +34,7 @@ class ChoiceExtendedOptimizer(BaseCoordinateWisePolicy):
 
         self.choice = Dense(3, input_shape=(layers[-1] + 3,))
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
         # Momentum & Variance
         states_new = {}
@@ -53,15 +53,16 @@ class ChoiceExtendedOptimizer(BaseCoordinateWisePolicy):
         x = inputs_augmented
         for i, layer in enumerate(self.recurrent):
             hidden_name = "rnn_{}".format(i)
-            x, states_new[hidden_name] = layer(x, states[hidden_name])
+            x, states_new[hidden_name] = layer(
+                x, states[hidden_name], training=training)
             if self.layer_normalization:
                 x = self.norm[i](x)
             x = tf.concat([x, inputs_augmented], 1)
 
         # Make choice
         opt_weights = softmax(
-            tf.reshape(self.choice(x), [-1, 3]),
-            hardness=self.hardness, train=self.train, epsilon=self.epsilon)
+            tf.reshape(self.choice(x, training=training), [-1, 3]),
+            hardness=self.hardness, train=training, epsilon=self.epsilon)
 
         # Combine softmax
         options = tf.concat([

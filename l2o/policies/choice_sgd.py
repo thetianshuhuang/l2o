@@ -30,7 +30,7 @@ class ChoiceSGDOptimizer(BaseCoordinateWisePolicy):
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
         self.choice = Dense(3, input_shape=(layers[-1] + 3,))
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
         # Momentum & Variance
         states_new = {}
@@ -53,7 +53,7 @@ class ChoiceSGDOptimizer(BaseCoordinateWisePolicy):
         # Make choice
         opt_weights = softmax(
             tf.reshape(self.choice(x), [-1, 3]),
-            hardness=self.hardness, train=self.train, epsilon=self.epsilon)
+            hardness=self.hardness, train=training, epsilon=self.epsilon)
 
         # Combine softmax
         options = tf.concat([

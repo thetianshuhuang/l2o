@@ -57,7 +57,7 @@ class RNNPropExtendedOptimizer(RNNPropOptimizer):
             1, input_shape=(layers[-1] + 3,), activation=out_activation,
             kernel_initializer="zeros", bias_initializer="zeros")
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
         # Momentum & Variance
         states_new = {}

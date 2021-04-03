@@ -1,7 +1,8 @@
 """RNNProp Implementation."""
 
 import tensorflow as tf
-from tensorflow.keras.layers import LSTMCell, Dense, LayerNormalization
+# from tensorflow.keras.layers import LSTMCell, Dense
+from .perturbable_keras import LSTMCell, Dense
 
 from .architectures import BaseCoordinateWisePolicy
 from .moments import rms_momentum
@@ -30,6 +31,8 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
         Name of optimizer network.
     warmup_lstm_update : bool
         Update LSTM during warmup?
+    train_noise : float
+        Gaussian noise stddev to add to parameters during training.
     **kwargs : dict
         Passed onto tf.keras.layers.LSTMCell
     """
@@ -38,7 +41,8 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
 
     def init_layers(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.999, alpha=0.1,
-            epsilon=1e-10, warmup_lstm_update=True, **kwargs):
+            epsilon=1e-10, warmup_lstm_update=True,
+            train_noise=0.0, **kwargs):
         """Initialize layers."""
         self.beta_1 = beta_1
         self.beta_2 = beta_2
@@ -46,10 +50,15 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
         self.epsilon = epsilon
         self.warmup_lstm_update = warmup_lstm_update
 
-        self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
-        self.delta = Dense(1, input_shape=(layers[-1],), activation="tanh")
+        self.recurrent = [
+            LSTMCell(hsize, noise_stddev=train_noise, **kwargs)
+            for hsize in layers
+        ]
+        self.delta = Dense(
+            1, input_shape=(layers[-1],),
+            activation="tanh", noise_stddev=train_noise)
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
         states_new = {}
 
@@ -71,9 +80,11 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
         ], 1)
         for i, layer in enumerate(self.recurrent):
             hidden_name = "rnn_{}".format(i)
-            x, states_new[hidden_name] = layer(x, states[hidden_name])
+            x, states_new[hidden_name] = layer(
+                x, states[hidden_name], training=training)
         # Delta
-        update = tf.reshape(self.alpha * self.delta(x), tf.shape(param))
+        update = tf.reshape(
+            self.alpha * self.delta(x, training=training), tf.shape(param))
 
         return update, states_new
 

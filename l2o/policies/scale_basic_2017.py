@@ -49,7 +49,7 @@ class ScaleBasicOptimizer(BaseCoordinateWisePolicy):
             1, input_shape=(layers[-1],), activation="sigmoid",
             name="learning_rate_change")
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Network call override."""
         states_new = {}
 

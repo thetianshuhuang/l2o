@@ -177,7 +177,7 @@ OVERRIDE_PRESETS = {
     ],
     "half_depth": [
         (["policy", "layers"], [20])
-    ]
+    ],
 }
 
 

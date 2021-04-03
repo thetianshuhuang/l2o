@@ -13,10 +13,6 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         Defaults to name specified by the ``default_name`` attribute.
     distribute : None or tf.distribute.Strategy
         Distributed training tensorflow strategy.
-    train : bool
-        Set to True when training, and False during evaluation. Used for
-        policies with gradient estimation (i.e. gumbel softmax); can be ignored
-        by most policies.
     debug : bool
         If True, sets a debug flag that indicates to optimizers they should log
         debug information in their optimizer states.
@@ -29,14 +25,13 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
     default_name = "LearnedOptimizer"
 
     def __init__(
-            self, name=None, distribute=None, train=True, debug=False,
+            self, name=None, distribute=None, debug=False,
             weights_file=None, **kwargs):
 
         if name is None:
             name = self.default_name
         super().__init__(name)
 
-        self.train = train
         self.debug = debug
         self.config = kwargs
 
@@ -60,7 +55,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         """Get network config."""
         return self.config
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Network call override (handled by tf.keras.Model).
 
         Parameters
@@ -75,6 +70,11 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         global_state : object
             Nested structure containing current global hidden state; can be
             empty.
+
+        Keyword Args
+        ------------
+        training : bool
+            Indicates train/test.
 
         Returns
         -------
@@ -125,7 +125,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         """
         raise NotImplementedError()
 
-    def call_global(self, states, global_state):
+    def call_global(self, states, global_state, training=False):
         """By default, perform no action.
 
         Due to a tensorflow bug that attempts to convert parameters inside
@@ -221,7 +221,7 @@ class BaseHierarchicalPolicy(BaseLearnToOptimizePolicy):
 
     architecture = HierarchicalOptimizer
 
-    def call_global(self, states, global_state):
+    def call_global(self, states, global_state, training=False):
         """Call function for global RNN update.
 
         Parameters
@@ -231,6 +231,11 @@ class BaseHierarchicalPolicy(BaseLearnToOptimizePolicy):
             for all variables
         global_state : object
             Nested structure containing the global state
+
+        Keyword Args
+        ------------
+        training : bool
+            Indicates train/test.
 
         Returns
         -------

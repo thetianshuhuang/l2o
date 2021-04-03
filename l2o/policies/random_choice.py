@@ -33,7 +33,7 @@ class RandomChoiceOptimizer(BaseCoordinateWisePolicy):
         self.learning_rate = learning_rate
         self.adam_weight = 0.5
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Network call override."""
         states_new = {}
 
