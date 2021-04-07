@@ -7,18 +7,23 @@ from tensorflow.python.ops import array_ops
 
 
 class NoiseMixin:
-    """Mixin to provide access to the _noise method."""
+    """Mixin to provide access to the _noise method.
 
-    def __init__(self, *args, noise_stddev=0.0, **kwargs):
+    Keyword Args
+    ------------
+    perturbation : BasePerturbation() or None
+        Perturbation type; if None, does nothing.
+    """
 
-        self.noise_stddev = noise_stddev
+    def __init__(self, *args, perturbation=None, **kwargs):
+
+        self.perturbation = perturbation
         super().__init__(*args, **kwargs)
 
-    def _noise(self, param, training):
-        """Add IID gaussian noise."""
-        if training and self.noise_stddev > 0:
-            return param + tf.random.normal(
-                param.shape, mean=0.0, stddev=self.noise_stddev)
+    def _noise(self, param, training=None):
+        """Add perturbation."""
+        if training and self.perturbation is not None:
+            return self.perturbation.add(param)
         else:
             return param
 

@@ -38,6 +38,14 @@ class StepMixin:
             Weight applied to imitation loss. If 0, imitation loss is not
             computed.
         """
+        def _get_loss(*args):
+            d, s, c = args
+            """Helper to compute inner loss."""
+            results = self.abstract_loss(d, s, c, **kwargs)
+            loss = (
+                meta_loss_weight * results[0]
+                + imitation_loss_weight * results[1])
+            return results, loss
 
         def _inner(data_, states_, scale_):
             """Distribute function.
@@ -47,13 +55,20 @@ class StepMixin:
             ``kwargs`` only contains bound constants, they are captured by
             closure instead of passed through ``distribute.run``.
             """
-            # Since the problem and teachers do not contain any variables,
-            # we do not need to ``tape.watch`` for efficiency.`
+            # Noise step
+            ptb = self.network.perturbation
+            ptb.reset()
+            for _ in range(ptb.adversarial_attack_steps):
+                with tf.GradientTape() as tape:
+                    tape.watch(ptb.perturbable_variables)
+                    results, loss = _get_loss(data_, states_, scale_)
+                grads = tape.gradient(loss, ptb.perturbable_variables)
+                ptb.apply_gradients(zip(ptb.perturbable_variables, grads))
+
+            # Meta step
             with tf.GradientTape() as tape:
-                results = self.abstract_loss(data_, states_, scale_, **kwargs)
-                loss = (
-                    meta_loss_weight * results[0]
-                    + imitation_loss_weight * results[1])
+                tape.watch(self.network.trainable_variables)
+                results, loss = _get_loss(data_, states_, scale_)
             grads = tape.gradient(loss, self.network.trainable_variables)
 
             clipped = self.gradient_clipping.clip(

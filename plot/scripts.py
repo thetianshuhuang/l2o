@@ -19,6 +19,7 @@ def plot_training(ctx, tests, limit=False):
             if limit:
                 ax.set_ylim(-1.1, 0.1)
     fig.tight_layout()
+    return fig, axs
 
 
 def plot_phase(ctx, tests, limit=False, sfx=""):
@@ -31,6 +32,7 @@ def plot_phase(ctx, tests, limit=False, sfx=""):
         if limit:
             ax.set_xlim(-6, -2)
             ax.set_ylim(-3.5, -2.4)
+    return fig, axs
 
 
 def plot_phase_swarm(ctx, tests, limit=False, sfx=""):
@@ -43,6 +45,7 @@ def plot_phase_swarm(ctx, tests, limit=False, sfx=""):
         if limit:
             ax.set_xlim(-6, -2)
             ax.set_ylim(-3.5, -2.4)
+    return fig, axs
 
 
 def plot_stats_batch(ctx, tests, sma=100, limit=False, sfx="", **kwargs):
@@ -54,6 +57,7 @@ def plot_stats_batch(ctx, tests, sma=100, limit=False, sfx="", **kwargs):
         if limit:
             ax.set_ylim(-8, 0)
     fig.tight_layout()
+    return fig, axs
 
 
 def plot_loss(ctx, tests, rulers=[], sfx="", **kwargs):
@@ -69,3 +73,4 @@ def plot_loss(ctx, tests, rulers=[], sfx="", **kwargs):
         for r in rulers:
             row[0].axline(r, color='black')
     fig.tight_layout()
+    return fig, axs

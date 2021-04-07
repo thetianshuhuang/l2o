@@ -1,7 +1,10 @@
 """Base API documentation (for tools to pull parent docstrings)."""
 
 import tensorflow as tf
+
+from l2o import deserialize
 from l2o.optimizer import CoordinateWiseOptimizer, HierarchicalOptimizer
+from . import perturbations as perturbations_module
 
 
 class BaseLearnToOptimizePolicy(tf.keras.Model):
@@ -18,6 +21,8 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         debug information in their optimizer states.
     weights_file : str or None
         Optional filepath to load optimizer network weights from.
+    perturbation : dict
+        Parameter perturbation configuration.
     kwargs : dict
         Passed to ``init_layers``.
     """
@@ -25,8 +30,9 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
     default_name = "LearnedOptimizer"
 
     def __init__(
-            self, name=None, distribute=None, debug=False,
-            weights_file=None, **kwargs):
+            self, name=None, distribute=None, debug=False, weights_file=None,
+            perturbation={"class_name": "BasePerturbation", "config": {}},
+            **kwargs):
 
         if name is None:
             name = self.default_name
@@ -35,6 +41,10 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         self.debug = debug
         self.config = kwargs
 
+        self.perturbation = deserialize.generic(
+            perturbation["class_name"], perturbations_module,
+            message="parameter perturbation")(**perturbation["config"])
+
         if distribute is None:
             distribute = tf.distribute.get_strategy()
         with distribute.scope():
@@ -42,6 +52,23 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
 
         if weights_file is not None:
             self.load_weights(weights_file)
+        else:
+            self._force_build()
+
+        self.perturbation.build(self.trainable_variables)
+
+    def _force_build(self):
+        """Force creation of variables.
+
+        This jank workaround is required since keras models do not initialize
+        variables until they are called the first time, which is not compatible
+        with adversarial attacks.
+        """
+        state = self.get_initial_state((1,))
+        gl = self.get_initial_state_global()
+
+        self.call(tf.zeros((1,)), tf.zeros((1,)), state, gl, training=False)
+        self.call_global([state], gl, training=False)
 
     def load_weights(self, file):
         """Load saved weights from file."""

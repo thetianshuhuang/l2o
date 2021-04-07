@@ -56,7 +56,7 @@ def __deep_warn_equal(path, d1, d2, d1name, d2name):
                 inner_path, d1[key], d2[key], d1name, d2name)
         elif d1[key] != d2[key]:
             warnings.append(
-                "<{}> has value '{}' in {} but '{}'' in {}".format(
+                "<{}> has value '{}' in {} but '{}' in {}".format(
                     inner_path, d1[key], d1name, d2[key], d2name))
     return warnings
 

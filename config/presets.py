@@ -30,10 +30,10 @@ OVERRIDE_PRESETS = {
     "debug": [
         (["strategy", "num_periods"], 3),
         (["strategy", "unroll_len"], 20),
-        (["strategy", "depth"], 20),
-        (["strategy", "epochs"], 2),
-        (["strategy", "validation_unroll"], 20),
-        (["strategy", "validation_depth"], 2),
+        (["strategy", "depth"], 5),
+        (["strategy", "epochs"], 10),
+        (["strategy", "validation_unroll"], 5),
+        (["strategy", "validation_depth"], 10),
         (["strategy", "validation_epochs"], 1),
         (["strategy", "max_repeat"], 1),
     ],
@@ -178,6 +178,21 @@ OVERRIDE_PRESETS = {
     "half_depth": [
         (["policy", "layers"], [20])
     ],
+    "fgsm": [(
+        ["policy", "perturbation"], {
+            "class_name": "FGSMPerturbation",
+            "config": {"step_size": 0.01}
+        }
+    )],
+    "pgd": [(
+        ["policy", "perturbation"], {
+            "class_name": "PGDPerturbation",
+            "config": {
+                "steps": 5, "magnitude": 0.01,
+                "norm": "inf", "learning_rate": 0.1
+            }
+        }
+    )]
 }
 
 

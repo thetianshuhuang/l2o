@@ -10,7 +10,6 @@ from .train_mixins import TrainingMixin
 from .warmup_mixins import WarmupMixin
 
 from . import gradient_clipping as gradient_clipping_module
-from .gradient_clipping import SimpleGC
 from . import step_callbacks as step_callbacks_module
 from .step_callbacks import BaseStepCallback, is_callback
 
@@ -94,7 +93,8 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin, WarmupMixin):
             parameter_scale_spread=3.0, loss_reduce=tf.math.reduce_max,
             il_mode='switch', unroll_weight="sum", teachers=[],
             obj_train_max_multiplier=-1, huber_delta=-1,
-            gradient_clipping={"class_name": "SimpleGC", "clip_value": -1},
+            gradient_clipping={
+                "class_name": "SimpleGC", "config": {"clip_value": -1}},
             epsilon=1e-10, step_callbacks=[],
             pbar_values=["meta_loss", "imitation_loss"],
             mean_stats=["meta_loss", "imitation_loss"],
