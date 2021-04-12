@@ -181,14 +181,14 @@ OVERRIDE_PRESETS = {
     "fgsm": [(
         ["policy", "perturbation"], {
             "class_name": "FGSMPerturbation",
-            "config": {"step_size": 0.01}
+            "config": {"step_size": 0.0001}
         }
     )],
     "pgd": [(
         ["policy", "perturbation"], {
             "class_name": "PGDPerturbation",
             "config": {
-                "steps": 5, "magnitude": 0.01,
+                "steps": 5, "magnitude": 0.0001,
                 "norm": "inf", "learning_rate": 0.1
             }
         }
