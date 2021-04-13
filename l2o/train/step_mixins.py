@@ -59,14 +59,16 @@ class StepMixin:
             ptb = self.network.perturbation
             ptb.reset()
             for _ in range(ptb.adversarial_attack_steps):
-                with tf.GradientTape() as tape:
+                # We manually watch variables here since we only
+                # want to watch perturbable_variables, not trainable_variables.
+                with tf.GradientTape(watch_accessed_variables=False) as tape:
                     tape.watch(ptb.perturbable_variables)
                     results, loss = _get_loss(data_, states_, scale_)
                 grads = tape.gradient(loss, ptb.perturbable_variables)
                 ptb.apply_gradients(zip(ptb.perturbable_variables, grads))
 
             # Meta step
-            with tf.GradientTape() as tape:
+            with tf.GradientTape(watch_accessed_variables=False) as tape:
                 tape.watch(self.network.trainable_variables)
                 results, loss = _get_loss(data_, states_, scale_)
             grads = tape.gradient(loss, self.network.trainable_variables)
@@ -75,6 +77,9 @@ class StepMixin:
                 self.network.trainable_variables, grads)
             self.optimizer.apply_gradients(
                 zip(clipped, self.network.trainable_variables))
+
+            # Don't forget to reset after use!
+            ptb.reset()
 
             return results
 
