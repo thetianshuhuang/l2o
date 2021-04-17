@@ -148,7 +148,7 @@ class CGDPerturbation(FGSMPerturbation):
 
     def __init__(self, steps=1, magnitude=0.01):
 
-        self.steps = steps
+        self.adversarial_attack_steps = steps
         self.magnitude = magnitude
 
     def apply_gradients(self, params_and_grads):
