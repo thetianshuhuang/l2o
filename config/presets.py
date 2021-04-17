@@ -192,6 +192,12 @@ OVERRIDE_PRESETS = {
                 "norm": "inf", "learning_rate": 0.1
             }
         }
+    )],
+    "cgd": [(
+        ["policy", "perturbation"], {
+            "class_name": "CGDPerturbation",
+            "config": {"steps": 3, "magnitude": 0.1}
+        }
     )]
 }
 

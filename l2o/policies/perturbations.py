@@ -33,15 +33,22 @@ class RandomPerturbation(BasePerturbation):
     ------------
     noise_stddev : float
         IID gaussian stddev.
+    relative : bool
+        Whether noise stddev is specified relative to the weight l2 magnitude.
     """
 
-    def __init__(self, noise_stddev=0.01):
+    def __init__(self, noise_stddev=0.01, relative=False):
         self.noise_stddev = noise_stddev
+        self.relative = relative
 
     def add(self, param):
         """Add noise to parameter."""
-        return param + tf.random.normal(
-            param.shape, mean=0.0, stddev=self.noise_stddev)
+        if self.relative:
+            noise = self.noise_stddev * tf.norm(param, ord=2)
+        else:
+            noise = self.noise_stddev
+
+        return param + tf.random.normal(param.shape, mean=0.0, stddev=noise)
 
 
 class FGSMPerturbation(BasePerturbation):
@@ -107,11 +114,13 @@ class PGDPerturbation(FGSMPerturbation):
         self.magnitude = magnitude
         self.norm = norm
         self.learning_rate = learning_rate
+        self.relative = relative
 
     def apply_gradients(self, params_and_grads):
         """Apply adversarial gradients."""
         for param, grad in params_and_grads:
             param_new = param + grad * self.learning_rate
+
             if self.norm == "l2":
                 param.assign(tf.clip_by_norm(param_new, self.magnitude))
             elif self.norm == "scale":
@@ -122,4 +131,28 @@ class PGDPerturbation(FGSMPerturbation):
                     param_new,
                     clip_value_min=-self.magnitude,
                     clip_value_max=self.magnitude))
+            else:
+                raise ValueError("Invalid norm: {}".format(self.norm))
 
+
+class CGDPerturbation(FGSMPerturbation):
+    """Adversarial perturbation using clipped gradient descent.
+
+    Keyword Args
+    ------------
+    magnitude : float
+        Magnitude of perturbation per step, relative to parameter magnitude.
+    steps : int
+        Number of steps to take.
+    """
+
+    def __init__(self, steps=1, magnitude=0.01):
+
+        self.steps = steps
+        self.magnitude = magnitude
+
+    def apply_gradients(self, params_and_grads):
+        """Apply adversarial gradients."""
+        for param, grad in params_and_grads:
+            param.assign(
+                param + tf.clip_by_norm(grad, tf.norm(param) * self.magnitude))
