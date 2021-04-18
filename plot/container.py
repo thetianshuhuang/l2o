@@ -3,9 +3,11 @@
 import os
 import json
 import numpy as np
+import functools
 from matplotlib import pyplot as plt
 
-from .strategy import get_constructor, Baseline
+from .strategy import get_container, Baseline, ReplicateResults
+from . import plots
 
 
 def _read_json(d):
@@ -95,8 +97,9 @@ class Results:
             for k1 in os.listdir(os.path.join(results, k2))
         }
         self.results.update(_read_json(os.path.join(results, "names.json")))
-
         self._results = {}
+
+        self._init_plots()
 
     def register_names(self, names):
         """Register display name aliases not already in names.json."""
@@ -110,7 +113,13 @@ class Results:
 
     def _get_test(self, t):
         """Get container."""
-        base = t.split(":")[0]
+        base = t.split(":")[0].split("/")
+        if len(base) == 2:
+            replicate = None
+        else:
+            replicate = "/".join(base[2:])
+        base = "/".join(base[:2])
+
         if base in self.baselines:
             return Baseline(
                 os.path.join(self.dir_baseline, base),
@@ -118,13 +127,14 @@ class Results:
         elif base in self.results:
             if base not in self._results:
                 path = os.path.join(self.dir_results, base)
-                cfg = _read_json(os.path.join(path, "config.json"))
-                self._results[base] = get_constructor(
-                    cfg["strategy_constructor"]
-                )(path, name=self.results[base])
-            return self._results[base]
+                self._results[base] = get_container(
+                    path, name=self.results[base])
+            if replicate is None:
+                return self._results[base]
+            else:
+                return self._results[base].get(replicate)
         else:
-            raise ValueError("Unknown result: {}".format(base))
+            raise ValueError("Unknown result: {}".format(base, replicate))
 
     def _expand_name(self, t):
         """Expand name into base and metadata."""
@@ -138,6 +148,10 @@ class Results:
         """Get evaluation results."""
         return self._get_test(t).get_eval(problem=problem, **metadata)
 
+    def get_eval_stats(self, t, problem="conv_train", **metadata):
+        """Get evaluation statistics."""
+        res = self._get_test(t).get_eval_stats(problem=problem, **metadata)
+
     def get_name(self, t, **metadata):
         """Get test full name."""
         return self._get_test(t)._display_name(**metadata)
@@ -148,134 +162,41 @@ class Results:
 
     def adjust_init_time(self, data):
         """Adjust times to ignore initialization time."""
-        if len(data.shape) == 2:
-            mean_duration = np.mean(np.diff(data, axis=1))
-            return data - data[:, :1] + mean_duration
+        return plots._adjust_init_time(data)
+
+    def _gather_eval(self, tests, problem="conv_train"):
+        """Gather evaluations."""
+        meta = [self._expand_name(t) for t in tests]
+        data = [self.get_eval(n, problem=problem, **m) for n, m in meta]
+        dnames = [self.get_name(n, **m) for n, m in meta]
+
+        return data, dnames
+
+    def _execute_plot(
+            self, tests, ax, problem="conv_train",
+            baselines=[], func=None, **kwargs):
+        """Make plot."""
+        if isinstance(tests, list):
+            data, dnames = self._gather_eval(baselines + tests)
+            func(ax, data, dnames, **kwargs)
+        elif isinstance(tests, str):
+            data_b, dnames_b = self._gather_eval(baselines)
+
+            repl = self._get_test(tests)
+            dnames, data = zip(*[
+                (k, v.get_eval(problem=problem))
+                for k, v in repl.replicates.items()
+            ])
+
+            func(ax, data_b + list(data), dnames_b + list(dnames), **kwargs)
         else:
-            mean_duration = np.mean(np.diff(data))
-            return data - data[0] + mean_duration
+            raise TypeError("Invalid tests type: {}".format(tests))
 
-    _phase_args = {
-        "width": 0.002, "headwidth": 5, "headlength": 5,
-        "scale_units": "xy", "angles": "xy", "scale": 1
-    }
-
-    def plot_phase(
-            self, tests, ax, loss=False, lgd=True, problem="conv_train"):
-        """Plot test phase diagram."""
-        for i, t in enumerate(tests):
-            name, metadata = self._expand_name(t)
-            d = self.get_eval(name, problem=problem, **metadata)
-            if not loss:
-                x = np.mean(d["sparse_categorical_accuracy"], axis=0)
-                y = np.mean(d["val_sparse_categorical_accuracy"], axis=0)
-            else:
-                x = np.mean(np.log(d["loss"]), axis=0)
-                y = np.mean(np.log(d["val_loss"]), axis=0)
-            ax.quiver(
-                x[:-1], y[:-1], x[1:] - x[:-1], y[1:] - y[:-1],
-                color='C' + str(i), **self._phase_args,
-                label=self.get_name(name, **metadata))
-        if loss:
-            ax.set_xlabel("Log Train Loss")
-            ax.set_ylabel("Log Validation Loss")
-        else:
-            ax.set_xlabel("Train Accuracy")
-            ax.set_ylabel("Validation Accuracy")
-
-        if lgd:
-            ax.legend()
-
-    def plot_phase_swarm(
-            self, tests, ax, loss=False, lgd=True, problem="conv_train"):
-        """Plot test phase diagram as a 'swarm'."""
-        for i, t in enumerate(tests):
-            name, metadata = self._expand_name(t)
-            d = self.get_eval(name, problem=problem, **metadata)
-            if not loss:
-                x = d["sparse_categorical_accuracy"]
-                y = d["val_sparse_categorical_accuracy"]
-            else:
-                x = np.log(d["loss"])
-                y = np.log(d["val_loss"])
-
-            for j, (dx, dy) in enumerate(zip(x, y)):
-                if j == 0:
-                    ax.quiver(
-                        dx[:-1], dy[:-1], dx[1:] - dx[:-1], dy[1:] - dy[:-1],
-                        color='C' + str(i), **self._phase_args,
-                        label=self.get_name(name, **metadata))
-                else:
-                    ax.quiver(
-                        dx[:-1], dy[:-1], dx[1:] - dx[:-1], dy[1:] - dy[:-1],
-                        color='C' + str(i), **self._phase_args)
-        if loss:
-            ax.set_xlabel("Log Train Loss")
-            ax.set_ylabel("Log Validation Loss")
-        else:
-            ax.set_xlabel("Train Accuracy")
-            ax.set_ylabel("Validation Accuracy")
-
-        if lgd:
-            ax.legend()
-
-    def plot_loss(
-            self, tests, ax, problem="conv_train", band_scale=0,
-            validation=False, time=False, adjust_init_time=True):
-        """Plot loss curve by epoch."""
-        key = "val_loss" if validation else "loss"
-
-        for t in tests:
-            name, meta = self._expand_name(t)
-            d = self.get_eval(name, problem=problem, **meta)
-
-            if time:
-                x = np.mean(d["epoch_time"], axis=0)
-                if adjust_init_time:
-                    x = self.adjust_init_time(x)
-            else:
-                x = np.arange(d["epoch_time"].shape[1])
-
-            plot_band(
-                ax, x, np.log(d[key]),
-                label=self.get_name(name, **meta), band_scale=band_scale)
-
-        ax.legend()
-        ax.set_ylabel("Log Val Loss" if validation else "Log Training Loss")
-        ax.set_xlabel("Time (s)" if time else "Epochs")
-
-    def plot_stats_batch(
-            self, tests, ax, start=0, end=0, use_time=False, sma=0, loss=True,
-            problem="conv_train", band_scale=0):
-        """Plot test loss or accuracy, batch-wise."""
-        for t in tests:
-            name, meta = self._expand_name(t)
-            d = self.get_eval(name, **meta)
-
-            if end == 0:
-                end = d["batch_loss"].shape[1]
-
-            if use_time:
-                x = np.linspace(
-                    0, np.sum(d["epoch_time"]) / d["epoch_time"].shape[0],
-                    num=d["batch_loss"].shape[1])[start:end]
-                xlabel = "Time (s)"
-            else:
-                x = np.arange(start, end)
-                xlabel = "Step"
-
-            if loss:
-                y = np.log(d["batch_loss"][:, start:end] + 1e-10)
-            else:
-                y = d["batch_accuracy"][:, start:end]
-
-            plot_band(
-                ax, x, y, label=self.get_name(name, **meta),
-                sma=sma, band_scale=band_scale)
-
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel("Log Training Loss" if loss else "Training Accuracy")
-        ax.legend()
+    def _init_plots(self):
+        """Register plots."""
+        for func in plots.EXPORTS:
+            setattr(self, func, functools.partial(
+                self._execute_plot, func=getattr(plots, func)))
 
     def plot_training(self, test, ax, **kwargs):
         """Plot Meta and Imitation Loss for a single test."""

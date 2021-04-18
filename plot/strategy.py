@@ -1,13 +1,22 @@
 """Strategy loader."""
 
 import os
+import json
 import numpy as np
 import pandas as pd
+import functools
+
+from . import plots
 
 
 def _npload(*args):
     """Helper to load .npz."""
     return np.load(os.path.join(*args) + ".npz")
+
+
+def _read_json(d):
+    with open(d) as f:
+        return json.load(f)
 
 
 class Baseline:
@@ -26,6 +35,40 @@ class Baseline:
 
     def _display_name(self, **metadata):
         return self.name
+
+
+class ReplicateResults:
+    """Results from multiple replicates."""
+
+    def __init__(self, path, name="ReplicateResults"):
+        self.directory = path
+        self.name = name
+        self.replicates = {
+            p: get_container(os.path.join(path, p), name=name + "/" + p)
+            for p in os.listdir(path)
+        }
+
+    def _display_name(self, **kwargs):
+        """Get display name as string."""
+        return self.name
+
+    def get(self, replicate):
+        """Get individual test."""
+        return self.replicates[replicate]
+
+    def boxplot(self, ax, problem="conv_train", stat="val_best"):
+        """Box plot of training stats."""
+        data = np.array([
+            repl.get_eval_stats(problem=problem)[stat]
+            for _, repl in self.replicates.items()
+        ])
+        ax.boxplot(np.transpose(data))
+        ax.set_title(self._display_name())
+
+        mean = np.mean(data)
+        err = 2 * np.sqrt(np.var(np.mean(data, axis=1)) / len(self.replicates))
+        for ruler in [mean, mean + err, mean - err]:
+            ax.axhline(ruler)
 
 
 class BaseResult:
@@ -109,6 +152,19 @@ class BaseResult:
         """Get evaluation results from .npz."""
         meta = self._complete_metadata(**meta)
         return _npload(self._path(dtype="eval", file=problem, **meta))
+
+    def get_eval_stats(self, problem="conv_train", **metadata):
+        """Get evaluation statistics."""
+        res = self.get_eval(problem=problem, **metadata)
+        return {
+            "val_best_index": np.argmin(res["val_loss"], axis=1),
+            "val_best": np.log(np.min(res["val_loss"], axis=1)),
+            "val_last": np.log(res["val_loss"][:, -1]),
+            "train_best_index": np.argmin(res["loss"]),
+            "train_best": np.log(np.min(res["loss"], axis=1)),
+            "train_last": np.log(res["loss"][:, -1]),
+            "train_10": np.log(res["loss"][:, 9])
+        }
 
     def get_train_log(self, **metadata):
         """Get log file for a single training period."""
@@ -254,11 +310,16 @@ class CurriculumResult(BaseResult):
         ax.legend()
 
 
-def get_constructor(s):
-    """Get result container constructor."""
-    if s == "CurriculumLearningStrategy":
-        return CurriculumResult
-    elif s == "RepeatStrategy":
-        return RepeatResult
-    else:
-        raise ValueError("Invalid strategy type {}".format(s))
+def get_container(path, **kwargs):
+    """Get result container."""
+    try:
+        s = _read_json(
+            os.path.join(path, "config.json"))["strategy_constructor"]
+        if s == "CurriculumLearningStrategy":
+            return CurriculumResult(path, **kwargs)
+        elif s == "RepeatStrategy":
+            return RepeatResult(path, **kwargs)
+        else:
+            raise ValueError("Invalid strategy type {}".format(s))
+    except FileNotFoundError:
+        return ReplicateResults(path, **kwargs)

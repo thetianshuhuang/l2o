@@ -79,9 +79,9 @@ STRATEGY = {
         "strategy": {
             "validation_problems": None,
             "validation_seed": 12345,
-            "num_periods": 25,
-            "unroll_len": 20,
-            "depth": 25,
+            "num_periods": 4,
+            "unroll_len": 100,
+            "depth": {"type": "list", "values": [1, 2, 5]},
             "epochs": 10,
             "annealing_schedule": 0.0,
             "validation_epochs": 2,
