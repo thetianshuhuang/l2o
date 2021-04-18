@@ -27,8 +27,8 @@ def softmax(weights, hardness=0.0, train=True, epsilon=1e-10):
         # Train -> use gumbel-softmax approximator
         if train:
             gumbels = -tf.math.log(-tf.math.log(
-                tf.random.uniform(tf.shape(opt_weights))))
-            z = tf.math.exp((opt_weights + gumbels) * self.hardness + epsilon)
+                tf.random.uniform(tf.shape(weights))))
+            z = tf.math.exp((weights + gumbels) * self.hardness + epsilon)
             return z / tf.math.reduce_sum(z, axis=1, keepdims=True)
         # Otherwise, use ordinary hard max.
         else:

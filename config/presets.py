@@ -224,7 +224,8 @@ OVERRIDE_PRESETS = {
             "class_name": "CGDPerturbation",
             "config": {"steps": 3, "magnitude": 0.005}
         }
-    )]
+    )],
+    "hard": [(["policy", "hardness"], 10.0)]
 }
 
 
