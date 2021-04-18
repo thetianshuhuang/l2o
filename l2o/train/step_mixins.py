@@ -65,7 +65,9 @@ class StepMixin:
                     tape.watch(ptb.perturbable_variables)
                     results, loss = _get_loss(data_, states_, scale_)
                 grads = tape.gradient(loss, ptb.perturbable_variables)
-                ptb.apply_gradients(zip(ptb.perturbable_variables, grads))
+                ptb.apply_gradients(zip(
+                    self.network.trainable_variables,
+                    ptb.perturbable_variables, grads))
 
             # Meta step
             with tf.GradientTape(watch_accessed_variables=False) as tape:

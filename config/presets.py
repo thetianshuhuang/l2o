@@ -27,11 +27,37 @@ OVERRIDE_PRESETS = {
             }
         }
     )],
+    "choice": [(
+        ["training", "teachers", "*"],
+        {
+            "class_name": "Choice",
+            "config": {
+                # RNNProp
+                "layers": [20],
+                "beta_1": 0.9,
+                "beta_2": 0.999,
+                "learning_rate": 0.001,
+                "epsilon": 1e-10,
+                "hardness": 0.0,
+                "name": "ChoiceOptimizer",
+                # LSTMCell Args
+                "activation": "tanh",
+                "recurrent_activation": "sigmoid",
+                "use_bias": True,
+                "kernel_initializer": "glorot_uniform",
+                "recurrent_initializer": "orthogonal",
+                "bias_initializer": "zeros",
+                "unit_forget_bias": True,
+                # File
+                "weights_file": "results/choice/layers1/checkpoint/period_3.0"
+            }
+        }
+    )],
     "debug": [
         (["strategy", "num_periods"], 3),
         (["strategy", "unroll_len"], 20),
-        (["strategy", "depth"], 5),
-        (["strategy", "epochs"], 10),
+        (["strategy", "depth"], 2),
+        (["strategy", "epochs"], 25),
         (["strategy", "validation_unroll"], 5),
         (["strategy", "validation_depth"], 10),
         (["strategy", "validation_epochs"], 1),
@@ -196,7 +222,7 @@ OVERRIDE_PRESETS = {
     "cgd": [(
         ["policy", "perturbation"], {
             "class_name": "CGDPerturbation",
-            "config": {"steps": 3, "magnitude": 0.1}
+            "config": {"steps": 3, "magnitude": 0.005}
         }
     )]
 }

@@ -72,7 +72,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
 
     def load_weights(self, file):
         """Load saved weights from file."""
-        tf.train.Checkpoint(network=self).read(file)
+        tf.train.Checkpoint(network=self).read(file).expect_partial()
 
     def init_layers(self, **kwargs):
         """Initialize layers."""

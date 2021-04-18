@@ -72,11 +72,13 @@ class FGSMPerturbation(BasePerturbation):
 
     def build(self, trainable_variables):
         """Prepare perturbation variables."""
-        self._perturbable_variables = {
-            _var_key(x): tf.Variable(tf.zeros_like(x), trainable=False)
-            for x in trainable_variables}
         self.perturbable_variables = [
-            v for k, v in self._perturbable_variables.items()]
+            tf.Variable(tf.zeros_like(x), trainable=False)
+            for x in trainable_variables]
+        self._perturbable_variables = {
+            _var_key(t): p
+            for t, p in zip(trainable_variables, self.perturbable_variables)
+        }
 
     def reset(self):
         """Reset noise variables."""
@@ -85,7 +87,7 @@ class FGSMPerturbation(BasePerturbation):
 
     def apply_gradients(self, params_and_grads):
         """Apply adversarial gradients."""
-        for param, grad in params_and_grads:
+        for _, param, grad in params_and_grads:
             param.assign_add(tf.math.sign(grad) * self.step_size)
 
 
@@ -118,7 +120,7 @@ class PGDPerturbation(FGSMPerturbation):
 
     def apply_gradients(self, params_and_grads):
         """Apply adversarial gradients."""
-        for param, grad in params_and_grads:
+        for _, param, grad in params_and_grads:
             param_new = param + grad * self.learning_rate
 
             if self.norm == "l2":
@@ -146,13 +148,14 @@ class CGDPerturbation(FGSMPerturbation):
         Number of steps to take.
     """
 
-    def __init__(self, steps=1, magnitude=0.01):
+    def __init__(self, steps=1, magnitude=0.005):
 
         self.adversarial_attack_steps = steps
         self.magnitude = magnitude
 
     def apply_gradients(self, params_and_grads):
         """Apply adversarial gradients."""
-        for param, grad in params_and_grads:
+        for parent, param, grad in params_and_grads:
             param.assign(
-                param + tf.clip_by_norm(grad, tf.norm(param) * self.magnitude))
+                param + tf.clip_by_norm(
+                    grad, tf.norm(parent) * self.magnitude))

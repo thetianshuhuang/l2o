@@ -34,7 +34,8 @@ directory = args.pop_get("--directory", default="weights")
 
 # Distribute
 vgpus = int(args.pop_get("--vgpu", default=1))
-distribute = create_distribute(vgpus=vgpus)
+memory_limit = int(args.pop_get("--vram", default=12000))
+distribute = create_distribute(vgpus=vgpus, memory_limit=memory_limit)
 
 # Pick up flags first
 initialize_only = args.pop_check("--initialize")
