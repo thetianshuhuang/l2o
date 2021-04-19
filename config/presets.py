@@ -77,9 +77,7 @@ OVERRIDE_PRESETS = {
             "config": {
                 # RNNProp
                 "layers": [20],
-                "beta_1": 0.9,
-                "beta_2": 0.999,
-                "learning_rate": 0.001,
+                "learning_rate": 0.05,
                 "epsilon": 1e-10,
                 "hardness": 0.0,
                 "name": "MoreChoiceOptimizer",
