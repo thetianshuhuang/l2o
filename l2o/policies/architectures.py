@@ -31,7 +31,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
 
     def __init__(
             self, name=None, distribute=None, debug=False, weights_file=None,
-            perturbation={"class_name": "BasePerturbation", "config": {}},
+            perturbation=None,
             **kwargs):
 
         if name is None:
@@ -42,11 +42,10 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         self.config = kwargs
 
         if perturbation is None:
-            self.perturbation = perturbation
-        else:
-            self.perturbation = deserialize.generic(
-                perturbation["class_name"], perturbations_module,
-                message="parameter perturbation")(**perturbation["config"])
+            perturbation = {"class_name": "BasePerturbation", "config": {}}
+        self.perturbation = deserialize.generic(
+            perturbation["class_name"], perturbations_module,
+            message="parameter perturbation")(**perturbation["config"])
 
         if distribute is None:
             distribute = tf.distribute.get_strategy()
@@ -58,8 +57,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         else:
             self._force_build()
 
-        if self.perturbation is not None:
-            self.perturbation.build(self.trainable_variables)
+        self.perturbation.build(self.trainable_variables)
 
     def _force_build(self):
         """Force creation of variables.
