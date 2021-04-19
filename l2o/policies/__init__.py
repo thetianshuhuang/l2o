@@ -40,7 +40,8 @@ from .choice import ChoiceOptimizer
 from .abstract_choice import AbstractChoiceOptimizer
 from .analytical import (
     AdamOptimizer, RMSPropOptimizer, SGDOptimizer,
-    MomentumOptimizer, PowerSignOptimizer, AddSignOptimizer)
+    MomentumOptimizer, PowerSignOptimizer, AddSignOptimizer,
+    AdaptivePowerSignOptimizer, AdaptiveAddSignOptimizer)
 from .rnnprop_ext import RNNPropExtendedOptimizer
 from .load import load
 
@@ -56,6 +57,8 @@ __all__ = [
     # Neural Optimizer Search
     "PowerSignOptimizer",
     "AddSignOptimizer",
+    "AdaptivePowerSignOptimizer",
+    "AdaptiveAddSignOptimizer",
     # Deepmind, Google Research
     "DMOptimizer",
     "ScaleBasicOptimizer",

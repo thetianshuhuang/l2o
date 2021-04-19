@@ -96,11 +96,44 @@ class AddSignOptimizer(MomentumOptimizer):
     def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
         states_new = states * self.beta_1 + inputs * (1 - self.beta_1)
-
         return (
             self.learning_rate * inputs
             * (1 + tf.math.sign(inputs) * tf.math.sign(states_new)),
             states_new)
+
+
+class AdaptivePowerSignOptimizer(AdamOptimizer):
+    """Adaptive PowerSign variant."""
+
+    def call(self, param, inputs, states, global_state, training=False):
+        """Policy call override."""
+        states_new = {}
+        states_new["m"], states_new["v"] = rms_momentum(
+            inputs, states["m"], states["v"],
+            beta_1=self.beta_1, beta_2=self.beta_2)
+
+        update = self.learning_rate * tf.exp(
+            tf.math.sign(inputs) * tf.math.sign(states_new["m"])
+        ) * inputs / tf.sqrt(states_new["v"] + self.epsilon)
+
+        return update, states_new
+
+
+class AdaptiveAddSignOptimizer(AdamOptimizer):
+    """Adaptive PowerSign variant."""
+
+    def call(self, param, inputs, states, global_state, training=False):
+        """Policy call override."""
+        states_new = {}
+        states_new["m"], states_new["v"] = rms_momentum(
+            inputs, states["m"], states["v"],
+            beta_1=self.beta_1, beta_2=self.beta_2)
+
+        update = self.learning_rate * (
+            1 + tf.math.sign(inputs) * tf.math.sign(states_new["m"])
+        ) * inputs / tf.sqrt(states_new["v"] + self.epsilon)
+
+        return update, states_new
 
 
 class SGDOptimizer(BaseCoordinateWisePolicy):
