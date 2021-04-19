@@ -58,7 +58,8 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         else:
             self._force_build()
 
-        self.perturbation.build(self.trainable_variables)
+        if self.perturbation is not None:
+            self.perturbation.build(self.trainable_variables)
 
     def _force_build(self):
         """Force creation of variables.
