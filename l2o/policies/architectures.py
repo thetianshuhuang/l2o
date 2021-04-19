@@ -41,10 +41,12 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         self.debug = debug
         self.config = kwargs
 
-        self.perturbation = deserialize.generic(
-            perturbation["class_name"], perturbations_module,
-            message="parameter perturbation", default=None
-        )(**perturbation["config"])
+        if perturbation is None:
+            self.perturbation = perturbation
+        else:
+            self.perturbation = deserialize.generic(
+                perturbation["class_name"], perturbations_module,
+                message="parameter perturbation")(**perturbation["config"])
 
         if distribute is None:
             distribute = tf.distribute.get_strategy()
