@@ -43,7 +43,8 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
 
         self.perturbation = deserialize.generic(
             perturbation["class_name"], perturbations_module,
-            message="parameter perturbation")(**perturbation["config"])
+            message="parameter perturbation", default=None
+        )(**perturbation["config"])
 
         if distribute is None:
             distribute = tf.distribute.get_strategy()
