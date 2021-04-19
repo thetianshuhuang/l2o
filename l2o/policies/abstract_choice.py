@@ -1,4 +1,4 @@
-"""L2O that chooses either Adam or RMSProp at each iteration."""
+"""L2O that chooses from a pool of optimizers at each iteration."""
 
 import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
@@ -7,18 +7,16 @@ from .architectures import BaseCoordinateWisePolicy
 from .moments import rms_momentum
 from .softmax import softmax
 
+from . import analytical
 
-class ChoiceOptimizer(BaseCoordinateWisePolicy):
-    """L2O that chooses either Adam or RMSProp at each iteration.
+
+class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
+    """L2O that chooses from a pool of optimizers at each iteration.
 
     Keyword Args
     ------------
     layers : int[]
         Size of LSTM layers.
-    beta_1 : float
-        Momentum decay constant (table 1)
-    beta_2 : float
-        Variance decay constant (table 1)
     learning_rate : float
         Learning rate multiplier
     epsilon : float
@@ -26,58 +24,57 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
     hardness : float
         If hardness=0.0, uses standard softmax. Otherwise, uses gumbel-softmax
         with temperature = 1/hardness during training.
+    pool : dict[]
+        List of configurations for optimizers to place in the pool.
     name : str
         Name of optimizer network.
     **kwargs : dict
         Passed onto tf.keras.layers.LSTMCell
     """
 
-    default_name = "ChoiceOptimizer"
+    default_name = "AbstractChoiceOptimizer"
 
     def init_layers(
-            self, layers=(20, 20), beta_1=0.9, beta_2=0.999,
-            learning_rate=0.001, epsilon=1e-10, hardness=0.0, **kwargs):
+            self, layers=(20, 20), hardness=0.0, learning_rate=0.01,
+            epsilon=1e-10, pool=[], **kwargs):
         """Initialize layers."""
-        self.beta_1 = beta_1
-        self.beta_2 = beta_2
-        self.epsilon = epsilon
+        self.choices = [
+            getattr(analytical, p["class_name"] + "Optimizer")(**p["config"])
+            for p in pool]
+
         self.hardness = hardness
+        self.epsilon = epsilon
 
         self.learning_rate = learning_rate
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
-        self.choice = Dense(2, input_shape=(layers[-1],))
+        self.choice = Dense(len(pool), input_shape=(layers[-1],))
 
     def call(self, param, inputs, states, global_state, training=False):
         """Network call override."""
         states_new = {}
-
-        # Adam/RMSProp updates
-        states_new["m"], states_new["v"] = rms_momentum(
-            inputs, states["m"], states["v"],
-            beta_1=self.beta_1, beta_2=self.beta_2)
-        m_rmsprop = states_new["m"] / tf.sqrt(states_new["v"] + self.epsilon)
-        m_hat = states_new["m"] / (1. - self.beta_1)
-        v_hat = states_new["v"] / (1. - self.beta_2)
-        m_tilde = m_hat / tf.sqrt(v_hat + self.epsilon)
-        g_tilde = inputs / tf.sqrt(v_hat + self.epsilon)
+        update, choices_new = zip(*[
+            p(param, inputs, s, global_state)
+            for s, p in zip(states["choices"], self.choices)
+        ])
+        states_new["choices"] = list(choices_new)
 
         # Recurrent
-        x = tf.concat([
-            tf.reshape(m_tilde, [-1, 1]), tf.reshape(g_tilde, [-1, 1])], 1)
+        x = tf.concat([tf.reshape(x, [-1, 1]) for x in update], 1)
         for i, layer in enumerate(self.recurrent):
             hidden_name = "rnn_{}".format(i)
             x, states_new[hidden_name] = layer(x, states[hidden_name])
 
-        # Factor in softmax of Adam, RMSProp
+        # Softmax
         opt_weights = softmax(
-            tf.reshape(self.choice(x), [-1, 2]),
+            tf.reshape(self.choice(x), [-1, len(self.choices)]),
             hardness=self.hardness, train=training, epsilon=self.epsilon)
 
         # Combine softmax
-        update = self.learning_rate * (
-            tf.reshape(opt_weights[:, 0], tf.shape(param)) * m_rmsprop
-            + tf.reshape(opt_weights[:, 1], tf.shape(param)) * g_tilde)
+        update = self.learning_rate * sum([
+            tf.reshape(opt_weights[:, i], tf.shape(param)) * u
+            for i, u in enumerate(update)
+        ])
 
         return update, states_new
 
@@ -91,10 +88,7 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
             for i, layer in enumerate(self.recurrent)
         }
 
-        # State for analytical computations
-        analytical_state = {
-            "m": tf.zeros(tf.shape(var)),
-            "v": tf.zeros(tf.shape(var))
-        }
+        # Child states
+        child_states = [p.get_initial_state(var) for p in self.choices]
 
-        return dict(**rnn_state, **analytical_state)
+        return dict(choices=child_states, **rnn_state)

@@ -37,10 +37,11 @@ from .dynamic_rate import AdamLROptimizer, RMSPropLROptimizer
 from .rnnprop_2016 import RNNPropOptimizer
 from .scale_hierarchical_2017 import ScaleHierarchicalOptimizer
 from .choice import ChoiceOptimizer
-from .hand_crafted import AdamOptimizer, RMSPropOptimizer, SGDOptimizer
+from .abstract_choice import AbstractChoiceOptimizer
+from .analytical import (
+    AdamOptimizer, RMSPropOptimizer, SGDOptimizer,
+    MomentumOptimizer, PowerSignOptimizer, AddSignOptimizer)
 from .rnnprop_ext import RNNPropExtendedOptimizer
-from .choice_ext import ChoiceExtendedOptimizer
-from .choice_sgd import ChoiceSGDOptimizer
 from .load import load
 
 __all__ = [
@@ -51,6 +52,10 @@ __all__ = [
     "AdamOptimizer",
     "RMSPropOptimizer",
     "SGDOptimizer",
+    "MomentumOptimizer",
+    # Neural Optimizer Search
+    "PowerSignOptimizer",
+    "AddSignOptimizer",
     # Deepmind, Google Research
     "DMOptimizer",
     "ScaleBasicOptimizer",
@@ -63,6 +68,4 @@ __all__ = [
     "RMSPropLROptimizer",
     # Optimizer Choice
     "ChoiceOptimizer",
-    "ChoiceSGDOptimizer",
-    "ChoiceExtendedOptimizer",
 ]

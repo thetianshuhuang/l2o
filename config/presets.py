@@ -27,6 +27,21 @@ OVERRIDE_PRESETS = {
             }
         }
     )],
+    "momentum": [
+        ["training", "teachers", "*"],
+        {"class_name": "Momentum",
+         "config": {"learning_rate": 0.05, "beta_1": 0.9}}
+    ],
+    "powersign": [
+        ["training", "teachers", "*"],
+        {"class_name": "PowerSign",
+         "config": {"learning_rate": 0.05, "beta_1": 0.9}}
+    ],
+    "addsign": [
+        ["training", "teachers", "*"],
+        {"class_name": "AddSign",
+         "config": {"learning_rate": 0.05, "beta_1": 0.9}}
+    ],
     "choice": [(
         ["training", "teachers", "*"],
         {

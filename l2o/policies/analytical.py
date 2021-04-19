@@ -59,6 +59,50 @@ class RMSPropOptimizer(BaseCoordinateWisePolicy):
         return tf.zeros(tf.shape(var))
 
 
+class MomentumOptimizer(BaseCoordinateWisePolicy):
+    """Momentum Optimizer."""
+
+    def init_layers(self, learning_rate=0.001, beta_1=0.9):
+        """Save hyperparameters."""
+        self.learning_rate = learning_rate
+        self.beta_1 = beta_1
+
+    def call(self, param, inputs, states, global_state, training=False):
+        """Policy call override."""
+        states_new = states * self.beta_1 + inputs * (1 - self.beta_1)
+
+        return self.learning_rate * states_new, states_new
+
+    def get_initial_state(self, var):
+        """Get initial optimizer state as a dictionary."""
+        return tf.zeros(tf.shape(var))
+
+
+class PowerSignOptimizer(MomentumOptimizer):
+    """PowerSign optimizer (first variant)."""
+
+    def call(self, param, inputs, states, global_state, training=False):
+        """Policy call override."""
+        states_new = states * self.beta_1 + inputs * (1 - self.beta_1)
+        return (
+            self.learning_rate * tf.exp(
+                tf.math.sign(inputs) * tf.math.sign(states_new)) * inputs,
+            states_new)
+
+
+class AddSignOptimizer(MomentumOptimizer):
+    """AddSign optimizer (first variant)."""
+
+    def call(self, param, inputs, states, global_state, training=False):
+        """Policy call override."""
+        states_new = states * self.beta_1 + inputs * (1 - self.beta_1)
+
+        return (
+            self.learning_rate * inputs
+            * (1 + tf.math.sign(inputs) * tf.math.sign(states_new)),
+            states_new)
+
+
 class SGDOptimizer(BaseCoordinateWisePolicy):
     """SGD Optimizer."""
 
@@ -66,7 +110,7 @@ class SGDOptimizer(BaseCoordinateWisePolicy):
         """Save hyperparameters."""
         self.learning_rate = learning_rate
 
-    def call(self, param, inputs, states, global_state):
+    def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
         # See BaseLearnToOptimizePolicy for why we need tf.constant(0.) instead
         # of None.
