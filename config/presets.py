@@ -87,52 +87,16 @@ OVERRIDE_PRESETS = {
                     {"class_name": "Momentum",
                      "config": {"learning_rate": 1.0, "beta_1": 0.9}},
                     {"class_name": "RMSProp",
-                     "config": {"learning_rate": 0.02, "rho": 0.9}},
+                     "config": {"learning_rate": 0.05, "rho": 0.9}},
                     {"class_name": "Adam",
-                     "config": {"learning_rate": 0.02, "beta_1": 0.9,
+                     "config": {"learning_rate": 0.05, "beta_1": 0.9,
                                 "beta_2": 0.999, "epsilon": 1e-10}},
                     {"class_name": "PowerSign",
-                     "config": {"learning_rate": 1.0, "beta_1": 0.9}},
+                     "config": {"learning_rate": 1.0, "beta_1": 0.9,
+                                "beta_2": 0.999, "epsilon": 1e-10}},
                     {"class_name": "AddSign",
-                     "config": {"learning_rate": 1.0, "beta_1": 0.9}}
-                ],
-                # LSTMCell Args
-                "activation": "tanh",
-                "recurrent_activation": "sigmoid",
-                "use_bias": True,
-                "kernel_initializer": "glorot_uniform",
-                "recurrent_initializer": "orthogonal",
-                "bias_initializer": "zeros",
-                "unit_forget_bias": True,
-                # File
-                "weights_file": "results/more_choice/base1/checkpoint/period_3.0"
-            }
-        }
-    )],
-    "adaptive_choice": [(
-        ["training", "teachers", "*"],
-        {
-            "class_name": "AbstractChoice",
-            "config": {
-                # RNNProp
-                "layers": [20],
-                "learning_rate": 0.001,
-                "epsilon": 1e-10,
-                "hardness": 0.0,
-                "name": "MoreChoiceOptimizer",
-                # Choices
-                "pool": [
-                    {"class_name": "RMSProp",
-                     "config": {"learning_rate": 1.0, "rho": 0.9}},
-                    {"class_name": "Adam",
                      "config": {"learning_rate": 1.0, "beta_1": 0.9,
                                 "beta_2": 0.999, "epsilon": 1e-10}},
-                    {"class_name": "AdaptivePowerSign",
-                     "config": {"learning_rate": 1.0, "beta_1": 0.9,
-                                "beta_2": 0.999, "epsilon": 1e-10}},
-                    {"class_name": "AdaptiveAddSign",
-                     "config": {"learning_rate": 1.0, "beta_1": 0.9,
-                                "beta_2": 0.999, "epsilon": 1e-10}}
                 ],
                 # LSTMCell Args
                 "activation": "tanh",

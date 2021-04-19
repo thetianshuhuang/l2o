@@ -78,32 +78,8 @@ class MomentumOptimizer(BaseCoordinateWisePolicy):
         return tf.zeros(tf.shape(var))
 
 
-class PowerSignOptimizer(MomentumOptimizer):
-    """PowerSign optimizer (first variant)."""
-
-    def call(self, param, inputs, states, global_state, training=False):
-        """Policy call override."""
-        states_new = states * self.beta_1 + inputs * (1 - self.beta_1)
-        return (
-            self.learning_rate * tf.exp(
-                tf.math.sign(inputs) * tf.math.sign(states_new)) * inputs,
-            states_new)
-
-
-class AddSignOptimizer(MomentumOptimizer):
-    """AddSign optimizer (first variant)."""
-
-    def call(self, param, inputs, states, global_state, training=False):
-        """Policy call override."""
-        states_new = states * self.beta_1 + inputs * (1 - self.beta_1)
-        return (
-            self.learning_rate * inputs
-            * (1 + tf.math.sign(inputs) * tf.math.sign(states_new)),
-            states_new)
-
-
-class AdaptivePowerSignOptimizer(AdamOptimizer):
-    """Adaptive PowerSign variant."""
+class PowerSignOptimizer(AdamOptimizer):
+    """PowerSign optimizer (first variant), modified to be differentiable."""
 
     def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
@@ -112,15 +88,58 @@ class AdaptivePowerSignOptimizer(AdamOptimizer):
             inputs, states["m"], states["v"],
             beta_1=self.beta_1, beta_2=self.beta_2)
 
+        v_hat = tf.sqrt(states_new["v"] + self.epsilon)
+        g_norm = inputs / v_hat
+        m_norm = states_new["m"] / v_hat
+
         update = self.learning_rate * tf.exp(
-            tf.math.sign(inputs) * tf.math.sign(states_new["m"])
-        ) * inputs / tf.sqrt(states_new["v"] + self.epsilon)
+            tf.math.tanh(g_norm) * tf.math.tanh(m_norm)) * inputs
+
+        return update, states_new
+
+
+class AddSignOptimizer(AdamOptimizer):
+    """AddSign optimizer (first variant), modified to be differentiable."""
+
+    def call(self, param, inputs, states, global_state, training=False):
+        """Policy call override."""
+        states_new = {}
+        states_new["m"], states_new["v"] = rms_momentum(
+            inputs, states["m"], states["v"],
+            beta_1=self.beta_1, beta_2=self.beta_2)
+
+        v_hat = tf.sqrt(states_new["v"] + self.epsilon)
+        g_norm = inputs / v_hat
+        m_norm = states_new["m"] / v_hat
+
+        update = self.learning_rate * (
+            1 + tf.math.tanh(g_norm) * tf.math.tanh(m_norm)) * inputs
+
+        return update, states_new
+
+
+class AdaptivePowerSignOptimizer(AdamOptimizer):
+    """Adaptive PowerSign variant, modified to be differentiable."""
+
+    def call(self, param, inputs, states, global_state, training=False):
+        """Policy call override."""
+        states_new = {}
+        states_new["m"], states_new["v"] = rms_momentum(
+            inputs, states["m"], states["v"],
+            beta_1=self.beta_1, beta_2=self.beta_2)
+
+        v_hat = tf.sqrt(states_new["v"] + self.epsilon)
+        g_norm = inputs / v_hat
+        m_norm = states_new["m"] / v_hat
+
+        update = self.learning_rate * tf.exp(
+            tf.math.tanh(g_norm) * tf.math.tanh(m_norm)) * g_norm
 
         return update, states_new
 
 
 class AdaptiveAddSignOptimizer(AdamOptimizer):
-    """Adaptive PowerSign variant."""
+    """Adaptive PowerSign variant, modified to be differentiable."""
 
     def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
@@ -129,9 +148,12 @@ class AdaptiveAddSignOptimizer(AdamOptimizer):
             inputs, states["m"], states["v"],
             beta_1=self.beta_1, beta_2=self.beta_2)
 
+        v_hat = tf.sqrt(states_new["v"] + self.epsilon)
+        g_norm = inputs / v_hat
+        m_norm = states_new["m"] / v_hat
+
         update = self.learning_rate * (
-            1 + tf.math.sign(inputs) * tf.math.sign(states_new["m"])
-        ) * inputs / tf.sqrt(states_new["v"] + self.epsilon)
+            1 + tf.math.tanh(g_norm) * tf.math.tanh(m_norm)) * g_norm
 
         return update, states_new
 
