@@ -171,10 +171,7 @@ POLICY = {
             "alpha": 0.1,
             "epsilon": 1e-10,
             "warmup_lstm_update": False,
-            "perturbation": {
-                "class_name": "RandomPerturbation",
-                "config": {"noise_stddev": 0.01}
-            },
+            "perturbation": None,
             "name": "RNNPropOptimizer",
             # LSTMCell Args
             "activation": "tanh",
