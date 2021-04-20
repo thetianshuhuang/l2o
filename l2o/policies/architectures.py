@@ -207,7 +207,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         dict
             Debug information. Empty unless implemented by the policy.
         """
-        return {}
+        return 0.
 
     def gather_debug_global(self, global_state):
         """Get global debug information.
@@ -222,7 +222,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         dict
             Debug information. Empty unless implemented by the policy.
         """
-        return {}
+        return 0.
 
     def debug_summarize(self, params, debug_states, debug_global):
         """Summarize debug information.
@@ -236,7 +236,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         debug_global : dict
             Global debug information.
         """
-        return {}
+        return 0.
 
     def aggregate_debug_data(self, data):
         """Aggregate debug data across multiple steps.
@@ -251,7 +251,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         object
             Some processed version of the input data.
         """
-        return {}
+        return 0.
 
 
 class BaseCoordinateWisePolicy(BaseLearnToOptimizePolicy):

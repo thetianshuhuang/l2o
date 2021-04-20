@@ -70,8 +70,8 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
             tf.reshape(self.choice(x), [-1, len(self.choices)]),
             hardness=self.hardness, train=training, epsilon=self.epsilon)
 
-        if self.log_choices:
-            state["log"] = tf.reduce_sum(opt_weights, axis=0)
+        if self.debug:
+            states_new["log"] = tf.reduce_sum(opt_weights, axis=0)
 
         # Combine softmax
         update = self.learning_rate * sum([
@@ -91,7 +91,7 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
             for i, layer in enumerate(self.recurrent)
         }
 
-        if self.log_choices:
+        if self.debug:
             state["log"] = tf.zeros(len(self.choices))
 
         # Child states
@@ -99,7 +99,7 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
 
         return state
 
-    def debug(self, param, states):
+    def gather_debug(self, param, states):
         """Get debug information."""
         return states["log"]
 
@@ -108,9 +108,9 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         acc = tf.zeros(len(self.choices))
         total = 0
         for p, s in zip(params, debug_states):
-            acc += s * tf.size(p)
+            acc += s * tf.cast(tf.size(p), tf.float32)
             total += tf.size(p)
-        return (acc / total).numpy()
+        return acc.numpy() / total.numpy()
 
     def aggregate_debug_data(self, data):
         """Aggregate debug data across multiple steps."""
