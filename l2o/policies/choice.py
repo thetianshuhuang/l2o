@@ -1,5 +1,6 @@
 """L2O that chooses either Adam or RMSProp at each iteration."""
 
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers import LSTMCell, Dense
 

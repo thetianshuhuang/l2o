@@ -106,14 +106,10 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
 
     def debug_summarize(self, params, debug_states, debug_global):
         """Summarize debug information."""
-        return {
-            v.name: s.numpy() / tf.size(s).numpy()
-            for v, s in zip(params, debug_states)
-        }
+        acc = sum(debug_states)
+        total = sum([tf.size(p) for p in params])
+        return acc.numpy() / total.numpy()
 
     def aggregate_debug_data(self, data):
         """Aggregate debug data across multiple steps."""
-        return {
-            k: np.stack([d[k] for d in data])
-            for k in data[0]
-        }
+        return np.stack(data)
