@@ -28,8 +28,6 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         List of configurations for optimizers to place in the pool.
     name : str
         Name of optimizer network.
-    log_choices : bool
-        If True, stores choices
     **kwargs : dict
         Passed onto tf.keras.layers.LSTMCell
     """
@@ -38,12 +36,11 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
 
     def init_layers(
             self, layers=(20, 20), hardness=0.0, learning_rate=0.01,
-            epsilon=1e-10, pool=[], log_choices=False, **kwargs):
+            epsilon=1e-10, pool=[], **kwargs):
         """Initialize layers."""
         self.choices = [
             getattr(analytical, p["class_name"] + "Optimizer")(**p["config"])
             for p in pool]
-        self.log_choices = log_choices
 
         self.hardness = hardness
         self.epsilon = epsilon

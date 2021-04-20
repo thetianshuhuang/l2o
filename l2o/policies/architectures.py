@@ -192,7 +192,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         """
         return new_state
 
-    def debug(self, param, states):
+    def gather_debug(self, param, states):
         """Get debug information.
 
         Parameters
@@ -209,7 +209,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         """
         return {}
 
-    def debug_global(self, global_state):
+    def gather_debug_global(self, global_state):
         """Get global debug information.
 
         Parameters
