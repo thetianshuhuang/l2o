@@ -34,6 +34,7 @@ with distribute.scope():
     results = []
     for i in range(repeat):
         print("Evaluation Training {}/{}".format(i + 1, repeat))
-        results.append(l2o.evaluate.evaluate(opt, **get_eval_problem(problem)))
+        results.append(l2o.evaluate.evaluate_model(
+            opt, **get_eval_problem(problem)))
     results = {k: np.stack([d[k] for d in results]) for k in results[0]}
     np.savez(output, **results)
