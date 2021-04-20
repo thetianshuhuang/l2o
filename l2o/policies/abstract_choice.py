@@ -28,6 +28,8 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         List of configurations for optimizers to place in the pool.
     name : str
         Name of optimizer network.
+    log_choices : bool
+        If True, stores choices
     **kwargs : dict
         Passed onto tf.keras.layers.LSTMCell
     """
@@ -36,11 +38,12 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
 
     def init_layers(
             self, layers=(20, 20), hardness=0.0, learning_rate=0.01,
-            epsilon=1e-10, pool=[], **kwargs):
+            epsilon=1e-10, pool=[], log_choices=False, **kwargs):
         """Initialize layers."""
         self.choices = [
             getattr(analytical, p["class_name"] + "Optimizer")(**p["config"])
             for p in pool]
+        self.log_choices = log_choices
 
         self.hardness = hardness
         self.epsilon = epsilon
@@ -70,6 +73,9 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
             tf.reshape(self.choice(x), [-1, len(self.choices)]),
             hardness=self.hardness, train=training, epsilon=self.epsilon)
 
+        if self.log_choices:
+            state["log"] = tf.reduce_sum(opt_weights, axis=0)
+
         # Combine softmax
         update = self.learning_rate * sum([
             tf.reshape(opt_weights[:, i], tf.shape(param)) * u
@@ -82,13 +88,33 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         """Get initial model state as a dictionary."""
         # RNN state
         batch_size = tf.size(var)
-        rnn_state = {
+        state = {
             "rnn_{}".format(i): layer.get_initial_state(
                 batch_size=batch_size, dtype=tf.float32)
             for i, layer in enumerate(self.recurrent)
         }
 
-        # Child states
-        child_states = [p.get_initial_state(var) for p in self.choices]
+        if self.log_choices:
+            state["log"] = tf.zeros(len(self.choices))
 
-        return dict(choices=child_states, **rnn_state)
+        # Child states
+        state["choices"] = [p.get_initial_state(var) for p in self.choices]
+
+        return state
+
+    def debug(self, param, states):
+        """Get debug information."""
+        return states["log"]
+
+    def debug_summarize(self, params, debug_states, debug_global):
+        """Summarize debug information."""
+        acc = tf.zeros(len(self.choices))
+        total = 0
+        for p, s in zip(params, debug_states):
+            acc += s * tf.size(p)
+            total += tf.size(p)
+        return (acc / total).numpy()
+
+    def aggregate_debug_data(self, data):
+        """Aggregate debug data across multiple steps."""
+        return np.stack([d.numpy() for d in data])

@@ -238,6 +238,21 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
         """
         return {}
 
+    def aggregate_debug_data(self, data):
+        """Aggregate debug data across multiple steps.
+
+        Parameters
+        ----------
+        data : object
+            Output of get_debug_summary.
+
+        Returns
+        -------
+        object
+            Some processed version of the input data.
+        """
+        return {}
+
 
 class BaseCoordinateWisePolicy(BaseLearnToOptimizePolicy):
     """Base Class for CoordinateWise L2O Policies."""

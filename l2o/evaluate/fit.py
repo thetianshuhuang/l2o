@@ -6,7 +6,8 @@ import numpy as np
 from tqdm import tqdm
 
 
-def model_fit(model, train, test, epochs=1, metrics=[], desc=None):
+def model_fit(
+        model, train, test, epochs=1, metrics=[], desc=None, log_debug=False):
     """Custom implementation of tf.keras.models.Model.fit.
 
     See https://github.com/tensorflow/tensorflow/issues/39448
@@ -29,6 +30,8 @@ def model_fit(model, train, test, epochs=1, metrics=[], desc=None):
         List of tensorflow metrics to evaluate.
     desc : str
         Description for display.
+    log_debug : bool
+        Whether to log debug information from optimizer.get_debug_summary().
     """
     strategy = tf.distribute.get_strategy()
 
@@ -48,6 +51,7 @@ def model_fit(model, train, test, epochs=1, metrics=[], desc=None):
         model.optimizer.apply_gradients(zip(grads, model.trainable_variables))
         for m in metrics:
             m.update_state(y, y_hat)
+
         return loss
 
     @tf.function
@@ -70,12 +74,14 @@ def model_fit(model, train, test, epochs=1, metrics=[], desc=None):
         return strategy.reduce(tf.distribute.ReduceOp.SUM, losses, axis=None)
 
     # Train/test loop
-    def run_loop(dataset, step):
+    def run_loop(dataset, step, callback=None):
         losses = []
         times = []
         for batch in dataset:
             losses.append(step(batch).numpy())
             times.append(time.time() - start_time)
+            if callback is not None:
+                callback()
 
         metric_values = [m.result() for m in metrics]
         for m in metrics:
@@ -95,9 +101,20 @@ def model_fit(model, train, test, epochs=1, metrics=[], desc=None):
         stats[m.name] = []
         stats["val_" + m.name] = []
 
+    # Debug
+    if log_debug:
+        trace = []
+
+        def log_debug():
+            trace.append(
+                model.optimizer.get_debug_summary(model.trainable_variables))
+    else:
+        log_debug = None
+
     # Epoch loop
     for _ in tqdm(range(epochs), desc=desc):
-        train_loss, train_time, train_metrics = run_loop(train, train_step)
+        train_loss, train_time, train_metrics = run_loop(
+            train, train_step, callback=log_debug)
         stats["batch_loss"] += train_loss
         stats["batch_time"] += train_time
         stats["loss"].append(np.mean(train_loss))
@@ -110,7 +127,12 @@ def model_fit(model, train, test, epochs=1, metrics=[], desc=None):
         for m, val in zip(metrics, test_metrics):
             stats["val_" + m.name].append(val)
 
-    return {k: np.array(v, dtype=np.float32) for k, v in stats.items()}
+    res = {k: np.array(v, dtype=np.float32) for k, v in stats.items()}
+
+    if log_debug:
+        res["debug"] = model.optimizer.aggregate_debug_data(trace)
+
+    return res
 
 
 def function_fit(function, optimizer, steps=1000):

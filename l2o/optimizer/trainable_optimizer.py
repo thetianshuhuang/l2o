@@ -204,3 +204,18 @@ class TrainableOptimizer(tf.keras.optimizers.Optimizer):
         debug_global = self.network.debug_global(
             self._state_dict["__global__"])
         return self.network.debug_summarize(params, debug_states, debug_global)
+
+    def aggregate_debug_data(self, data):
+        """Aggregate debug data across multiple steps.
+
+        Parameters
+        ----------
+        data : object
+            Output of get_debug_summary.
+
+        Returns
+        -------
+        object
+            Some processed version of the input data.
+        """
+        return self.network.aggregate_debug_data(data)

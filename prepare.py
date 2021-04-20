@@ -12,16 +12,17 @@ BASE_BLOCK = """python3 train.py \\
     --presets={presets} \\
     --policy={policy} \\
     --strategy={strategy} \\
-    --directory=results/{policy}/{flags}
+    --directory=results/{policy}/{base}/{flags}
 python3 evaluate.py \\
     --problem={problem} \\
-    --directory=results/{policy}/{flags} \\
+    --directory=results/{policy}/{base}/{flags} \\
     --repeat=10
 """
 
 BASE_RUNNER = (
-    "sbatch -p gtx -N 1 -n 1 -o logs/{policy}-{flags}.log -t 24:00:00 -A "
-    "{allocation} -J {shortname}{flags} scripts/{policy}-{flags}.sh")
+    "sbatch -p gtx -N 1 -n 1 -o logs/{policy}-{base}-{flags}.log -t 24:00:00 "
+    "-A {allocation} -J {shortname}{base}{flags} "
+    "scripts/{policy}-{base}-{flags}.sh")
 
 args = ArgParser(sys.argv[1:])
 
@@ -31,11 +32,13 @@ ctx = {
     "policy": args.pop_get("--policy", "rnnprop"),
     "strategy": args.pop_get("--strategy", "repeat"),
     "allocation": args.pop_get("--alloc", "Senior-Design_UT-ECE"),
-    "problem": args.pop_get("--problem", "conv_train")
+    "problem": args.pop_get("--problem", "conv_train"),
+    "base": args.pop_get("--base", "test")
 }
 
 
-with open("scripts/{}-{}.sh".format(ctx["policy"], flags[0]), "w") as f:
+with open(
+        "scripts/{}-{}-{}.sh".format(ctx["policy"], base, flags[0]), "w") as f:
     f.write(BASE_SCRIPT + "".join(
         [BASE_BLOCK.format(flags=f, **ctx) for f in flags]))
 
