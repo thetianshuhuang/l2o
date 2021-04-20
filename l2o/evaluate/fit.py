@@ -129,7 +129,7 @@ def model_fit(
 
     res = {k: np.array(v, dtype=np.float32) for k, v in stats.items()}
     if debug:
-        res["debug"] = model.optimizer.aggregate_debug_data(trace)
+        res.update(model.optimizer.aggregate_debug_data(trace))
     return res
 
 
