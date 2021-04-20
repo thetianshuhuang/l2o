@@ -30,18 +30,20 @@ OVERRIDE_PRESETS = {
     "6t": [(
         ["training", "teachers"],
         [
-            {"class_name": "SGD", "config": {"learning_rate": 0.05}},
+            {"class_name": "SGD", "config": {"learning_rate": 1.0}},
             {"class_name": "Momentum",
-             "config": {"learning_rate": 0.05, "beta_1": 0.9}},
+             "config": {"learning_rate": 1.0, "beta_1": 0.9}},
             {"class_name": "RMSProp",
-             "config": {"learning_rate": 0.001, "rho": 0.9, "epsilon": 1e-10}},
+             "config": {"learning_rate": 0.05, "rho": 0.9}},
             {"class_name": "Adam",
-             "config": {"learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999,
-                        "epsilon": 1e-10}},
-            {"class_name": "AddSign",
-             "config": {"learning_rate": 0.05, "beta_1": 0.9}},
+             "config": {"learning_rate": 0.05, "beta_1": 0.9,
+                        "beta_2": 0.999, "epsilon": 1e-10}},
             {"class_name": "PowerSign",
-             "config": {"learning_rate": 0.05, "beta_1": 0.9}}
+             "config": {"learning_rate": 1.0, "beta_1": 0.9,
+                        "beta_2": 0.999, "epsilon": 1e-10}},
+            {"class_name": "AddSign",
+             "config": {"learning_rate": 1.0, "beta_1": 0.9,
+                        "beta_2": 0.999, "epsilon": 1e-10}},
         ]
     )],
     "choice": [(
@@ -107,7 +109,7 @@ OVERRIDE_PRESETS = {
                 "bias_initializer": "zeros",
                 "unit_forget_bias": True,
                 # File
-                "weights_file": "results/more_choice/base1/checkpoint/period_3.0"
+                "weights_file": "results/more_choice/diff1/checkpoint/period_3.0"
             }
         }
     )],
@@ -181,6 +183,8 @@ OVERRIDE_PRESETS = {
     "il_more": [
         (["strategy", "annealing_schedule"],
          {"type": "list", "values": [0.2, 0.1, 0.05, 0.02]}),
+        (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
+        (["training", "stack_stats", "*"], "teacher_counts"),
     ],
     "warmup": [
         (["strategy", "warmup"], {"type": "list", "values": [0, 5]}),
