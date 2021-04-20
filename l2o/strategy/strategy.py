@@ -286,7 +286,7 @@ class BaseStrategy:
                 name="OptimizerEvaluation")
             results.append(evaluator(
                 opt, desc="{}/{}".format(i + 1, repeat),
-                debug=self.learner.network.debug, **kwargs))
+                **kwargs))
         results = {k: np.stack([d[k] for d in results]) for k in results[0]}
 
         if file is not None:

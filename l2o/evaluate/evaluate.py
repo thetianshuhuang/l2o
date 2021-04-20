@@ -10,7 +10,8 @@ from .fit import model_fit, function_fit
 
 
 def evaluate_function(
-        opt, config={}, target="Rastrigin", steps=1000, desc=None):
+        opt, config={}, target="Rastrigin",
+        steps=1000, debug=False, desc=None):
     """Evaluate L2O on a function.
 
     Parameters
@@ -29,6 +30,8 @@ def evaluate_function(
         Number of gradient descent steps to perform.
     desc : float
         Evaluation description.
+    debug : bool
+        Whether to log debug information from optimizer.get_debug_summary().
 
     Returns
     -------
@@ -44,7 +47,7 @@ def evaluate_function(
 
 def evaluate_model(
         opt, config={}, target="conv_classifier", dataset="mnist", epochs=20,
-        batch_size=32, desc=None):
+        batch_size=32, desc=None, debug=False):
     """Evaluate L2O on a classifier model.
 
     Parameters
@@ -67,6 +70,8 @@ def evaluate_model(
         Batch size for dataset.
     desc : float
         Evaluation description.
+    debug : bool
+        Whether to log debug information from optimizer.get_debug_summary().
 
     Returns
     -------
@@ -96,5 +101,5 @@ def evaluate_model(
         model,
         _batch(ds_train.shuffle(
             buffer_size=batch_size * 100, reshuffle_each_iteration=True)),
-        _batch(ds_val), epochs=epochs, desc=desc,
+        _batch(ds_val), epochs=epochs, desc=desc, debug=debug,
         metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
