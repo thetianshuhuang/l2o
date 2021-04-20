@@ -112,4 +112,4 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
 
     def aggregate_debug_data(self, data):
         """Aggregate debug data across multiple steps."""
-        return np.stack(data)
+        return {"log": np.stack(data)}

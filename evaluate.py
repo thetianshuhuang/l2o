@@ -55,4 +55,6 @@ with distribute.scope():
             for pr in problems:
                 print("Problem: {}".format(pr))
                 config = get_eval_problem(pr)
-                strategy.evaluate(metadata=m, repeat=repeat, file=pr, **config)
+                file = pr + "_dbg" if debug else pr
+                strategy.evaluate(
+                    metadata=m, repeat=repeat, file=file, **config)

@@ -287,7 +287,8 @@ OVERRIDE_PRESETS = {
             "config": {"steps": 3, "magnitude": 0.005}
         }
     )],
-    "hard": [(["policy", "hardness"], 10.0)]
+    "hard": [(["policy", "hardness"], 10.0)],
+    "noscale": [(["training", "parameter_scale_spread"], 0.0)]
 }
 
 

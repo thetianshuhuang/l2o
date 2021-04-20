@@ -37,8 +37,8 @@ ctx = {
 }
 
 
-with open(
-        "scripts/{}-{}-{}.sh".format(ctx["policy"], base, flags[0]), "w") as f:
+script = "scripts/{}-{}-{}.sh".format(ctx["policy"], ctx["base"], flags[0])
+with open(script, "w") as f:
     f.write(BASE_SCRIPT + "".join(
         [BASE_BLOCK.format(flags=f, **ctx) for f in flags]))
 
