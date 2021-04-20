@@ -74,7 +74,9 @@ def deep_warn_equal(d1, d2, d1name, d2name, strict=False):
             print("Warning: " + wstring)
 
 
-def build(config, overrides, directory="weights", strict=True, info=True):
+def build(
+        config, overrides,
+        directory="weights", strict=True, info=True, debug=False):
     """Build learner, training, and strategy.
 
     Parameters
@@ -93,6 +95,8 @@ def build(config, overrides, directory="weights", strict=True, info=True):
         not match ``config``.
     info : bool
         Flag to disable printing out config. Warnings/errors are not affected.
+    debug : bool
+        Build with debug flag?
 
     Returns
     -------
@@ -123,7 +127,7 @@ def build(config, overrides, directory="weights", strict=True, info=True):
     policy_constructor = l2o.deserialize.generic(
         config["policy_constructor"], l2o.policies, pass_cond=None,
         message="learned optimizer model", default=l2o.policies.DMOptimizer)
-    policy = policy_constructor(**config["policy"])
+    policy = policy_constructor(debug=debug, **config["policy"])
 
     # Build learner
     learner = OptimizerTraining(
@@ -139,7 +143,7 @@ def build(config, overrides, directory="weights", strict=True, info=True):
     return strategy
 
 
-def build_from_config(directory, info=True):
+def build_from_config(directory, info=True, debug=False):
     """Build from saved configuration.
 
     Parameters
@@ -151,9 +155,11 @@ def build_from_config(directory, info=True):
     ------------
     info : bool
         Flag to disable printing out config. Warnings/errors are not affected.
-
+    debug : bool
+        Build with debug flag?
     """
     with open(os.path.join(directory, "config.json")) as x:
         config = json.load(x)
 
-    return build(config, [], directory=directory, strict=False, info=info)
+    return build(
+        config, [], directory=directory, strict=False, info=info, debug=debug)

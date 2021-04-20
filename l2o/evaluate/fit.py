@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 
 def model_fit(
-        model, train, test, epochs=1, metrics=[], desc=None, log_debug=False):
+        model, train, test, epochs=1, metrics=[], desc=None, debug=False):
     """Custom implementation of tf.keras.models.Model.fit.
 
     See https://github.com/tensorflow/tensorflow/issues/39448
@@ -30,7 +30,7 @@ def model_fit(
         List of tensorflow metrics to evaluate.
     desc : str
         Description for display.
-    log_debug : bool
+    debug : bool
         Whether to log debug information from optimizer.get_debug_summary().
     """
     strategy = tf.distribute.get_strategy()
@@ -102,7 +102,7 @@ def model_fit(
         stats["val_" + m.name] = []
 
     # Debug
-    if log_debug:
+    if debug:
         trace = []
 
         def log_debug():
@@ -128,14 +128,12 @@ def model_fit(
             stats["val_" + m.name].append(val)
 
     res = {k: np.array(v, dtype=np.float32) for k, v in stats.items()}
-
-    if log_debug:
+    if debug:
         res["debug"] = model.optimizer.aggregate_debug_data(trace)
-
     return res
 
 
-def function_fit(function, optimizer, steps=1000):
+def function_fit(function, optimizer, steps=1000, debug=False):
     """Fit a function using gradient descent.
 
     NOTE: only a single GPU is supported.
@@ -153,6 +151,9 @@ def function_fit(function, optimizer, steps=1000):
     ------------
     steps : int
         Number of gradient descent steps to perform.
+    debug : bool
+        Whether to log debug information from optimizer.get_debug_summary().
+        Currently ignored.
     """
     strategy = tf.distribute.get_strategy()
 

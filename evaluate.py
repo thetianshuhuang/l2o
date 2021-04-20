@@ -24,6 +24,7 @@ problems = args.pop_get("--problem", "conv_train").split(",")
 targets = args.pop_get("--directory", "weights").split(",")
 repeat = int(args.pop_get("--repeat", 10))
 strategy = args.pop_get("--strategy", "repeat")
+debug = bool(args.pop_get("--debug", False))
 
 if strategy == "repeat":
     periods = args.pop_get("--periods", None)
@@ -48,7 +49,7 @@ if strategy == "curriculum":
 with distribute.scope():
     for tg in targets:
         print("Strategy: {}".format(tg))
-        strategy = l2o.strategy.build_from_config(tg, info=False)
+        strategy = l2o.strategy.build_from_config(tg, info=False, debug=debug)
         for m in metadata:
             print("Checkpoint: {}".format(m))
             for pr in problems:

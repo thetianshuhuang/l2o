@@ -285,7 +285,8 @@ class BaseStrategy:
                 warmup_rate=self.validation_warmup_rate,
                 name="OptimizerEvaluation")
             results.append(evaluator(
-                opt, desc="{}/{}".format(i + 1, repeat), **kwargs))
+                opt, desc="{}/{}".format(i + 1, repeat),
+                debug=self.learner.network.debug, **kwargs))
         results = {k: np.stack([d[k] for d in results]) for k in results[0]}
 
         if file is not None:
