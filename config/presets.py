@@ -79,25 +79,25 @@ OVERRIDE_PRESETS = {
             "config": {
                 # RNNProp
                 "layers": [20],
-                "learning_rate": 0.05,
+                "learning_rate": 1.0,
                 "epsilon": 1e-10,
                 "hardness": 0.0,
                 "name": "MoreChoiceOptimizer",
                 # Choices
                 "pool": [
-                    {"class_name": "SGD", "config": {"learning_rate": 1.0}},
+                    {"class_name": "SGD", "config": {"learning_rate": 0.2}},
                     {"class_name": "Momentum",
-                     "config": {"learning_rate": 1.0, "beta_1": 0.9}},
+                     "config": {"learning_rate": 0.5, "beta_1": 0.9}},
                     {"class_name": "RMSProp",
-                     "config": {"learning_rate": 0.05, "rho": 0.9}},
+                     "config": {"learning_rate": 0.005, "rho": 0.9}},
                     {"class_name": "Adam",
-                     "config": {"learning_rate": 0.05, "beta_1": 0.9,
+                     "config": {"learning_rate": 0.005, "beta_1": 0.9,
                                 "beta_2": 0.999, "epsilon": 1e-10}},
                     {"class_name": "PowerSign",
-                     "config": {"learning_rate": 1.0, "beta_1": 0.9,
+                     "config": {"learning_rate": 0.1, "beta_1": 0.9,
                                 "beta_2": 0.999, "epsilon": 1e-10}},
                     {"class_name": "AddSign",
-                     "config": {"learning_rate": 1.0, "beta_1": 0.9,
+                     "config": {"learning_rate": 0.1, "beta_1": 0.9,
                                 "beta_2": 0.999, "epsilon": 1e-10}},
                 ],
                 # LSTMCell Args
