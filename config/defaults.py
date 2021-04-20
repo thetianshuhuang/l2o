@@ -319,5 +319,44 @@ POLICY = {
             "unit_forget_bias": True,
         }
     },
-
+    "adam": {
+        "policy_constructor": "AdamOptimizer",
+        "policy": {
+            "learning_rate": 0.001, "beta_1": 0.9,
+            "beta_2": 0.999, "epsilon": 1e-10, "trainable": True
+        }
+    },
+    "rmsprop": {
+        "policy_constructor": "RMSPropOptimizer",
+        "policy": {
+            "learning_rate": 0.001, "rho": 0.9, "epsilon": 1e-10,
+            "trainable": True
+        }
+    },
+    "momentum": {
+        "policy_constructor": "MomentumOptimizer",
+        "policy": {
+            "learning_rate": 0.001, "beta_1": 0.9, "trainable": False
+        }
+    },
+    "powersign": {
+        "policy_constructor": "PowerSignOptimizer",
+        "policy": {
+            "learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999,
+            "temperature": 1.0, "epsilon": 1e-10, "trainable": True
+        }
+    },
+    "addsign": {
+        "policy_constructor": "AddSignOptimizer",
+        "policy": {
+            "learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999,
+            "temperature": 1.0, "epsilon": 1e-10, "trainable": True
+        }
+    },
+    "sgd": {
+        "policy_constructor": "SGDOptimizer",
+        "policy": {
+            "learning_rate": 0.01, "trainable": True
+        }
+    }
 }

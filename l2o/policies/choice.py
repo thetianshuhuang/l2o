@@ -29,6 +29,8 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
         with temperature = 1/hardness during training.
     name : str
         Name of optimizer network.
+    warmup_lstm_update : bool
+        Update LSTM during warmup?
     **kwargs : dict
         Passed onto tf.keras.layers.LSTMCell
     """
@@ -37,7 +39,8 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
 
     def init_layers(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.999,
-            learning_rate=0.001, epsilon=1e-10, hardness=0.0, **kwargs):
+            learning_rate=0.001, epsilon=1e-10, hardness=0.0,
+            warmup_lstm_update=False, **kwargs):
         """Initialize layers."""
         self.beta_1 = beta_1
         self.beta_2 = beta_2
@@ -84,6 +87,18 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
             + tf.reshape(opt_weights[:, 1], tf.shape(param)) * g_tilde)
 
         return update, states_new
+
+    def warmup_mask(self, state, new_state, in_warmup):
+        """Mask state when in warmup to disable a portion of the update."""
+        if self.warmup_lstm_update:
+            return new_state
+        else:
+            rnn_state = {
+                k: tf.cond(in_warmup, lambda: state[k], lambda: new_state[k])
+                for k in state if k.startswith("rnn")
+            }
+            analytical_state = {"m": new_state["m"], "v": new_state["v"]}
+            return dict(log=state["log"], **rnn_state, **analytical_state)
 
     def get_initial_state(self, var):
         """Get initial model state as a dictionary."""

@@ -6,16 +6,25 @@ from .architectures import BaseCoordinateWisePolicy, BaseHierarchicalPolicy
 from .moments import rms_momentum, rms_scaling
 
 
+def _trainable(value, trainable=False):
+    """Helper to optionally create trainable variable."""
+    if trainable:
+        return tf.Variable(
+            tf.constant(value), trainable=True, dtype=tf.float32)
+    else:
+        return value
+
+
 class AdamOptimizer(BaseCoordinateWisePolicy):
     """Adam Optimizer."""
 
     def init_layers(
             self, learning_rate=0.001, beta_1=0.9,
-            beta_2=0.999, epsilon=1e-07):
+            beta_2=0.999, epsilon=1e-07, trainable=False):
         """Save hyperparameters (Adam has no layers)."""
-        self.learning_rate = learning_rate
-        self.beta_1 = beta_1
-        self.beta_2 = beta_2
+        self.learning_rate = _trainable(learning_rate, trainable)
+        self.beta_1 = _trainable(beta_1, trainable)
+        self.beta_2 = _trainable(beta_2, trainable)
         self.epsilon = epsilon
 
     def call(self, param, inputs, states, global_state, training=False):
@@ -41,10 +50,12 @@ class AdamOptimizer(BaseCoordinateWisePolicy):
 class RMSPropOptimizer(BaseCoordinateWisePolicy):
     """RMSProp Optimizer."""
 
-    def init_layers(self, learning_rate=0.001, rho=0.9, epsilon=1e-07):
+    def init_layers(
+            self, learning_rate=0.001, rho=0.9,
+            epsilon=1e-07, trainable=False):
         """Save hyperparameters."""
-        self.learning_rate = learning_rate
-        self.rho = rho
+        self.learning_rate = _trainable(learning_rate, trainable)
+        self.rho = _trainable(rho, trainable)
         self.epsilon = epsilon
 
     def call(self, param, inputs, states, global_state, training=False):
@@ -62,10 +73,10 @@ class RMSPropOptimizer(BaseCoordinateWisePolicy):
 class MomentumOptimizer(BaseCoordinateWisePolicy):
     """Momentum Optimizer."""
 
-    def init_layers(self, learning_rate=0.001, beta_1=0.9):
+    def init_layers(self, learning_rate=0.001, beta_1=0.9, trainable=False):
         """Save hyperparameters."""
-        self.learning_rate = learning_rate
-        self.beta_1 = beta_1
+        self.learning_rate = _trainable(learning_rate, trainable)
+        self.beta_1 = _trainable(beta_1, trainable)
 
     def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
@@ -80,6 +91,11 @@ class MomentumOptimizer(BaseCoordinateWisePolicy):
 
 class PowerSignOptimizer(AdamOptimizer):
     """PowerSign optimizer (first variant), modified to be differentiable."""
+
+    def init_layers(self, temperature=1.0, trainable=False, **kwargs):
+        """Save hyperparameters."""
+        self.temperature = _trainable(temperature, trainable)
+        super().init_layers(**kwargs, trainable=trainable)
 
     def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
@@ -100,6 +116,11 @@ class PowerSignOptimizer(AdamOptimizer):
 
 class AddSignOptimizer(AdamOptimizer):
     """AddSign optimizer (first variant), modified to be differentiable."""
+
+    def init_layers(self, temperature=1.0, trainable=False, **kwargs):
+        """Save hyperparameters."""
+        self.temperature = _trainable(temperature, trainable)
+        super().init_layers(**kwargs, trainable=trainable)
 
     def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
@@ -161,9 +182,9 @@ class AdaptiveAddSignOptimizer(AdamOptimizer):
 class SGDOptimizer(BaseCoordinateWisePolicy):
     """SGD Optimizer."""
 
-    def init_layers(self, learning_rate=0.01):
+    def init_layers(self, learning_rate=0.01, trainable=False):
         """Save hyperparameters."""
-        self.learning_rate = learning_rate
+        self.learning_rate = _trainable(learning_rate, trainable)
 
     def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
