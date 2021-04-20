@@ -74,6 +74,9 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
             tf.reshape(self.choice(x), [-1, 2]),
             hardness=self.hardness, train=training, epsilon=self.epsilon)
 
+        if self.debug:
+            states_new["log"] = tf.reduce_sum(opt_weights, axis=0)
+
         # Combine softmax
         update = self.learning_rate * (
             tf.reshape(opt_weights[:, 0], tf.shape(param)) * m_rmsprop
@@ -85,16 +88,32 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
         """Get initial model state as a dictionary."""
         # RNN state
         batch_size = tf.size(var)
-        rnn_state = {
+        state = {
             "rnn_{}".format(i): layer.get_initial_state(
                 batch_size=batch_size, dtype=tf.float32)
             for i, layer in enumerate(self.recurrent)
         }
 
-        # State for analytical computations
-        analytical_state = {
-            "m": tf.zeros(tf.shape(var)),
-            "v": tf.zeros(tf.shape(var))
-        }
+        # Debug log
+        if self.debug:
+            state["log"] = tf.zeros(2)
 
-        return dict(**rnn_state, **analytical_state)
+        # State for analytical computations
+        state["m"] = tf.zeros(tf.shape(var))
+        state["v"] = tf.zeros(tf.shape(var))
+
+        return state
+
+    def gather_debug(self, param, states):
+        """Get debug information."""
+        return states["log"]
+
+    def debug_summarize(self, params, debug_states, debug_global):
+        """Summarize debug information."""
+        acc = sum(debug_states)
+        total = sum([tf.size(p) for p in params])
+        return acc.numpy() / total.numpy()
+
+    def aggregate_debug_data(self, data):
+        """Aggregate debug data across multiple steps."""
+        return np.stack(data)

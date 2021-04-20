@@ -42,7 +42,7 @@ def evaluate_function(
         target, functions, pass_cond=None, message="target function")
     function = function(**config)
 
-    return function_fit(function, opt, steps=steps)
+    return function_fit(function, opt, steps=steps, debug=debug)
 
 
 def evaluate_model(
