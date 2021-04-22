@@ -83,6 +83,8 @@ OVERRIDE_PRESETS = {
                 "epsilon": 1e-10,
                 "hardness": 0.0,
                 "name": "MoreChoiceOptimizer",
+                "use_meta_features": True,
+                "use_lr_multiplier": False,
                 # Choices
                 "pool": [
                     {"class_name": "SGD", "config": {"learning_rate": 0.2}},

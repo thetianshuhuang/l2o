@@ -73,23 +73,23 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
 
         # Extra features
         if self.use_meta_features:
-            # Size
-            update += [
-                tf.constant(
-                    len(tf.shape(param)) == i,
-                    dtype=tf.float32, shape=(tf.size(param),))
-                for i in range(3)
-            ]
+            time_val = 1 / (1 + tf.cast(states["time"], tf.float32) / 1000)
+            features = [
+                tf.tile(tf.reshape(time_val, shape=(1,)), [tf.size(param)])]
+            features += [
+                tf.tile(
+                    tf.constant(
+                        len(tf.shape(param)) == i + 1,
+                        dtype=tf.float32, shape=(1,)), [tf.size(param)])
+                for i in range(3)]
             # Time
-            update += [
-                tf.constant(
-                    1 / (1 + states["time"] / 1000),
-                    dtype=tf.float32, shape=(tf.size(param),))
-            ]
             states_new["time"] = states["time"] + 1
+        else:
+            features = []
 
         # Recurrent
-        x = tf.concat([tf.reshape(x, [-1, 1]) for x in update], 1)
+        _update = [*update, *features]
+        x = tf.concat([tf.reshape(x, [-1, 1]) for x in _update], 1)
         for i, layer in enumerate(self.recurrent):
             hidden_name = "rnn_{}".format(i)
             x, states_new[hidden_name] = layer(x, states[hidden_name])
@@ -130,7 +130,7 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         if self.use_meta_features:
             state["time"] = tf.zeros((), dtype=tf.int64)
             if self.debug:
-                state["_learning_rate"] = tf.zeros(len(self.choices))
+                state["_learning_rate"] = tf.zeros((), dtype=tf.float32)
 
         # Child states
         state["choices"] = [p.get_initial_state(var) for p in self.choices]
@@ -142,7 +142,7 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
     def debug_summarize(self, params, debug_states, debug_global):
         """Summarize debug information."""
         return {
-            k + "_" + p.name: v / tf.size(p)
+            k + "_" + p.name: v / tf.cast(tf.size(p), tf.float32)
             for p, s in zip(params, debug_states)
             for k, v in s.items()
         }
