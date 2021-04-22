@@ -79,7 +79,7 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
             features += [
                 tf.tile(
                     tf.constant(
-                        len(tf.shape(param)) == i + 1,
+                        tf.shape(param).shape[0] == i + 1,
                         dtype=tf.float32, shape=(1,)), [tf.size(param)])
                 for i in range(3)]
             # Time
@@ -129,8 +129,9 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
 
         if self.use_meta_features:
             state["time"] = tf.zeros((), dtype=tf.int64)
-            if self.debug:
-                state["_learning_rate"] = tf.zeros((), dtype=tf.float32)
+
+        if self.use_lr_multiplier and self.debug:
+            state["_learning_rate"] = tf.zeros((), dtype=tf.float32)
 
         # Child states
         state["choices"] = [p.get_initial_state(var) for p in self.choices]
