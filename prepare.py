@@ -17,6 +17,11 @@ python3 evaluate.py \\
     --problem={problem} \\
     --directory=results/{policy}/{base}/{flags} \\
     --repeat=10
+python3 evaluate.py \\
+    --problem={problem} \\
+    --directory=results/{policy}/{base}/{flags} \\
+    --repeat=1 \\
+    --debug=True
 """
 
 BASE_RUNNER = (

@@ -29,6 +29,10 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         List of configurations for optimizers to place in the pool.
     name : str
         Name of optimizer network.
+    use_meta_features : bool
+        Whether to add time and tensor type features.
+    use_lr_multiplier : bool
+        Whether to add a learning rate learnable dynamic multiplier.
     **kwargs : dict
         Passed onto tf.keras.layers.LSTMCell
     """
@@ -37,7 +41,8 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
 
     def init_layers(
             self, layers=(20, 20), hardness=0.0, learning_rate=0.01,
-            epsilon=1e-10, pool=[], **kwargs):
+            epsilon=1e-10, pool=[],
+            use_meta_features=False, use_lr_multiplier=False, **kwargs):
         """Initialize layers."""
         self.choices = [
             getattr(analytical, p["class_name"] + "Optimizer")(**p["config"])
@@ -46,10 +51,16 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         self.hardness = hardness
         self.epsilon = epsilon
 
+        self.use_meta_features = use_meta_features
+        self.use_lr_multiplier = use_lr_multiplier
+
         self.learning_rate = learning_rate
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
         self.choice = Dense(len(pool), input_shape=(layers[-1],))
+
+        if use_lr_multiplier:
+            self.lr_multiplier = Dense(1, input_shape=(layers[-1],))
 
     def call(self, param, inputs, states, global_state, training=False):
         """Network call override."""
@@ -59,6 +70,23 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
             for s, p in zip(states["choices"], self.choices)
         ])
         states_new["choices"] = list(choices_new)
+
+        # Extra features
+        if self.use_meta_features:
+            # Size
+            update += [
+                tf.constant(
+                    len(tf.shape(param)) == i,
+                    dtype=tf.float32, shape=(tf.size(param),))
+                for i in range(3)
+            ]
+            # Time
+            update += [
+                tf.constant(
+                    1 / (1 + states["time"] / 1000),
+                    dtype=tf.float32, shape=(tf.size(param),))
+            ]
+            states_new["time"] = states["time"] + 1
 
         # Recurrent
         x = tf.concat([tf.reshape(x, [-1, 1]) for x in update], 1)
@@ -72,13 +100,20 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
             hardness=self.hardness, train=training, epsilon=self.epsilon)
 
         if self.debug:
-            states_new["log"] = tf.reduce_sum(opt_weights, axis=0)
+            states_new["_choices"] = tf.reduce_sum(opt_weights, axis=0)
 
         # Combine softmax
         update = self.learning_rate * sum([
             tf.reshape(opt_weights[:, i], tf.shape(param)) * u
             for i, u in enumerate(update)
         ])
+
+        # Learning rate multiplier
+        if self.use_lr_multiplier:
+            lr_multiplier = tf.exp(2 * tf.tanh(self.lr_multiplier(x)))
+            update = update * tf.reshape(lr_multiplier, tf.shape(param))
+            if self.debug:
+                states_new["_learning_rate"] = tf.reduce_sum(lr_multiplier)
 
         return update, states_new
 
@@ -92,24 +127,29 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
             for i, layer in enumerate(self.recurrent)
         }
 
-        if self.debug:
-            state["log"] = tf.zeros(len(self.choices))
+        if self.use_meta_features:
+            state["time"] = tf.zeros((), dtype=tf.int64)
+            if self.debug:
+                state["_learning_rate"] = tf.zeros(len(self.choices))
 
         # Child states
         state["choices"] = [p.get_initial_state(var) for p in self.choices]
+        if self.debug:
+            state["_choices"] = tf.zeros(len(self.choices))
 
         return state
 
-    def gather_debug(self, param, states):
-        """Get debug information."""
-        return states["log"]
-
     def debug_summarize(self, params, debug_states, debug_global):
         """Summarize debug information."""
-        acc = sum(debug_states)
-        total = sum([tf.size(p) for p in params])
-        return acc.numpy() / total.numpy()
+        return {
+            k + "_" + p.name: v / tf.size(p)
+            for p, s in zip(params, debug_states)
+            for k, v in s.items()
+        }
 
     def aggregate_debug_data(self, data):
         """Aggregate debug data across multiple steps."""
-        return {"log": np.stack(data)}
+        return {
+            k: np.stack([d[k] for d in data])
+            for k in data[0]
+        }
