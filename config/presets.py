@@ -194,39 +194,19 @@ OVERRIDE_PRESETS = {
         (["strategy", "validation_warmup"], 5),
         (["strategy", "validation_warmup_rate"], 0.05)
     ],
-    "noscale": [
-        (["training", "scale_objective"], False),
-        (["strategy", "annealing_schedule", "value"], 0.25)
-    ],
-    "long-warmup": [
-        (["strategy", "unroll_len"], 100),
-        (["strategy", "depth"], 5),
-        (["strategy", "validation_unroll"], 100),
-        (["strategy", "validation_depth"], 5),
-        (["strategy", "warmup"], {"type": "list", "values": [0, 1]}),
-        (["strategy", "warmup_rate"], {"type": "list", "values": [0.0, 0.05]}),
-        (["strategy", "validation_warmup"], 1),
-        (["strategy", "validation_warmup_rate"], 0.05)
-    ],
-    "long": [
-        (["strategy", "unroll_len"], 100),
-        (["strategy", "depth"], 5),
-        (["strategy", "validation_unroll"], 100),
-        (["strategy", "validation_depth"], 5),
-    ],
     "cl_fixed": [(
         ["strategy"],
         {
             "validation_problems": None,
             "validation_seed": 12345,
-            "num_periods": 10,
+            "num_periods": 5,
             "unroll_len": 100,
-            "depth": {"type": "list", "values": [1, 2, 5, 5, 10]},
+            "depth": {"type": "list", "values": [1, 2, 5]},
             "epochs": 10,
             "annealing_schedule": {"type": "constant", "value": 0.0},
             "validation_epochs": 1,
             "validation_unroll": 100,
-            "validation_depth": 20,
+            "validation_depth": 10,
             "max_repeat": 4,
             "repeat_threshold": 0.9,
             "warmup": {"type": "list", "values": [0, 1]},

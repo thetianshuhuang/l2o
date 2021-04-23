@@ -61,7 +61,9 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         self.choice = Dense(len(pool), input_shape=(layers[-1],))
 
         if self.lr_multiplier_scale > 0.0:
-            self.lr_multiplier = Dense(1, input_shape=(layers[-1],))
+            self.lr_multiplier = Dense(
+                1, input_shape=(layers[-1],),
+                kernel_initializer='zeros', bias_initializer='zeros')
 
     def call(self, param, inputs, states, global_state, training=False):
         """Network call override."""
