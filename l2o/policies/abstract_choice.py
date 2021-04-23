@@ -31,6 +31,8 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         Name of optimizer network.
     use_meta_features : bool
         Whether to add time and tensor type features.
+    time_scales : float[]
+        List of denominator scales for time feature.
     lr_multiplier_scale : bool
         Maximum magnitude of log learning rate multiplier. If 0.0, the learning
         rate multiplier is not used.
@@ -42,8 +44,9 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
 
     def init_layers(
             self, layers=(20, 20), hardness=0.0, learning_rate=0.01,
-            epsilon=1e-10, pool=[],
-            use_meta_features=False, lr_multiplier_scale=0.0, **kwargs):
+            epsilon=1e-10, pool=[], use_meta_features=False,
+            time_scales=[500.0, 1000.0, 2000.0], lr_multiplier_scale=0.0,
+            **kwargs):
         """Initialize layers."""
         self.choices = [
             getattr(analytical, p["class_name"] + "Optimizer")(**p["config"])
@@ -53,6 +56,7 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         self.epsilon = epsilon
 
         self.use_meta_features = use_meta_features
+        self.time_scales = time_scales
         self.lr_multiplier_scale = lr_multiplier_scale
 
         self.learning_rate = learning_rate
@@ -76,9 +80,12 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
 
         # Extra features
         if self.use_meta_features:
-            time_val = 1 / (1 + tf.cast(states["time"], tf.float32) / 1000)
-            features = [
-                tf.tile(tf.reshape(time_val, shape=(1,)), [tf.size(param)])]
+            _time = tf.cast(states["time"], tf.float32)
+            time_values = [
+                tf.tile(
+                    tf.reshape(1 / (1 + _time / scale), shape=(1,)),
+                    [tf.size(param)])
+                for scale in self.time_scales]
             features += [
                 tf.tile(
                     tf.constant(
