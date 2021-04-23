@@ -91,15 +91,15 @@ OVERRIDE_PRESETS = {
                     {"class_name": "Momentum",
                      "config": {"learning_rate": 0.5, "beta_1": 0.9}},
                     {"class_name": "RMSProp",
-                     "config": {"learning_rate": 0.005, "rho": 0.9}},
+                     "config": {"learning_rate": 0.002, "rho": 0.9}},
                     {"class_name": "Adam",
                      "config": {"learning_rate": 0.005, "beta_1": 0.9,
                                 "beta_2": 0.999, "epsilon": 1e-10}},
                     {"class_name": "PowerSign",
-                     "config": {"learning_rate": 0.1, "beta_1": 0.9,
+                     "config": {"learning_rate": 0.05, "beta_1": 0.9,
                                 "beta_2": 0.999, "epsilon": 1e-10}},
                     {"class_name": "AddSign",
-                     "config": {"learning_rate": 0.1, "beta_1": 0.9,
+                     "config": {"learning_rate": 0.05, "beta_1": 0.9,
                                 "beta_2": 0.999, "epsilon": 1e-10}},
                 ],
                 # LSTMCell Args
@@ -219,14 +219,14 @@ OVERRIDE_PRESETS = {
         {
             "validation_problems": None,
             "validation_seed": 12345,
-            "num_periods": 4,
+            "num_periods": 10,
             "unroll_len": 100,
-            "depth": {"type": "list", "values": [1, 2, 5]},
+            "depth": {"type": "list", "values": [1, 2, 5, 5, 10]},
             "epochs": 10,
             "annealing_schedule": {"type": "constant", "value": 0.0},
             "validation_epochs": 1,
             "validation_unroll": 100,
-            "validation_depth": 5,
+            "validation_depth": 20,
             "max_repeat": 4,
             "repeat_threshold": 0.9,
             "warmup": {"type": "list", "values": [0, 1]},
@@ -236,35 +236,6 @@ OVERRIDE_PRESETS = {
             "name": "RepeatStrategy"
         }
     )],
-    "cl_unroll": [(
-        ["strategy"], {
-            "validation_problems": None,
-            "validation_seed": 12345,
-            "num_stages": 4,
-            "num_periods": 2,
-            "num_chances": 3,
-            "unroll_len": {
-                "type": "list", "values": [20, 50, 100]},
-            "depth": 2,
-            "epochs": 10,
-            "annealing_schedule": 0.0,
-            "validation_epochs": 10,
-            "max_repeat": 2,
-            "repeat_threshold": 0.8,
-            "warmup": {"type": "list", "values": [0, 1]},
-            "warmup_rate": {"type": "list", "values": [0, 0.05]},
-            "name": "CurriculumLearningStrategy"
-        }
-    )],
-    "cl_short": [
-        (["strategy", "num_stages"], 3),
-        (["strategy", "depth"], {"type": "list", "values": [1, 2, 5, 10]})
-    ],
-    "cl_long": [
-        (["strategy", "num_stages"], 5),
-        (["strategy", "depth"],
-         {"type": "list", "values": [1, 2, 5, 10, 20, 50]})
-    ],
     "half_depth": [
         (["policy", "layers"], [20])
     ],

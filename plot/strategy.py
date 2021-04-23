@@ -48,6 +48,14 @@ class ReplicateResults:
             for p in os.listdir(path)
         }
 
+    @property
+    def config(self):
+        """Get configuration settings.
+
+        Assumes all replicates have the same settings.
+        """
+        return next(iter(self.replicates.values())).config
+
     def _display_name(self, **kwargs):
         """Get display name as string."""
         return self.name
@@ -80,6 +88,16 @@ class BaseResult:
         self.directory = path
         self.name = name
         self.summary = pd.read_csv(os.path.join(path, "summary.csv"))
+
+        self._config = None
+
+    @property
+    def config(self):
+        """Configuration settings, from config.json."""
+        if self._config is None:
+            self._config = _read_json(
+                os.path.join(self.directory, "config.json"))
+        return self._config
 
     def _display_name(self, **kwargs):
         """Get display name as string."""

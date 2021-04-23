@@ -31,8 +31,9 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         Name of optimizer network.
     use_meta_features : bool
         Whether to add time and tensor type features.
-    use_lr_multiplier : bool
-        Whether to add a learning rate learnable dynamic multiplier.
+    lr_multiplier_scale : bool
+        Maximum magnitude of log learning rate multiplier. If 0.0, the learning
+        rate multiplier is not used.
     **kwargs : dict
         Passed onto tf.keras.layers.LSTMCell
     """
@@ -42,7 +43,7 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
     def init_layers(
             self, layers=(20, 20), hardness=0.0, learning_rate=0.01,
             epsilon=1e-10, pool=[],
-            use_meta_features=False, use_lr_multiplier=False, **kwargs):
+            use_meta_features=False, lr_multiplier_scale=0.0, **kwargs):
         """Initialize layers."""
         self.choices = [
             getattr(analytical, p["class_name"] + "Optimizer")(**p["config"])
@@ -52,14 +53,14 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         self.epsilon = epsilon
 
         self.use_meta_features = use_meta_features
-        self.use_lr_multiplier = use_lr_multiplier
+        self.lr_multiplier_scale = lr_multiplier_scale
 
         self.learning_rate = learning_rate
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
         self.choice = Dense(len(pool), input_shape=(layers[-1],))
 
-        if use_lr_multiplier:
+        if self.lr_multiplier_scale > 0.0:
             self.lr_multiplier = Dense(1, input_shape=(layers[-1],))
 
     def call(self, param, inputs, states, global_state, training=False):
@@ -109,8 +110,9 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         ])
 
         # Learning rate multiplier
-        if self.use_lr_multiplier:
-            lr_multiplier = tf.exp(2 * tf.tanh(self.lr_multiplier(x)))
+        if self.lr_multiplier_scale > 0.0:
+            lr_multiplier = tf.exp(
+                self.lr_multiplier_scale * tf.tanh(self.lr_multiplier(x)))
             update = update * tf.reshape(lr_multiplier, tf.shape(param))
             if self.debug:
                 states_new["_learning_rate"] = tf.reduce_sum(lr_multiplier)
@@ -130,7 +132,7 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         if self.use_meta_features:
             state["time"] = tf.zeros((), dtype=tf.int64)
 
-        if self.use_lr_multiplier and self.debug:
+        if (self.lr_multiplier_scale > 0.0) and self.debug:
             state["_learning_rate"] = tf.zeros((), dtype=tf.float32)
 
         # Child states
