@@ -40,6 +40,7 @@ ctx = {
     "problem": args.pop_get("--problem", "conv_train"),
     "base": args.pop_get("--base", "test")
 }
+time = args.pop_get("--time", "24:00:00")
 
 
 script = "scripts/{}-{}-{}.sh".format(ctx["policy"], ctx["base"], flags[0])
@@ -49,4 +50,4 @@ with open(script, "w") as f:
 
 
 print(BASE_RUNNER.format(
-    shortname=ctx["policy"][0].upper(), flags=flags[0], **ctx))
+    shortname=ctx["policy"][0].upper(), flags=flags[0], time=time, **ctx))
