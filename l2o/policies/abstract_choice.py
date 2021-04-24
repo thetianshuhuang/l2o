@@ -67,13 +67,13 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
 
         if self.lr_multiplier_scale > 0.0:
             self.lr_multiplier = Dense(
-                1, input_shape=(layers[-1],),
+                len(pool), input_shape=(layers[-1],),
                 kernel_initializer='zeros', bias_initializer='zeros')
 
     def call(self, param, inputs, states, global_state, training=False):
         """Network call override."""
         states_new = {}
-        update, choices_new = zip(*[
+        updates, choices_new = zip(*[
             p(param, inputs, s, global_state)
             for s, p in zip(states["choices"], self.choices)
         ])
@@ -96,8 +96,8 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
             features = []
 
         # Recurrent
-        _update = [*update, *features]
-        x = tf.concat([tf.reshape(x, [-1, 1]) for x in _update], 1)
+        _updates = [*updates, *features]
+        x = tf.concat([tf.reshape(x, [-1, 1]) for x in _updates], 1)
         for i, layer in enumerate(self.recurrent):
             hidden_name = "rnn_{}".format(i)
             x, states_new[hidden_name] = layer(x, states[hidden_name])
@@ -110,19 +110,23 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         if self.debug:
             states_new["_choices"] = tf.reduce_sum(opt_weights, axis=0)
 
-        # Combine softmax
-        update = self.learning_rate * sum([
-            tf.reshape(opt_weights[:, i], tf.shape(param)) * u
-            for i, u in enumerate(update)
-        ])
-
         # Learning rate multiplier
         if self.lr_multiplier_scale > 0.0:
             lr_multiplier = tf.exp(
                 self.lr_multiplier_scale * tf.tanh(self.lr_multiplier(x)))
-            update = update * tf.reshape(lr_multiplier, tf.shape(param))
+            updates = [
+                u * tf.reshape(lr_multiplier[:, i], tf.shape(param))
+                for i, u in enumerate(updates)
+            ]
             if self.debug:
-                states_new["_learning_rate"] = tf.reduce_sum(lr_multiplier)
+                states_new["_learning_rate"] = tf.reduce_sum(
+                    lr_multiplier, axis=0)
+
+        # Combine softmax
+        update = self.learning_rate * sum([
+            tf.reshape(opt_weights[:, i], tf.shape(param)) * u
+            for i, u in enumerate(updates)
+        ])
 
         return update, states_new
 
@@ -140,7 +144,8 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
             state["time"] = tf.zeros((), dtype=tf.int64)
 
         if (self.lr_multiplier_scale > 0.0) and self.debug:
-            state["_learning_rate"] = tf.zeros((), dtype=tf.float32)
+            state["_learning_rate"] = tf.zeros(
+                len(self.choices), dtype=tf.float32)
 
         # Child states
         state["choices"] = [p.get_initial_state(var) for p in self.choices]

@@ -252,7 +252,7 @@ POLICY = {
             "name": "MoreChoiceOptimizer",
             "use_meta_features": True,
             "time_scale": 1000.,
-            "lr_multiplier_scale": 2.3,
+            "lr_multiplier_scale": 3.0,
             # Choices
             "pool": [
                 {"class_name": "SGD", "config": {"learning_rate": 0.2}},

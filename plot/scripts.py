@@ -13,7 +13,7 @@ def plot_training(ctx, tests, limit=False):
     """Training summary plot (1 row per test, 4 replicas per row)."""
     vh = len(tests)
     fig, axs = plt.subplots(vh, 4, figsize=(16, 3 * vh))
-    for test, row in zip(tests, axs):
+    for test, row in zip(tests, axs.reshape(vh, 4)):
         for rep, ax in enumerate(row):
             ctx.plot_training(
                 "{}/{}".format(test, rep + 1), ax, validation=True)
@@ -71,7 +71,7 @@ def plot_loss(ctx, tests, rulers=[], sfx="", **kwargs):
     """Loss plot (1 row per test, val on left, train on right)."""
     vh = len(tests)
     fig, axs = plt.subplots(vh, 2, figsize=(16, 4 * vh))
-    for base, row in zip(tests, axs):
+    for base, row in zip(tests, axs.reshape(vh, 2)):
         ctx.plot_loss(
             base, row[0], baselines=["adam"], validation=True, **kwargs)
         ctx.plot_loss(
