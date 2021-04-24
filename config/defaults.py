@@ -253,6 +253,7 @@ POLICY = {
             "use_meta_features": True,
             "time_scale": 1000.,
             "lr_multiplier_scale": 3.0,
+            "warmup_lstm_update": False,
             # Choices
             "pool": [
                 {"class_name": "SGD", "config": {"learning_rate": 0.2}},

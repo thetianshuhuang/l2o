@@ -37,6 +37,8 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
     lr_multiplier_scale : bool
         Maximum magnitude of log learning rate multiplier. If 0.0, the learning
         rate multiplier is not used.
+    warmup_lstm_update : bool
+        Update LSTM during warmup?
     **kwargs : dict
         Passed onto tf.keras.layers.LSTMCell
     """
@@ -47,7 +49,7 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
             self, layers=(20, 20), hardness=0.0, learning_rate=0.01,
             epsilon=1e-10, pool=[], use_meta_features=False,
             time_scale=1000., lr_multiplier_scale=0.0,
-            **kwargs):
+            warmup_lstm_update=False, **kwargs):
         """Initialize layers."""
         self.choices = [
             getattr(analytical, p["class_name"] + "Optimizer")(**p["config"])
@@ -59,7 +61,7 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         self.use_meta_features = use_meta_features
         self.time_scale = time_scale
         self.lr_multiplier_scale = lr_multiplier_scale
-
+        self.warmup_lstm_update = warmup_lstm_update
         self.learning_rate = learning_rate
 
         self.recurrent = [LSTMCell(hsize, **kwargs) for hsize in layers]
@@ -129,6 +131,19 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
         ])
 
         return update, states_new
+
+    def warmup_mask(self, state, new_state, in_warmup):
+        """Mask state when in warmup to disable a portion of the update."""
+        if self.warmup_lstm_update:
+            return new_state
+        else:
+            rnn_state = {
+                k: tf.cond(in_warmup, lambda: state[k], lambda: new_state[k])
+                for k in state if k.startswith("rnn")
+            }
+            analytical_state = {
+                k: v for k, v in new_state.items() if k not in rnn_state}
+            return dict(**rnn_state, **analytical_state)
 
     def get_initial_state(self, var):
         """Get initial model state as a dictionary."""
