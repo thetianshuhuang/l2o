@@ -25,7 +25,7 @@ python3 evaluate.py \\
 """
 
 BASE_RUNNER = (
-    "sbatch -p gtx -N 1 -n 1 -o logs/{policy}-{base}-{flags}.log -t 24:00:00 "
+    "sbatch -p gtx -N 1 -n 1 -o logs/{policy}-{base}-{flags}.log -t {time} "
     "-A {allocation} -J {shortname}{base}{flags} "
     "scripts/{policy}-{base}-{flags}.sh")
 
