@@ -20,7 +20,7 @@ class LossMixin:
         ] + [
             UnrollStateManager(
                 t, objective=obj, training=False,
-                do_oracle_scaling=self.do_teacher_parameter_scale)
+                do_oracle_scaling=not self.do_teacher_parameter_scale)
             for t in self.teachers
         ]
 
