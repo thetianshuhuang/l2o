@@ -15,7 +15,7 @@ BASE = {
         "use_log_objective": True,
         "scale_objective": True,
         "parameter_scale_spread": 3.0,
-        "do_teacher_parameter_scale": False,
+        "do_teacher_parameter_scale": True,
         "loss_reduce": "reduce_max",
         "il_mode": "sum",
         "unroll_weight": "mean",
