@@ -252,8 +252,8 @@ POLICY = {
             "hardness": 0.0,
             "name": "MoreChoiceOptimizer",
             "use_meta_features": True,
-            "time_scale": 1000.,
-            "lr_multiplier_scale": 3.0,
+            "time_scale": 2000.,
+            "lr_multiplier_scale": 0.0,
             "warmup_lstm_update": False,
             # Choices
             "pool": [
