@@ -83,10 +83,9 @@ class AbstractChoiceOptimizer(BaseCoordinateWisePolicy):
 
         # Extra features
         if self.use_meta_features:
-            _time = 1 - tf.square(
-                tf.minimum(
-                    tf.cast(states["time"], tf.float32) / self.time_scale, 1.0)
-                - 1)
+            _time = tf.cast(states["time"], tf.float32) / self.time_scale
+            features = [tf.tile(
+                tf.reshape(1 / (1 + _time), (1,)), [tf.size(param)])]
             features = [tf.tile(tf.reshape(_time, (1,)), [tf.size(param)])]
             features += [
                 tf.tile(
