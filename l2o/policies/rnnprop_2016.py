@@ -31,6 +31,8 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
         Name of optimizer network.
     warmup_lstm_update : bool
         Update LSTM during warmup?
+    input_noise : float
+        Standard deviation of noise to add to gradients during training.
     **kwargs : dict
         Passed onto tf.keras.layers.LSTMCell
     """
@@ -39,13 +41,14 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
 
     def init_layers(
             self, layers=(20, 20), beta_1=0.9, beta_2=0.999, alpha=0.1,
-            epsilon=1e-10, warmup_lstm_update=True, **kwargs):
+            epsilon=1e-10, warmup_lstm_update=True, input_noise=0.0, **kwargs):
         """Initialize layers."""
         self.beta_1 = beta_1
         self.beta_2 = beta_2
         self.alpha = alpha
         self.epsilon = epsilon
         self.warmup_lstm_update = warmup_lstm_update
+        self.input_noise = input_noise
 
         self.recurrent = [
             LSTMCell(hsize, perturbation=self.perturbation, **kwargs)
@@ -57,6 +60,10 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
 
     def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
+        if self.input_noise > 0.0:
+            inputs = inputs + tf.random.normal(
+                param.shape, mean=0.0, stddev=self.input_noise)
+
         states_new = {}
 
         # From table 1

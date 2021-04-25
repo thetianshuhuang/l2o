@@ -16,10 +16,10 @@ class LossMixin:
     def _make_policy_managers(self, obj):
         """Create policy managers."""
         return [
-            UnrollStateManager(self.network, objective=obj)
+            UnrollStateManager(self.network, objective=obj, training=True)
         ] + [
             UnrollStateManager(
-                t, objective=obj,
+                t, objective=obj, training=False,
                 do_oracle_scaling=self.do_teacher_parameter_scale)
             for t in self.teachers
         ]

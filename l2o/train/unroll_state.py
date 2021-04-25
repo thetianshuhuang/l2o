@@ -78,15 +78,18 @@ class UnrollStateManager:
         should use the reference optimizer (policy_ref).
     do_oracle_scaling : bool
         If True, transforms back into the original scale.
+    training : bool
+        Whether this policy should be run in training mode.
     """
 
     def __init__(
             self, policy, objective=None, learner_mask=AlwaysTrue(),
-            do_oracle_scaling=False):
+            do_oracle_scaling=False, training=True):
         self.policy = policy
         self.objective = objective
         self.mask = learner_mask
         self.do_oracle_scaling = do_oracle_scaling
+        self.training = training
 
     def advance_param(self, args, mask, global_state):
         """Advance a single parameter, depending on mask."""
@@ -123,7 +126,7 @@ class UnrollStateManager:
         # global_state <- global_policy(local states, global state)
         global_state_new = self.policy.call_global(
             [s for s, mask in zip(states_new, self.mask) if mask],
-            unroll_state.global_state, training=True)
+            unroll_state.global_state, training=self.training)
         unroll_state_new = UnrollState(
             params=dparams, states=states_new, global_state=global_state_new)
 

@@ -173,6 +173,7 @@ POLICY = {
             "epsilon": 1e-10,
             "warmup_lstm_update": False,
             "perturbation": None,
+            "input_noise": 0.01,
             "name": "RNNPropOptimizer",
             # LSTMCell Args
             "activation": "tanh",

@@ -31,8 +31,7 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
 
     def __init__(
             self, name=None, distribute=None, debug=False, weights_file=None,
-            perturbation=None,
-            **kwargs):
+            perturbation=None, **kwargs):
 
         if name is None:
             name = self.default_name
