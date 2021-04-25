@@ -4,45 +4,35 @@
 OVERRIDE_PRESETS = {
     "sgd": [(
         ["training", "teachers", "*"],
-        {"class_name": "SGD", "config": {"learning_rate": 0.05}}
+        {"class_name": "SGD", "config": {"learning_rate": 0.2}}
     )],
     "adam": [(
         ["training", "teachers", "*"],
         {"class_name": "Adam",
-         "config": {"learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999,
+         "config": {"learning_rate": 0.005, "beta_1": 0.9, "beta_2": 0.999,
                     "epsilon": 1e-10}}
     )],
     "rmsprop": [(
         ["training", "teachers", "*"],
         {"class_name": "RMSProp",
-         "config": {"learning_rate": 0.001, "rho": 0.9, "epsilon": 1e-10}}
-    )],
-    "radam": [(
-        ["training", "teachers", "*"],
-        {
-            "class_name": "RectifiedAdam",
-            "config": {
-                "learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999,
-                "sma_threshold": 5.0, "warmup_proportion": 0.1
-            }
-        }
+         "config": {"learning_rate": 0.005, "rho": 0.9, "epsilon": 1e-10}}
     )],
     "6t": [(
         ["training", "teachers"],
         [
-            {"class_name": "SGD", "config": {"learning_rate": 1.0}},
+            {"class_name": "SGD", "config": {"learning_rate": 0.2}},
             {"class_name": "Momentum",
-             "config": {"learning_rate": 1.0, "beta_1": 0.9}},
+             "config": {"learning_rate": 0.2, "beta_1": 0.9}},
             {"class_name": "RMSProp",
-             "config": {"learning_rate": 0.05, "rho": 0.9}},
+             "config": {"learning_rate": 0.005, "rho": 0.9}},
             {"class_name": "Adam",
-             "config": {"learning_rate": 0.05, "beta_1": 0.9,
+             "config": {"learning_rate": 0.005, "beta_1": 0.9,
                         "beta_2": 0.999, "epsilon": 1e-10}},
             {"class_name": "PowerSign",
-             "config": {"learning_rate": 1.0, "beta_1": 0.9,
+             "config": {"learning_rate": 0.05, "beta_1": 0.9,
                         "beta_2": 0.999, "epsilon": 1e-10}},
             {"class_name": "AddSign",
-             "config": {"learning_rate": 1.0, "beta_1": 0.9,
+             "config": {"learning_rate": 0.05, "beta_1": 0.9,
                         "beta_2": 0.999, "epsilon": 1e-10}},
         ]
     )],

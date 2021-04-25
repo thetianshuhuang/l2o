@@ -76,13 +76,17 @@ class UnrollStateManager:
     learner_mask : bool[]
         Mask indicating which parameters should be trained on, and which
         should use the reference optimizer (policy_ref).
+    do_oracle_scaling : bool
+        If True, transforms back into the original scale.
     """
 
     def __init__(
-            self, policy, objective=None, learner_mask=AlwaysTrue()):
+            self, policy, objective=None, learner_mask=AlwaysTrue(),
+            do_oracle_scaling=False):
         self.policy = policy
         self.objective = objective
         self.mask = learner_mask
+        self.do_oracle_scaling = do_oracle_scaling
 
     def advance_param(self, args, mask, global_state):
         """Advance a single parameter, depending on mask."""
@@ -91,15 +95,25 @@ class UnrollStateManager:
         else:
             return self.policy_ref.call(*args)
 
-    def apply_gradients(self, unroll_state, grads, warmup=False):
+    def apply_gradients(self, unroll_state, grads, scale, warmup=False):
         """Apply gradients."""
+        # Scale back to original
+        if self.do_oracle_scaling:
+            grads = [g / s for g, s in zip(grads, scale)]
+            params = [p * s for p, s in zip(unroll_state.params, scale)]
+        else:
+            params = unroll_state.params
+
         # delta p, state <- policy(params, grads, local, global)
         dparams, states_new = list(map(list, zip(*[
             self.advance_param(args, mask, unroll_state.global_state)
             for mask, args in zip(
-                self.mask,
-                zip(unroll_state.params, grads, unroll_state.states))
+                self.mask, zip(params, grads, unroll_state.states))
         ])))
+
+        # Reapply scale
+        if self.do_oracle_scaling:
+            dparams = [p / s for p, s in zip(dparams, scale)]
 
         if warmup:
             states_new = [
@@ -149,7 +163,7 @@ class UnrollStateManager:
         grads = tape.gradient(objective, unroll_state.params)
         # 3. delta p, state <- policy(params, grads, local, global)
         #    global_state <- global_policy(local states, global state)
-        dstate = self.apply_gradients(unroll_state, grads)
+        dstate = self.apply_gradients(unroll_state, grads, scale)
         # 4. p <- p - delta p
         params_new = [
             p - d for p, d in zip(unroll_state.params, dstate.params)]

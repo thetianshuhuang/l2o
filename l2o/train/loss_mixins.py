@@ -8,6 +8,22 @@ from .unroll_state import UnrollStateManager, state_distance, UnrollState
 class LossMixin:
     """Inner Training and Outer Loss computation Mixin."""
 
+    def _unbatch_data(self, data, unroll):
+        """Unbatch unroll batch into single iteration sub-batches."""
+        return [
+            tf.stack(tf.split(dim, num_or_size_splits=unroll)) for dim in data]
+
+    def _make_policy_managers(self, obj):
+        """Create policy managers."""
+        return [
+            UnrollStateManager(self.network, objective=obj)
+        ] + [
+            UnrollStateManager(
+                t, objective=obj,
+                do_oracle_scaling=self.do_teacher_parameter_scale)
+            for t in self.teachers
+        ]
+
     def _scale_meta_objective(self, objective, initial_obj):
         """Normalizes the objective based on the initial objective value."""
         if self.use_log_objective:
@@ -94,18 +110,10 @@ class LossMixin:
             [2] Learner and teacher states after this unroll.
             [3] Summary statistics collected by self.step_callback if present.
         """
-        # Unbatch data
-        data = [
-            tf.stack(tf.split(dim, num_or_size_splits=unroll)) for dim in data]
-
-        # Make Managers
-        policy_managers = [
-            UnrollStateManager(p, objective=problem.objective)
-            for p in [self.network, *self.teachers]
-        ]
+        data = self._unbatch_data(data, unroll)
+        policy_managers = self._make_policy_managers(problem.objective)
 
         init_params = [p * s for p, s in zip(states[0].params, scale)]
-
         meta_loss = 0.
         imitation_loss = 0.
         callback_states = [cb.get_state(unroll) for cb in self.step_callbacks]

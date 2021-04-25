@@ -40,6 +40,8 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin, WarmupMixin):
         Each parameter is randomly scaled by a factor sampled from a
         log uniform distribution exp(Unif([-L, L])). If the spread is 0,
         this is equivalent to a constant scale of 1.
+    do_teacher_parameter_scale : bool
+        Controls whether the teachers should use scaled or unscaled gradients.
     loss_reduce : str or Callable (float[]) -> float or None
         Imitation learning multi-teacher loss strategy. Suggested:
         - ``tf.math.reduce_mean``: classic multi-teacher mean loss.
@@ -91,6 +93,7 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin, WarmupMixin):
             self, network, optimizer, name="OptimizerTraining",
             use_log_objective=True, scale_objective=False,
             parameter_scale_spread=3.0, loss_reduce=tf.math.reduce_max,
+            do_teacher_parameter_scale=True,
             il_mode='switch', unroll_weight="sum", teachers=[],
             obj_train_max_multiplier=-1, huber_delta=-1,
             gradient_clipping={
@@ -113,6 +116,7 @@ class OptimizerTraining(LossMixin, StepMixin, TrainingMixin, WarmupMixin):
         self.use_log_objective = use_log_objective
         self.scale_objective = scale_objective
         self.parameter_scale_spread = parameter_scale_spread
+        self.do_teacher_parameter_scale = do_teacher_parameter_scale
 
         # Loss computation
         self.loss_reduce = deserialize.generic(

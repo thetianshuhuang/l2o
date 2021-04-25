@@ -104,7 +104,6 @@ class TrainingMixin:
         # concrete_step is cached.
         step = meta.problem.get_step(meta)
         warmup_step = None
-        policies = [self.network, *self.teachers]
         states, scale = None, None
 
         # Single progress bar
@@ -125,7 +124,9 @@ class TrainingMixin:
             if i % (depth + meta.warmup) == 0:
                 params = meta.problem.get_parameters(seed=meta.seed)
                 params, scale = self._create_scaling(params)
-                states = [create_state(p, params) for p in policies]
+                states = [
+                    create_state(p, params)
+                    for p in [self.network, *self.teachers]]
 
             # Create concrete_step; done here to capture batch shape.
             args = (batch, states, scale)

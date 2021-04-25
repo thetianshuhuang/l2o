@@ -40,14 +40,8 @@ class WarmupMixin:
         UnrollState[]
             Learner and teacher states after this unroll.
         """
-        # Unbatch data
-        data = [
-            tf.stack(tf.split(dim, num_or_size_splits=unroll)) for dim in data]
-
-        # Make Managers
-        policy_managers = [
-            UnrollStateManager(p, objective=problem.objective)
-            for p in [self.network, *self.teachers]]
+        data = self._unbatch_data(data, unroll)
+        policy_managers = self._make_policy_managers(problem.objective)
 
         params = states[0].params
         for i in tf.range(unroll):
@@ -63,7 +57,7 @@ class WarmupMixin:
 
             # Apply gradients to update optimizer internal states
             states = [
-                mgr.apply_gradients(st, grads, warmup=True)
+                mgr.apply_gradients(st, grads, scale, warmup=True)
                 for st, mgr in zip(states, policy_managers)]
 
         # Wipe states.params on return
