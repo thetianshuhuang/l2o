@@ -80,7 +80,7 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
             hardness=self.hardness, train=training, epsilon=self.epsilon)
 
         if self.debug:
-            states_new["log"] = tf.reduce_sum(opt_weights, axis=0)
+            states_new["_choices"] = tf.reduce_sum(opt_weights, axis=0)
 
         # Combine softmax
         update = self.learning_rate * (
@@ -98,8 +98,9 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
                 k: tf.cond(in_warmup, lambda: state[k], lambda: new_state[k])
                 for k in state if k.startswith("rnn")
             }
-            analytical_state = {"m": new_state["m"], "v": new_state["v"]}
-            return dict(log=state["log"], **rnn_state, **analytical_state)
+            analytical_state = {
+                k: v for k, v in new_state.items() if k not in rnn_state}
+            return dict(**rnn_state, **analytical_state)
 
     def get_initial_state(self, var):
         """Get initial model state as a dictionary."""
@@ -113,7 +114,7 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
 
         # Debug log
         if self.debug:
-            state["log"] = tf.zeros(2)
+            state["_choices"] = tf.zeros(2)
 
         # State for analytical computations
         state["m"] = tf.zeros(tf.shape(var))
@@ -121,16 +122,17 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
 
         return state
 
-    def gather_debug(self, param, states):
-        """Get debug information."""
-        return states["log"]
-
     def debug_summarize(self, params, debug_states, debug_global):
         """Summarize debug information."""
-        acc = sum(debug_states)
-        total = sum([tf.size(p) for p in params])
-        return acc.numpy() / total.numpy()
+        return {
+            k + "_" + p.name: v / tf.cast(tf.size(p), tf.float32)
+            for p, s in zip(params, debug_states)
+            for k, v in s.items()
+        }
 
     def aggregate_debug_data(self, data):
         """Aggregate debug data across multiple steps."""
-        return np.stack(data)
+        return {
+            k: np.stack([d[k] for d in data])
+            for k in data[0]
+        }
