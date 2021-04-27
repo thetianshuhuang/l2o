@@ -94,7 +94,8 @@ class UnrollStateManager:
     def advance_param(self, args, mask, global_state):
         """Advance a single parameter, depending on mask."""
         if mask:
-            return self.policy.call(*args, global_state, training=True)
+            return self.policy.call(
+                *args, global_state, training=self.training)
         else:
             return self.policy_ref.call(*args)
 
@@ -206,3 +207,4 @@ def state_distance(s1, s2, delta=-1., epsilon=1e-10):
     ])
     size = tf.math.reduce_sum([tf.size(p) for p in s1.params])
     return tf.math.log(dist + epsilon) - tf.math.log(tf.cast(size, tf.float32))
+    
