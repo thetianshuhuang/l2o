@@ -207,4 +207,3 @@ def state_distance(s1, s2, delta=-1., epsilon=1e-10):
     ])
     size = tf.math.reduce_sum([tf.size(p) for p in s1.params])
     return tf.math.log(dist + epsilon) - tf.math.log(tf.cast(size, tf.float32))
-    
