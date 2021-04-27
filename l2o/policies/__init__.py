@@ -43,12 +43,10 @@ from .analytical import (
     MomentumOptimizer, PowerSignOptimizer, AddSignOptimizer,
     AdaptivePowerSignOptimizer, AdaptiveAddSignOptimizer)
 from .rnnprop_ext import RNNPropExtendedOptimizer
-from .load import load
 
 __all__ = [
     # Utilities & helpers
     "BaseLearnToOptimizePolicy",
-    "load",
     # Hand-crafted optimizers
     "AdamOptimizer",
     "RMSPropOptimizer",

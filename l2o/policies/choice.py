@@ -46,6 +46,7 @@ class ChoiceOptimizer(BaseCoordinateWisePolicy):
         self.beta_2 = beta_2
         self.epsilon = epsilon
         self.hardness = hardness
+        self.warmup_lstm_update = warmup_lstm_update
 
         self.learning_rate = learning_rate
 

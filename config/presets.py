@@ -2,130 +2,64 @@
 
 
 OVERRIDE_PRESETS = {
+
+    # ----------------------------------------------------------------------- #
+    #                                 Teachers                                #
+    # ----------------------------------------------------------------------- #
+
     "sgd": [(
         ["training", "teachers", "*"],
         {"class_name": "SGD", "config": {"learning_rate": 0.2}}
     )],
+    "momentum": [(
+        ["training", "teachers", "*"],
+        {"class_name": "Momentum",
+         "config": {"learning_rate": 0.5, "beta_1": 0.9}},
+    )],
     "adam": [(
-        ["training", "teachers", "*"],
-        {"class_name": "Adam",
-         "config": {"learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.999,
-                    "epsilon": 1e-10}}
-    )],
-    "rmsprop": [(
-        ["training", "teachers", "*"],
-        {"class_name": "RMSProp",
-         "config": {"learning_rate": 0.001, "rho": 0.9, "epsilon": 1e-10}}
-    )],
-    "adamgs": [(
         ["training", "teachers", "*"],
         {"class_name": "Adam",
          "config": {"learning_rate": 0.005, "beta_1": 0.9, "beta_2": 0.999,
                     "epsilon": 1e-10}}
     )],
-    "rmspropgs": [(
+    "rmsprop": [(
         ["training", "teachers", "*"],
         {"class_name": "RMSProp",
          "config": {"learning_rate": 0.005, "rho": 0.9, "epsilon": 1e-10}}
     )],
-    "6t": [(
-        ["training", "teachers"],
-        [
-            {"class_name": "SGD", "config": {"learning_rate": 0.2}},
-            {"class_name": "Momentum",
-             "config": {"learning_rate": 0.5, "beta_1": 0.9}},
-            {"class_name": "RMSProp",
-             "config": {"learning_rate": 0.005, "rho": 0.9}},
-            {"class_name": "Adam",
-             "config": {"learning_rate": 0.005, "beta_1": 0.9,
-                        "beta_2": 0.999, "epsilon": 1e-10}},
-            {"class_name": "PowerSign",
-             "config": {"learning_rate": 0.1, "beta_1": 0.9,
-                        "beta_2": 0.999, "epsilon": 1e-10}},
-            {"class_name": "AddSign",
-             "config": {"learning_rate": 0.1, "beta_1": 0.9,
-                        "beta_2": 0.999, "epsilon": 1e-10}},
-        ]
+    "powersign": [(
+        ["training", "teachers", "*"],
+        {"class_name": "PowerSign",
+         "config": {"learning_rate": 0.1, "beta_1": 0.9,
+                    "beta_2": 0.999, "epsilon": 1e-10}},
+    )],
+    "addsign": [(
+        ["training", "teachers", "*"],
+        {"class_name": "AddSign",
+         "config": {"learning_rate": 0.1, "beta_1": 0.9,
+                    "beta_2": 0.999, "epsilon": 1e-10}},
     )],
     "choice": [(
         ["training", "teachers", "*"],
         {
-            "class_name": "Choice",
-            "config": {
-                # RNNProp
-                "layers": [20],
-                "beta_1": 0.9,
-                "beta_2": 0.999,
-                "learning_rate": 0.001,
-                "epsilon": 1e-10,
-                "hardness": 0.0,
-                "name": "ChoiceOptimizer",
-                # LSTMCell Args
-                "activation": "tanh",
-                "recurrent_activation": "sigmoid",
-                "use_bias": True,
-                "kernel_initializer": "glorot_uniform",
-                "recurrent_initializer": "orthogonal",
-                "bias_initializer": "zeros",
-                "unit_forget_bias": True,
-                # File
-                "weights_file": "results/choice/layers1/checkpoint/period_3.0"
-            }
+            "class_name": "__load__",
+            "directory": "results/choice/base/1",
+            "checkpoint": "period_3.0"
         }
     )],
     "more_choice": [(
         ["training", "teachers", "*"],
         {
-            "class_name": "AbstractChoice",
-            "config": {
-                # RNNProp
-                "layers": [20],
-                "learning_rate": 1.0,
-                "epsilon": 1e-10,
-                "hardness": 0.0,
-                "name": "MoreChoiceOptimizer",
-                "use_meta_features": True,
-                "use_lr_multiplier": False,
-                # Choices
-                "pool": [
-                    {"class_name": "SGD", "config": {"learning_rate": 0.2}},
-                    {"class_name": "Momentum",
-                     "config": {"learning_rate": 0.5, "beta_1": 0.9}},
-                    {"class_name": "RMSProp",
-                     "config": {"learning_rate": 0.002, "rho": 0.9}},
-                    {"class_name": "Adam",
-                     "config": {"learning_rate": 0.005, "beta_1": 0.9,
-                                "beta_2": 0.999, "epsilon": 1e-10}},
-                    {"class_name": "PowerSign",
-                     "config": {"learning_rate": 0.05, "beta_1": 0.9,
-                                "beta_2": 0.999, "epsilon": 1e-10}},
-                    {"class_name": "AddSign",
-                     "config": {"learning_rate": 0.05, "beta_1": 0.9,
-                                "beta_2": 0.999, "epsilon": 1e-10}},
-                ],
-                # LSTMCell Args
-                "activation": "tanh",
-                "recurrent_activation": "sigmoid",
-                "use_bias": True,
-                "kernel_initializer": "glorot_uniform",
-                "recurrent_initializer": "orthogonal",
-                "bias_initializer": "zeros",
-                "unit_forget_bias": True,
-                # File
-                "weights_file": "results/more_choice/diff1/checkpoint/period_3.0"
-            }
+            "class_name": "__load__",
+            "directory": "results/more-choice/base/1",
+            "checkpoint": "period_4.0"
         }
     )],
-    "debug": [
-        (["strategy", "num_periods"], 3),
-        (["strategy", "unroll_len"], 20),
-        (["strategy", "depth"], 2),
-        (["strategy", "epochs"], 25),
-        (["strategy", "validation_unroll"], 5),
-        (["strategy", "validation_depth"], 10),
-        (["strategy", "validation_epochs"], 1),
-        (["strategy", "max_repeat"], 1),
-    ],
+
+    # ----------------------------------------------------------------------- #
+    #                                 Problems                                #
+    # ----------------------------------------------------------------------- #
+
     "conv_train": [(
         ["problems"],
         [{
@@ -171,13 +105,24 @@ OVERRIDE_PRESETS = {
             }
         }]
     )],
+
+    # ----------------------------------------------------------------------- #
+    #                                 Training                                #
+    # ----------------------------------------------------------------------- #
+
+    "debug": [
+        (["strategy", "num_periods"], 3),
+        (["strategy", "unroll_len"], 20),
+        (["strategy", "depth"], 2),
+        (["strategy", "epochs"], 25),
+        (["strategy", "validation_unroll"], 5),
+        (["strategy", "validation_depth"], 10),
+        (["strategy", "validation_epochs"], 1),
+        (["strategy", "max_repeat"], 1),
+    ],
     "log_teachers": [
         (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
         (["training", "stack_stats", "*"], "teacher_counts"),
-    ],
-    "il_constant": [
-        (["strategy", "annealing_schedule"],
-         {"type": "constant", "value": 0.1}),
     ],
     "il_adjusted": [
         (["strategy", "annealing_schedule"],
@@ -188,12 +133,6 @@ OVERRIDE_PRESETS = {
          {"type": "list", "values": [0.2, 0.1, 0.05, 0.02]}),
         (["training", "step_callbacks", "*"], "WhichTeacherCountCallback"),
         (["training", "stack_stats", "*"], "teacher_counts"),
-    ],
-    "warmup": [
-        (["strategy", "warmup"], {"type": "list", "values": [0, 5]}),
-        (["strategy", "warmup_rate"], {"type": "list", "values": [0.0, 0.05]}),
-        (["strategy", "validation_warmup"], 5),
-        (["strategy", "validation_warmup_rate"], 0.05)
     ],
     "cl_fixed": [(
         ["strategy"],
@@ -220,6 +159,13 @@ OVERRIDE_PRESETS = {
     "half_depth": [
         (["policy", "layers"], [20])
     ],
+    "hard": [(["policy", "hardness"], 10.0)],
+    "noscale": [(["training", "parameter_scale_spread"], 0.0)]
+
+    # ----------------------------------------------------------------------- #
+    #                              Perturbations                              #
+    # ----------------------------------------------------------------------- #
+
     "fgsm": [(
         ["policy", "perturbation"], {
             "class_name": "FGSMPerturbation",
@@ -241,8 +187,6 @@ OVERRIDE_PRESETS = {
             "config": {"steps": 3, "magnitude": 0.005}
         }
     )],
-    "hard": [(["policy", "hardness"], 10.0)],
-    "noscale": [(["training", "parameter_scale_spread"], 0.0)]
 }
 
 

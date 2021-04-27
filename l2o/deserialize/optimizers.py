@@ -1,5 +1,7 @@
 """Keras Optimizers."""
 
+import os
+import json
 import tensorflow as tf
 
 from l2o import policies
@@ -33,9 +35,21 @@ def optimizer(opt):
 
 def policy(opt):
     """Helper function to get optimizer policy from l2o.policies."""
-    constructor = generic(
-        opt["class_name"] + "Optimizer", policies,
-        pass_cond=lambda x: isinstance(x, policies.BaseLearnToOptimizePolicy),
-        message="gradient optimization policy", default=None)
+    # Directory specification
+    if opt["class_name"] == "__load__":
+        with open(os.path.join(opt["directory"], "config.json"), 'r') as f:
+            cfg = json.load(f)
 
-    return constructor(**opt["config"])
+        constructor = generic(cfg["policy_constructor"], policies)
+        src = os.path.join(opt["directory"], "checkpoint", opt["checkpoint"])
+        return constructor(weights_file=src, **cfg["policy"])
+
+    # Explicit specification
+    else:
+        constructor = generic(
+            opt["class_name"] + "Optimizer", policies,
+            pass_cond=lambda x: isinstance(
+                x, policies.BaseLearnToOptimizePolicy),
+            message="gradient optimization policy", default=None)
+
+        return constructor(**opt["config"])
