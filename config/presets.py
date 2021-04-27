@@ -160,7 +160,7 @@ OVERRIDE_PRESETS = {
         (["policy", "layers"], [20])
     ],
     "hard": [(["policy", "hardness"], 10.0)],
-    "noscale": [(["training", "parameter_scale_spread"], 0.0)]
+    "noscale": [(["training", "parameter_scale_spread"], 0.0)],
 
     # ----------------------------------------------------------------------- #
     #                              Perturbations                              #
