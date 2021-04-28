@@ -142,7 +142,7 @@ class ChoiceLargeOptimizer(BaseCoordinateWisePolicy):
 
         # Debug log
         if self.debug:
-            state["_choices"] = tf.zeros(2)
+            state["_choices"] = tf.zeros(6)
 
         # State for analytical computations
         state["m"] = tf.zeros(tf.shape(var))
