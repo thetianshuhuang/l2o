@@ -37,6 +37,7 @@ from .dynamic_rate import AdamLROptimizer, RMSPropLROptimizer
 from .rnnprop_2016 import RNNPropOptimizer
 from .scale_hierarchical_2017 import ScaleHierarchicalOptimizer
 from .choice import ChoiceOptimizer
+from .choice_large import ChoiceLargeOptimizer
 from .abstract_choice import AbstractChoiceOptimizer
 from .analytical import (
     AdamOptimizer, RMSPropOptimizer, SGDOptimizer,
@@ -69,4 +70,6 @@ __all__ = [
     "RMSPropLROptimizer",
     # Optimizer Choice
     "ChoiceOptimizer",
+    "ChoiceLargeOptimizer",
+    "AbstractChoiceOptimizer"
 ]
