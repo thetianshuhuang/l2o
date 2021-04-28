@@ -304,6 +304,37 @@ POLICY = {
             "unit_forget_bias": True,
         }
     },
+    "less_choice": {
+        "policy_constructor": "AbstractChoiceOptimizer",
+        "policy": {
+            # RNNProp
+            "layers": [20, 20],
+            "learning_rate": 1.0,
+            "epsilon": 1e-10,
+            "hardness": 0.0,
+            "name": "MoreChoiceOptimizer",
+            "use_meta_features": True,
+            "time_scale": 2000.,
+            "lr_multiplier_scale": 0.0,
+            "warmup_lstm_update": False,
+            # Choices
+            "pool": [
+                {"class_name": "RMSProp",
+                 "config": {"learning_rate": 0.005, "rho": 0.9}},
+                {"class_name": "Adam",
+                 "config": {"learning_rate": 0.005, "beta_1": 0.9,
+                            "beta_2": 0.999, "epsilon": 1e-10}},
+            ],
+            # LSTMCell Args
+            "activation": "tanh",
+            "recurrent_activation": "sigmoid",
+            "use_bias": True,
+            "kernel_initializer": "glorot_uniform",
+            "recurrent_initializer": "orthogonal",
+            "bias_initializer": "zeros",
+            "unit_forget_bias": True,
+        }
+    },
     "adam_lr": {
         "policy_constructor": "AdamLROptimizer",
         "policy": {
