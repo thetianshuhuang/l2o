@@ -55,6 +55,14 @@ OVERRIDE_PRESETS = {
             "checkpoint": "period_4.0"
         }
     )],
+    "less_choice": [(
+        ["training", "teachers", "*"],
+        {
+            "class_name": "__load__",
+            "directory": "results/less-choice/base/1",
+            "checkpoint": "period_4.0"
+        }
+    )],
 
     # ----------------------------------------------------------------------- #
     #                                 Problems                                #
