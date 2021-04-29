@@ -60,7 +60,7 @@ class RNNPropOptimizer(BaseCoordinateWisePolicy):
 
     def call(self, param, inputs, states, global_state, training=False):
         """Policy call override."""
-        if self.input_noise > 0.0:
+        if self.input_noise > 0.0 and training:
             inputs = inputs + tf.random.normal(
                 param.shape, mean=0.0, stddev=self.input_noise)
 
