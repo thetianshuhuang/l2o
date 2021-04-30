@@ -64,7 +64,9 @@ class ReplicateResults:
         """Get individual test."""
         return self.replicates[replicate]
 
-    def boxplot(self, ax, problem="conv_train", stat="val_best"):
+    def boxplot(
+            self, ax, problem="conv_train", stat="val_best",
+            aggregate_std=False, do_stderr=True, do_std=False):
         """Box plot of training stats."""
         data = np.array([
             repl.get_eval_stats(problem=problem)[stat]
@@ -74,9 +76,23 @@ class ReplicateResults:
         ax.set_title(self._display_name())
 
         mean = np.mean(data)
-        err = 2 * np.sqrt(np.var(np.mean(data, axis=1)) / len(self.replicates))
-        for ruler in [mean, mean + err, mean - err]:
-            ax.axhline(ruler)
+
+        if do_stderr:
+            if aggregate_std:
+                err = 2 * np.sqrt(np.var(data) / data.size)
+            else:
+                err = 2 * np.sqrt(
+                    np.var(np.mean(data, axis=1)) / len(self.replicates))
+            for ruler in [mean, mean + err, mean - err]:
+                ax.axhline(ruler, color='C0')
+
+        if do_std:
+            if aggregate_std:
+                err = 2 * np.sqrt(np.var(data))
+            else:
+                err = 2 * np.sqrt(np.var(np.mean(data, axis=1)))
+            ax.axhline(mean + err, color='C2')
+            ax.axhline(mean - err, color='C2')
 
 
 class BaseResult:
