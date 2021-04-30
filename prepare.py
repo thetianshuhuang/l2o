@@ -36,12 +36,12 @@ args = ArgParser(sys.argv[1:])
 
 flags = args.pop_get("--flags", "test").split(",")
 ctx = {
-    "presets": args.pop_get(
-        "--presets", "conv_train,conv_deeper_pool,conv_cifar10_pool"),
+    "presets": args.pop_get("--presets", "conv_train"),
     "policy": args.pop_get("--policy", "rnnprop"),
     "strategy": args.pop_get("--strategy", "repeat"),
     "allocation": args.pop_get("--alloc", "Senior-Design_UT-ECE"),
-    "problem": args.pop_get("--problem", "conv_train"),
+    "problem": args.pop_get(
+        "--problem", "conv_train,conv_deeper_pool,conv_cifar10_pool"),
     "base": args.pop_get("--base", "test")
 }
 time = args.pop_get("--time", "24:00:00")
