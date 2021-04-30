@@ -17,6 +17,9 @@ python3 evaluate.py \\
     --problem={problem} \\
     --directory=results/{policy}/{base}/{flags} \\
     --repeat=10
+"""
+
+BLOCK_DEBUG = """
 python3 evaluate.py \\
     --problem={problem} \\
     --directory=results/{policy}/{base}/{flags} \\
@@ -33,7 +36,8 @@ args = ArgParser(sys.argv[1:])
 
 flags = args.pop_get("--flags", "test").split(",")
 ctx = {
-    "presets": args.pop_get("--presets", "conv_train"),
+    "presets": args.pop_get(
+        "--presets", "conv_train,conv_deeper_pool,conv_cifar10_pool"),
     "policy": args.pop_get("--policy", "rnnprop"),
     "strategy": args.pop_get("--strategy", "repeat"),
     "allocation": args.pop_get("--alloc", "Senior-Design_UT-ECE"),
@@ -42,11 +46,16 @@ ctx = {
 }
 time = args.pop_get("--time", "24:00:00")
 
+do_debug = bool(args.pop_get("--debug", False))
+if do_debug:
+    _base_block = BASE_BLOCK + BLOCK_DEBUG
+else:
+    _base_block = BASE_BLOCK
 
 script = "scripts/{}-{}-{}.sh".format(ctx["policy"], ctx["base"], flags[0])
 with open(script, "w") as f:
     f.write(BASE_SCRIPT + "".join(
-        [BASE_BLOCK.format(flags=f, **ctx) for f in flags]))
+        [_base_block.format(flags=f, **ctx) for f in flags]))
 
 
 print(BASE_RUNNER.format(
