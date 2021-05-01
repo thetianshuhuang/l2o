@@ -18,18 +18,24 @@ distribute = create_distribute(vgpus=vgpus)
 
 problem = {
     "config": {
-        "layers": [[16, 3, 1], 2, [32, 5, 1], 2],
+        "layers": [
+            [16, 3, 1],
+            [32, 3, 1],
+            [32, 3, 1],
+            2,
+            [64, 3, 1],
+            [64, 3, 1],
+            2
+        ],
         "activation": "relu"
     },
     "target": "conv_classifier",
-    "dataset": "mnist",
-    "epochs": 5,
+    "dataset": "cifar10",
+    "epochs": 25,
     "batch_size": 128
 }
 
-
-# learning_rates = [0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1]
-learning_rates = [0.2, 0.5]
+learning_rates = [0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]
 policy_names = ["adam", "rmsprop", "sgd", "momentum", "addsign", "powersign"]
 
 for policy_name in policy_names:
@@ -57,4 +63,6 @@ for policy_name in policy_names:
         with distribute.scope():
             results = l2o.evaluate.evaluate_model(
                 opt, **get_eval_problem(problem))
-            np.savez("gridsearch/{}/{}".format(policy_name, lr), **results)
+            np.savez(
+                "gridsearch/conv_cifar10_pool/{}/{}".format(policy_name, lr),
+                **results)

@@ -15,10 +15,13 @@ def plot_training(ctx, tests, limit=False):
     fig, axs = plt.subplots(vh, 4, figsize=(16, 3 * vh))
     for test, row in zip(tests, axs.reshape(vh, 4)):
         for rep, ax in enumerate(row):
-            ctx.plot_training(
-                "{}/{}".format(test, rep + 1), ax, validation=True)
-            if limit:
-                ax.set_ylim(-1.1, 0.1)
+            try:
+                ctx.plot_training(
+                    "{}/{}".format(test, rep + 1), ax, validation=True)
+                if limit:
+                    ax.set_ylim(-1.1, 0.1)
+            except KeyError:
+                pass
     fig.tight_layout()
     return fig, axs
 
