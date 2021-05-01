@@ -22,6 +22,17 @@ EVALUATION_PROBLEMS = {
         "epochs": 25,
         "batch_size": 128
     },
+    "conv_train_dp": {
+        "config": {
+            "layers": [[16, 3, 1], 2, [32, 5, 1], 2],
+            "activation": "relu"
+        },
+        "target": "conv_classifier",
+        "dataset": "mnist",
+        "epochs": 25,
+        "batch_size": 128,
+        "dp_args": {"clip_norm": 1.0, "noise_multiplier": 1.1}
+    },
     "conv_avg": {
         "config": {
             "layers": [[16, 3, 1], 2, [32, 5, 1], 2, [0, 3, 1]],

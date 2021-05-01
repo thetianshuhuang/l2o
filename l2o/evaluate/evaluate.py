@@ -7,6 +7,7 @@ from l2o import deserialize
 from . import models
 from . import functions
 from .fit import model_fit, function_fit
+from .fit_dp import model_dp_fit
 
 
 def evaluate_function(
@@ -47,7 +48,7 @@ def evaluate_function(
 
 def evaluate_model(
         opt, config={}, target="conv_classifier", dataset="mnist", epochs=20,
-        batch_size=32, desc=None, debug=False):
+        batch_size=32, desc=None, debug=False, dp_args=None):
     """Evaluate L2O on a classifier model.
 
     Parameters
@@ -72,6 +73,9 @@ def evaluate_model(
         Evaluation description.
     debug : bool
         Whether to log debug information from optimizer.get_debug_summary().
+    dp_args : dict or None
+        Optional args for differentially private training. If None, standard
+        training is used.
 
     Returns
     -------
@@ -97,9 +101,16 @@ def evaluate_model(
         return ds.batch(
             batch_size=batch_size).prefetch(tf.data.experimental.AUTOTUNE)
 
-    return model_fit(
-        model,
-        _batch(ds_train.shuffle(
-            buffer_size=batch_size * 100, reshuffle_each_iteration=True)),
-        _batch(ds_val), epochs=epochs, desc=desc, debug=debug,
-        metrics=[tf.keras.metrics.SparseCategoricalAccuracy()])
+    batched_train = _batch(ds_train.shuffle(
+        buffer_size=batch_size * 100, reshuffle_each_iteration=True))
+    batched_val = _batch(ds_val)
+    metrics = [tf.keras.metrics.SparseCategoricalAccuracy()]
+
+    if dp_args is None:
+        return model_fit(
+            model, batched_train, batched_val, epochs=epochs, desc=desc,
+            debug=debug, metrics=metrics)
+    else:
+        return model_dp_fit(
+            model, batched_train, batched_val, epochs=epochs, desc=desc,
+            debug=debug, metrics=metrics, **dp_args)
