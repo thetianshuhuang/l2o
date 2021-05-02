@@ -16,30 +16,19 @@ vgpus = int(args.pop_get("--vgpu", default=1))
 distribute = create_distribute(vgpus=vgpus)
 # policy_name = args.pop_get("--optimizer", "adam")
 
-problem = {
-    "config": {
-        "layers": [
-            [16, 3, 1],
-            [32, 3, 1],
-            [32, 3, 1],
-            2,
-            [64, 3, 1],
-            [64, 3, 1],
-            2
-        ],
-        "activation": "relu"
-    },
-    "target": "conv_classifier",
-    "dataset": "cifar10",
-    "epochs": 25,
-    "batch_size": 128
-}
+problem_name = args.pop_get("--problem", "conv_train")
+problem = get_eval_problem(problem_name)
 
 learning_rates = [0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]
 policy_names = ["adam", "rmsprop", "sgd", "momentum", "addsign", "powersign"]
 
 for policy_name in policy_names:
+
+    dst = "gridsearch/{}/{}".format(problem_name, policy_name)
+    os.makedirs(dst, exist_ok=True)
+
     for lr in learning_rates:
+
         if policy_name == "adam":
             policy = l2o.policies.AdamOptimizer(
                 learning_rate=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-07)
@@ -63,6 +52,5 @@ for policy_name in policy_names:
         with distribute.scope():
             results = l2o.evaluate.evaluate_model(
                 opt, **get_eval_problem(problem))
-            np.savez(
-                "gridsearch/conv_cifar10_pool/{}/{}".format(policy_name, lr),
-                **results)
+
+        np.savez(os.path.join(dst, str(lr)), **results)

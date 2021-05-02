@@ -169,9 +169,7 @@ OVERRIDE_PRESETS = {
     ],
     "hard": [(["policy", "hardness"], 10.0)],
     "noscale": [(["training", "parameter_scale_spread"], 0.0)],
-    "inoise_1e-1": [(["policy", "input_noise"], 0.1)],
-    "inoise_1e-2": [(["policy", "input_noise"], 0.01)],
-    "inoise_1e-3": [(["policy", "input_noise"], 0.001)],
+    "reduce_mean": [(["training", "loss_reduce"], "reduce_mean")],
 
     # ----------------------------------------------------------------------- #
     #                              Perturbations                              #
@@ -198,6 +196,10 @@ OVERRIDE_PRESETS = {
             "config": {"steps": 3, "magnitude": 0.005}
         }
     )],
+    "inoise_1e-1": [(["policy", "input_noise"], 0.1)],
+    "inoise_1e-2": [(["policy", "input_noise"], 0.01)],
+    "inoise_1e-3": [(["policy", "input_noise"], 0.001)],
+
 }
 
 
