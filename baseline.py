@@ -22,7 +22,12 @@ vgpus = int(args.pop_get("--vgpu", default=1))
 distribute = create_distribute(vgpus=vgpus)
 
 problem = args.pop_get("--problem", "conv_train")
-target = args.pop_get("--optimizer", "adam")
+# target = args.pop_get("--optimizer", "adam")
+target = {
+    "class_name": "adam",
+    "config": {"learning_rate": 0.005, "beta_1": 0.9, "beta_2": 0.999}
+}
+
 repeat = int(args.pop_get("--repeat", 10))
 
 kwargs = get_eval_problem(problem)
