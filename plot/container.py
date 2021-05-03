@@ -150,7 +150,7 @@ class Results:
 
     def get_eval_stats(self, t, problem="conv_train", **metadata):
         """Get evaluation statistics."""
-        res = self._get_test(t).get_eval_stats(problem=problem, **metadata)
+        return self._get_test(t).get_eval_stats(problem=problem, **metadata)
 
     def get_name(self, t, **metadata):
         """Get test full name."""

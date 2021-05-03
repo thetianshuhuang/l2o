@@ -19,24 +19,6 @@ def _read_json(d):
         return json.load(f)
 
 
-class Baseline:
-    """Baseline result container."""
-
-    def __init__(self, path, name="DefaultBaseline"):
-        self.directory = path
-        self.name = name
-
-    def get_eval(self, problem="conv_train", **metadata):
-        """Get evaluation results from .npz."""
-        return _npload(self.directory, problem)
-
-    def _parse_metadata(self, n):
-        return {}
-
-    def _display_name(self, **metadata):
-        return self.name
-
-
 class ReplicateResults:
     """Results from multiple replicates."""
 
@@ -209,6 +191,24 @@ class BaseResult:
     def plot_training(self, ax, **kwargs):
         """Plot training summary."""
         raise NotImplementedError()
+
+
+class Baseline(BaseResult):
+    """Baseline result container."""
+
+    def __init__(self, path, name="DefaultBaseline"):
+        self.directory = path
+        self.name = name
+
+    def get_eval(self, problem="conv_train", **metadata):
+        """Get evaluation results from .npz."""
+        return _npload(self.directory, problem)
+
+    def _parse_metadata(self, n):
+        return {}
+
+    def _display_name(self, **metadata):
+        return self.name
 
 
 class RepeatResult(BaseResult):

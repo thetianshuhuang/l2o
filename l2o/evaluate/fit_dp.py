@@ -58,12 +58,15 @@ def model_dp_fit(
 
     start_time = time.time()
 
+    # Override as last minute hack
+    loss_func = tf.keras.losses.sparse_categorical_crossentropy
+
     # Train
     def _train_step(batch):
         x, y = batch
         with tf.GradientTape() as tape:
             y_hat = model(x, training=True)
-            loss = model.compiled_loss(y, y_hat)
+            loss = loss_func(y, y_hat)
         grads = tape.jacobian(loss, model.trainable_variables)
 
         # Apply DP

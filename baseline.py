@@ -19,7 +19,8 @@ from gpu_setup import create_distribute
 
 args = ArgParser(sys.argv[1:])
 vgpus = int(args.pop_get("--vgpu", default=1))
-distribute = create_distribute(vgpus=vgpus)
+cpu = bool(args.pop_get("--cpu", default=False))
+distribute = create_distribute(vgpus=vgpus, do_cpu=cpu)
 
 problem = args.pop_get("--problem", "conv_train")
 # target = args.pop_get("--optimizer", "adam")
