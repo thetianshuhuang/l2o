@@ -29,7 +29,7 @@ python3 evaluate.py \\
 """
 
 BASE_RUNNER = (
-    "sbatch -p gtx -N 1 -n 1 -o logs/{policy}-{base}-{flags}.log -t {time}"
+    "sbatch{queue} -N 1 -n 1 -o logs/{policy}-{base}-{flags}.log -t {time}"
     "{allocation} -J {shortname}{base}{flags} "
     "scripts/{policy}-{base}-{flags}.sh")
 
@@ -41,6 +41,7 @@ ctx = {
     "policy": args.pop_get("--policy", "rnnprop"),
     "strategy": args.pop_get("--strategy", "repeat"),
     "allocation": args.pop_get("--alloc", "Senior-Design_UT-ECE"),
+    "queue": args.pop_get("--queue", "gtx")
     "problem": args.pop_get(
         "--problem", "conv_train,conv_deeper_pool,conv_cifar10_pool"),
     "base": args.pop_get("--base", "test"),
@@ -49,6 +50,8 @@ ctx = {
 
 if ctx["allocation"] != "":
     ctx["allocation"] = " -A " + ctx["allocation"]
+if ctx["queue"] != "":
+    ctx["queue"] = " -q " + ctx["queue"]
 
 do_debug = bool(args.pop_get("--debug", False))
 if do_debug:
