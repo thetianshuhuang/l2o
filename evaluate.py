@@ -34,6 +34,8 @@ Arguments
     Debug flag passed to optimizer policy.
 --info : bool
     If True, prints final configuration after overrides.
+--suffix : str
+    Modifier to append to problem.
 --strategy : str
     Strategy type to inform metadata flags. Can ignore if the default
     checkpoint is used.
@@ -49,17 +51,27 @@ if len(sys.argv) < 2:
     print(HELP)
     exit(0)
 
+# Distribute args
 args = ArgParser(sys.argv[1:])
 vgpus = int(args.pop_get("--vgpu", default=1))
 do_cpu = bool(args.pop_get("--cpu", default=False))
 distribute = create_distribute(vgpus=vgpus, do_cpu=do_cpu)
 
+# Core args
 problems = args.pop_get("--problem", "conv_train").split(",")
 targets = args.pop_get("--directory", "weights").split(",")
 repeat = int(args.pop_get("--repeat", 10))
 debug = bool(args.pop_get("--debug", False))
 show_info = bool(args.pop_get("--info", False))
 
+# Suffix
+suffix = args.pop_get("--suffix", "")
+if suffix is not None:
+    suffix = "_" + suffix
+if debug:
+    suffix += "_dbg"
+
+# Checkpoint specification
 strategy = args.pop_get("--strategy", "repeat")
 if strategy == "repeat":
     periods = args.pop_get("--periods", None)
@@ -80,8 +92,10 @@ if strategy == "curriculum":
             {"stage": int(s), "period": int(p)}
             for s, p in zip(stages.split(","), periods.split(","))]
 
+# All remaining args are converted to overrides
 overrides = args.to_overrides()
 
+# Eval loop
 with distribute.scope():
     for tg in targets:
         print("Strategy: {}".format(tg))
@@ -92,6 +106,6 @@ with distribute.scope():
             for pr in problems:
                 print("Problem: {}".format(pr))
                 config = get_eval_problem(pr)
-                file = pr + "_dbg" if debug else pr
+                file = pr + suffix
                 strategy.evaluate(
                     metadata=m, repeat=repeat, file=file, **config)
