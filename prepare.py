@@ -1,6 +1,7 @@
 """Prepare script."""
 
 import sys
+import json
 from config import ArgParser
 
 
@@ -28,8 +29,8 @@ python3 evaluate.py \\
 """
 
 BASE_RUNNER = (
-    "sbatch -p gtx -N 1 -n 1 -o logs/{policy}-{base}-{flags}.log -t {time} "
-    "-A {allocation} -J {shortname}{base}{flags} "
+    "sbatch -p gtx -N 1 -n 1 -o logs/{policy}-{base}-{flags}.log -t {time}"
+    "{allocation} -J {shortname}{base}{flags} "
     "scripts/{policy}-{base}-{flags}.sh")
 
 args = ArgParser(sys.argv[1:])
@@ -42,9 +43,12 @@ ctx = {
     "allocation": args.pop_get("--alloc", "Senior-Design_UT-ECE"),
     "problem": args.pop_get(
         "--problem", "conv_train,conv_deeper_pool,conv_cifar10_pool"),
-    "base": args.pop_get("--base", "test")
+    "base": args.pop_get("--base", "test"),
+    "time": args.pop_get("--time", "24:00:00")
 }
-time = args.pop_get("--time", "24:00:00")
+
+if ctx["allocation"] != "":
+    ctx["allocation"] = " -A " + ctx["allocation"]
 
 do_debug = bool(args.pop_get("--debug", False))
 if do_debug:
@@ -59,4 +63,4 @@ with open(script, "w") as f:
 
 
 print(BASE_RUNNER.format(
-    shortname=ctx["policy"][0].upper(), flags=flags[0], time=time, **ctx))
+    shortname=ctx["policy"][0].upper(), flags=flags[0], **ctx))

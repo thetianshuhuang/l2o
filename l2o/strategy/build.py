@@ -90,7 +90,7 @@ def build(
     ------------
     directory : str
         Directory to run inside / save to.
-    exempt_overides : (path, value)[]
+    exempt_overrides : (path, value)[]
         List of overrides that are exempt from config checking.
     strict : bool
         If True, raises exception if config.json is already present and does
