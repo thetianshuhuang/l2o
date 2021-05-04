@@ -1,7 +1,7 @@
 """Parameter perturbations."""
 
 import tensorflow as tf
-from tensorflow.python.training.optimizer import _var_key
+from l2o.optimizer.tf_utils import _var_key
 
 
 class BasePerturbation:

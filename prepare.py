@@ -14,7 +14,7 @@ CFG_NODETYPE = {
         "queue": "-p gtx "
     },
     "longhorn": {
-        "load": "",
+        "load": "conda activate l2o",
         "allocation": "",
         "queue": "-p v100 "
     }

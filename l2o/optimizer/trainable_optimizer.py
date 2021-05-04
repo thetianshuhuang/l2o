@@ -2,7 +2,7 @@
 
 import tensorflow as tf
 
-from tensorflow.python.training.optimizer import _var_key
+from .tf_utils import _var_key
 from .utils import wrap_variables, nested_assign
 
 

@@ -15,29 +15,24 @@
 # limitations under the License.
 # ==============================================================================
 # Excerpt from ``tensorflow/python/keras/optimizer_v2/optimizer_v2.py``
-# Modified _distributed_container() -> _distributed_container.
+# Modified to be compatible with tf 2.3 and 2.4
+
+from tensorflow.python.distribute import distribute_utils
+from tensorflow.python.framework import ops
 
 
 def _var_key(var):
-    """Key for representing a primary variable, for looking up slots.
-
-    In graph mode the name is derived from the var shared name.
-    In eager mode the name is derived from the var unique id.
-    If distribution strategy exists, get the primary variable first.
-
-    Parameters
-    ----------
-    var : tf.Variable
-        the variable.
-
-    Returns
-    -------
-    object
-        the unique name of the variable.
-    """
-    # Get the distributed variable if it exists.
+    """Returns slot key for `var`."""
+    # pylint: disable=protected-access
     if hasattr(var, "_distributed_container"):
-        var = var._distributed_container
-    if var._in_graph_mode:
-        return var._shared_name
+        if callable(var._distributed_container):
+            var = var._distributed_container()
+        else:
+            var = var._distributed_container
+    if (distribute_utils.is_distributed_variable(var)
+            and not ops.executing_eagerly_outside_functions()):
+        return (var.graph, var._shared_name)
+    if hasattr(var, "op"):
+        return (var.op.graph, var.op.name)
     return var._unique_id
+    # pylint: enable=protected-access
