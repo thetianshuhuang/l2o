@@ -5,9 +5,23 @@ import json
 from config import ArgParser
 
 
-BASE_SCRIPT = """#!/bin/sh
-module load intel/18.0.2 python3/3.7.0 cuda/10.1 cudnn/7.6.5 nccl/2.5.6
-"""
+CFG_NODETYPE = {
+    "maverick2": {
+        "load": (
+            "module load intel/18.0.2 python3/3.7.0 cuda/10.1 cudnn/7.6.5 "
+            "nccl/2.5.6\n"),
+        "allocation": "-A Senior-Design_UT-ECE ",
+        "queue": "-p gtx "
+    },
+    "longhorn": {
+        "load": "",
+        "allocation": "",
+        "queue": "-p v100 "
+    }
+}
+
+
+BASE_SCRIPT = "#!/bin/sh\n{load}"
 
 BASE_BLOCK = """python3 train.py \\
     --presets={presets} \\
@@ -29,8 +43,8 @@ python3 evaluate.py \\
 """
 
 BASE_RUNNER = (
-    "sbatch {queue} -N 1 -n 1 -o logs/{policy}-{base}-{flags}.log -t {time}"
-    "{allocation} -J {shortname}{base}{flags} "
+    "sbatch {queue}-N 1 -n 1 -o logs/{policy}-{base}-{flags}.log -t {time} "
+    "{allocation}-J {shortname}{base}{flags} "
     "scripts/{policy}-{base}-{flags}.sh")
 
 args = ArgParser(sys.argv[1:])
@@ -40,18 +54,13 @@ ctx = {
     "presets": args.pop_get("--presets", "conv_train"),
     "policy": args.pop_get("--policy", "rnnprop"),
     "strategy": args.pop_get("--strategy", "repeat"),
-    "allocation": args.pop_get("--alloc", "Senior-Design_UT-ECE"),
-    "queue": args.pop_get("--queue", "gtx"),
     "problem": args.pop_get(
         "--problem", "conv_train,conv_deeper_pool,conv_cifar10_pool"),
     "base": args.pop_get("--base", "test"),
-    "time": args.pop_get("--time", "24:00:00")
+    "time": args.pop_get("--time", "24:00:00"),
 }
-
-if ctx["allocation"] != "":
-    ctx["allocation"] = " -A " + ctx["allocation"]
-if ctx["queue"] != "":
-    ctx["queue"] = " -p " + ctx["queue"]
+node = args.pop_get("--node", "maverick2")
+ctx.update(CFG_NODETYPE[node])
 
 do_debug = bool(args.pop_get("--debug", False))
 if do_debug:
@@ -61,7 +70,7 @@ else:
 
 script = "scripts/{}-{}-{}.sh".format(ctx["policy"], ctx["base"], flags[0])
 with open(script, "w") as f:
-    f.write(BASE_SCRIPT + "".join(
+    f.write(BASE_SCRIPT.format(**ctx) + "".join(
         [_base_block.format(flags=f, **ctx) for f in flags]))
 
 
