@@ -1,10 +1,4 @@
-"""Evaluate L2O.
-
-Run with
-```
-python evaluate.py directory --vgpu=1
-```
-"""
+"""Evaluate L2O."""
 
 import os
 import sys
@@ -16,6 +10,45 @@ from config import ArgParser, get_eval_problem
 from gpu_setup import create_distribute
 
 
+HELP = """
+Evaluate learned optimizer.
+
+Examples
+--------
+python evaluate.py --problem=conv_train --directory=weights --repeat=10
+
+Arguments
+---------
+--vgpu : int >= 1
+    (debug) Number of virtual GPUs to create for testing. If 1, no virtual GPUs
+    are created, and a mirrored strategy is created with all physical GPUs.
+--cpu : bool
+    (debug) Whether to use CPU-only training.
+--problem : str
+    Problem to evaluate on. Can pass a comma separated list.
+--directory : str
+    Target directory to load from. Can pass a comma separated list.
+--repeat : int
+    Number of times to run evaluation.
+--debug : bool
+    Debug flag passed to optimizer policy.
+--info : bool
+    If True, prints final configuration after overrides.
+--strategy : str
+    Strategy type to inform metadata flags. Can ignore if the default
+    checkpoint is used.
+--periods : int
+    Periods to evaluate.
+--stages : int
+    Stages to evaluate. Only use if strategy=curriculum.
+(all other args) : float
+    Passed as overrides to strategy/policy building.
+"""
+
+if len(sys.argv) < 2:
+    print(HELP)
+    exit(0)
+
 args = ArgParser(sys.argv[1:])
 vgpus = int(args.pop_get("--vgpu", default=1))
 do_cpu = bool(args.pop_get("--cpu", default=False))
@@ -24,9 +57,10 @@ distribute = create_distribute(vgpus=vgpus, do_cpu=do_cpu)
 problems = args.pop_get("--problem", "conv_train").split(",")
 targets = args.pop_get("--directory", "weights").split(",")
 repeat = int(args.pop_get("--repeat", 10))
-strategy = args.pop_get("--strategy", "repeat")
 debug = bool(args.pop_get("--debug", False))
+show_info = bool(args.pop_get("--info", False))
 
+strategy = args.pop_get("--strategy", "repeat")
 if strategy == "repeat":
     periods = args.pop_get("--periods", None)
     if periods is None:
@@ -44,13 +78,15 @@ if strategy == "curriculum":
     else:
         metadata = [
             {"stage": int(s), "period": int(p)}
-            for s, p in zip(stages.split(","), periods.split(","))
-        ]
+            for s, p in zip(stages.split(","), periods.split(","))]
+
+overrides = args.to_overrides()
 
 with distribute.scope():
     for tg in targets:
         print("Strategy: {}".format(tg))
-        strategy = l2o.strategy.build_from_config(tg, info=False, debug=debug)
+        strategy = l2o.strategy.build_from_config(
+            tg, overrides=overrides, info=show_info, debug=debug)
         for m in metadata:
             print("Checkpoint: {}".format(m))
             for pr in problems:

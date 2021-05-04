@@ -75,7 +75,7 @@ def deep_warn_equal(d1, d2, d1name, d2name, strict=False):
 
 
 def build(
-        config, overrides,
+        config, overrides, exempt_overrides=[],
         directory="weights", strict=True, info=True, debug=False):
     """Build learner, training, and strategy.
 
@@ -90,6 +90,8 @@ def build(
     ------------
     directory : str
         Directory to run inside / save to.
+    exempt_overides : (path, value)[]
+        List of overrides that are exempt from config checking.
     strict : bool
         If True, raises exception if config.json is already present and does
         not match ``config``.
@@ -103,6 +105,7 @@ def build(
     strategy.Strategy
         Strategy built according to ``config`` and ``overrides``.
     """
+    # Overrides
     for path, value in overrides:
         override(config, path, value)
 
@@ -118,6 +121,10 @@ def build(
         with open(saved_config, 'w') as f:
             json.dump(config, f, indent=4)
         print("Config saved to <{}/config.json>.".format(directory))
+
+    # Check-exempt overrides
+    for path, value in exempt_overrides:
+        override(config, path, value)
 
     if info:
         print("Configuration:")
@@ -143,7 +150,7 @@ def build(
     return strategy
 
 
-def build_from_config(directory, info=True, debug=False):
+def build_from_config(directory, overrides=[], info=True, debug=False):
     """Build from saved configuration.
 
     Parameters
@@ -153,6 +160,9 @@ def build_from_config(directory, info=True, debug=False):
 
     Keyword Args
     ------------
+    overrides : (path, value)[]
+        List of overrides to apply; overrides are exempt from config checks
+        and are not saved. DO NOT USE during training.
     info : bool
         Flag to disable printing out config. Warnings/errors are not affected.
     debug : bool
@@ -162,4 +172,5 @@ def build_from_config(directory, info=True, debug=False):
         config = json.load(x)
 
     return build(
-        config, [], directory=directory, strict=False, info=info, debug=debug)
+        config, [], exempt_overrides=overrides, directory=directory,
+        strict=False, info=info, debug=debug)

@@ -5,6 +5,8 @@ import tensorflow as tf
 import numpy as np
 from tqdm import tqdm
 
+from tensorflow.keras.utils import Progbar
+
 
 def model_fit(
         model, train, test, epochs=1, metrics=[], desc=None, debug=False):
@@ -112,7 +114,8 @@ def model_fit(
         log_debug = None
 
     # Epoch loop
-    for _ in tqdm(range(epochs), desc=desc):
+    pbar = Progbar(epochs, unit_name='epoch')
+    for _ in range(epochs):
         train_loss, train_time, train_metrics = run_loop(
             train, train_step, callback=log_debug)
         stats["batch_loss"] += train_loss
@@ -126,6 +129,9 @@ def model_fit(
         stats["val_loss"].append(np.mean(test_loss))
         for m, val in zip(metrics, test_metrics):
             stats["val_" + m.name].append(val)
+
+        pbar.add(1, values=[
+            ("train", stats["loss"][-1]), ("val", stats["val_loss"][-1])])
 
     res = {k: np.array(v, dtype=np.float32) for k, v in stats.items()}
     if debug:
