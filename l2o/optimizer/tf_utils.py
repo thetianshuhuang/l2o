@@ -15,7 +15,8 @@
 # limitations under the License.
 # ==============================================================================
 # Excerpt from ``tensorflow/python/keras/optimizer_v2/optimizer_v2.py``
-# Modified to be compatible with tf 2.3 and 2.4
+# Modified to be compatible with tf 2.3 and 2.4: _distributed_container is
+# sometimes an attribute and sometimes a method.
 
 from tensorflow.python.distribute import distribute_utils
 from tensorflow.python.framework import ops

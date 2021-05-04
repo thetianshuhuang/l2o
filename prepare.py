@@ -9,7 +9,7 @@ CFG_NODETYPE = {
     "maverick2": {
         "load": (
             "module load intel/18.0.2 python3/3.7.0 cuda/10.1 cudnn/7.6.5 "
-            "nccl/2.5.6\n"),
+            "nccl/2.5.6"),
         "allocation": "-A Senior-Design_UT-ECE ",
         "queue": "-p gtx "
     },
@@ -21,7 +21,8 @@ CFG_NODETYPE = {
 }
 
 
-BASE_SCRIPT = "#!/bin/sh\n{load}"
+BASE_SCRIPT = """#!/bin/sh
+{load}"""
 
 BASE_BLOCK = """python3 train.py \\
     --presets={presets} \\
