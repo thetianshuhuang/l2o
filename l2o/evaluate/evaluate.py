@@ -99,7 +99,8 @@ def evaluate_model(
 
     def _batch(ds):
         return ds.batch(
-            batch_size=batch_size).prefetch(tf.data.experimental.AUTOTUNE)
+            batch_size=batch_size, drop_remainder=True
+        ).prefetch(tf.data.experimental.AUTOTUNE)
 
     batched_train = _batch(ds_train.shuffle(
         buffer_size=batch_size * 100, reshuffle_each_iteration=True))
