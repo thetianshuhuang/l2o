@@ -3,7 +3,8 @@
 import time
 import tensorflow as tf
 import numpy as np
-from tqdm import tqdm
+
+from tensorflow.keras.utils import Progbar
 
 
 def clip_gradients_vmap(g, l2_norm_clip):

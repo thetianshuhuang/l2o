@@ -3,7 +3,6 @@
 import time
 import tensorflow as tf
 import numpy as np
-from tqdm import tqdm
 
 from tensorflow.keras.utils import Progbar
 
