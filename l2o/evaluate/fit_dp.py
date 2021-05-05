@@ -76,8 +76,11 @@ def model_dp_fit(
 
         def reduce_noise_normalize_batch(g):
             summed_gradient = tf.reduce_sum(g, axis=0)
-            return summed_gradient + tf.random.normal(
-                tf.shape(summed_gradient), stddev=clip_norm * noise_multiplier)
+            return (
+                summed_gradient + tf.random.normal(
+                    tf.shape(summed_gradient),
+                    stddev=clip_norm * noise_multiplier)
+            ) / tf.cast(tf.size(y), tf.float32)
 
         noised_grads = [reduce_noise_normalize_batch(g) for g in clipped_grads]
 
