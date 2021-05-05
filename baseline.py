@@ -23,11 +23,21 @@ cpu = bool(args.pop_get("--cpu", default=False))
 distribute = create_distribute(vgpus=vgpus, do_cpu=cpu)
 
 problem = args.pop_get("--problem", "conv_train")
-# target = args.pop_get("--optimizer", "adam")
-target = {
-    "class_name": "adam",
-    "config": {"learning_rate": 0.005, "beta_1": 0.9, "beta_2": 0.999}
-}
+
+target = args.pop_get("--optimizer", "adam")
+target_cfg = {
+    "adam": {
+        "class_name": "adam",
+        "config": {"learning_rate": 0.005, "beta_1": 0.9, "beta_2": 0.999}
+    },
+    "rmsprop": {
+        "class_name": "rmsprop",
+        "config": {"learning_rate": 0.005, "rho": 0.9}
+    },
+    "sgd": {
+        "class_name"
+    }
+}[target]
 
 repeat = int(args.pop_get("--repeat", 10))
 
@@ -41,6 +51,7 @@ with distribute.scope():
     results = []
     for i in range(repeat):
         print("Evaluation Training {}/{}".format(i + 1, repeat))
-        results.append(evaluator(tf.keras.optimizers.get(target), **kwargs))
+        results.append(evaluator(
+            tf.keras.optimizers.get(target_cfg), **kwargs))
     results = {k: np.stack([d[k] for d in results]) for k in results[0]}
     np.savez(os.path.join("baseline", target, problem), **results)

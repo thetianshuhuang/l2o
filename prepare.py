@@ -22,7 +22,8 @@ CFG_NODETYPE = {
 
 
 BASE_SCRIPT = """#!/bin/sh
-{load}"""
+{load}
+"""
 
 BASE_BLOCK = """python3 train.py \\
     --presets={presets} \\
