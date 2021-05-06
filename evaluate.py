@@ -66,7 +66,7 @@ show_info = bool(args.pop_get("--info", False))
 
 # Suffix
 suffix = args.pop_get("--suffix", "")
-if suffix is not None:
+if suffix != "":
     suffix = "_" + suffix
 if debug:
     suffix += "_dbg"

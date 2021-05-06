@@ -54,8 +54,6 @@ class ReplicateResults:
             repl.get_eval_stats(problem=problem)[stat]
             for _, repl in self.replicates.items()
         ])
-        if drop_top:
-            
 
         ax.boxplot(np.transpose(data))
         ax.set_title(self._display_name())

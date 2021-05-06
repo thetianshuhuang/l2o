@@ -177,7 +177,8 @@ class Results:
             baselines=[], func=None, **kwargs):
         """Make plot."""
         if isinstance(tests, list):
-            data, dnames = self._gather_eval(baselines + tests)
+            data, dnames = self._gather_eval(
+                baselines + tests, problem=problem)
             func(ax, data, dnames, **kwargs)
         elif isinstance(tests, str):
             data_b, dnames_b = self._gather_eval(baselines)
