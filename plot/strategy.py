@@ -48,12 +48,15 @@ class ReplicateResults:
 
     def boxplot(
             self, ax, problem="conv_train", stat="val_best",
-            aggregate_std=False, do_stderr=True, do_std=False):
+            aggregate_std=False, do_stderr=True, do_std=False, drop_top=False):
         """Box plot of training stats."""
         data = np.array([
             repl.get_eval_stats(problem=problem)[stat]
             for _, repl in self.replicates.items()
         ])
+        if drop_top:
+            
+
         ax.boxplot(np.transpose(data))
         ax.set_title(self._display_name())
 

@@ -35,7 +35,8 @@ target_cfg = {
         "config": {"learning_rate": 0.005, "rho": 0.9}
     },
     "sgd": {
-        "class_name"
+        "class_name": "sgd",
+        "config": {"learning_rate": 0.1}
     }
 }[target]
 
