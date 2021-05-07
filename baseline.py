@@ -69,4 +69,6 @@ with distribute.scope():
             opt = pol.architecture(pol)
         results.append(evaluator(opt, **kwargs))
     results = {k: np.stack([d[k] for d in results]) for k in results[0]}
+
+    os.makedirs(os.path.join("baseline", target), exist_ok=True)
     np.savez(os.path.join("baseline", target, problem), **results)
