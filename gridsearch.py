@@ -12,12 +12,11 @@ from gpu_setup import create_distribute
 
 
 args = ArgParser(sys.argv[1:])
-vgpus = int(args.pop_get("--vgpu", default=1))
+vgpus = args.pop_get("--vgpu", default=1, dtype=int)
 distribute = create_distribute(vgpus=vgpus)
 # policy_name = args.pop_get("--optimizer", "adam")
 
 problem_name = args.pop_get("--problem", "conv_train")
-problem = get_eval_problem(problem_name)
 
 learning_rates = [0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5]
 policy_names = ["adam", "rmsprop", "sgd", "momentum", "addsign", "powersign"]
@@ -51,6 +50,6 @@ for policy_name in policy_names:
 
         with distribute.scope():
             results = l2o.evaluate.evaluate_model(
-                opt, **get_eval_problem(problem))
+                opt, **get_eval_problem(problem_name))
 
         np.savez(os.path.join(dst, str(lr)), **results)

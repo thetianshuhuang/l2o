@@ -18,7 +18,7 @@ from gpu_setup import create_distribute
 
 
 args = ArgParser(sys.argv[2:])
-vgpus = int(args.pop_get("--vgpu", default=1))
+vgpus = args.pop_get("--vgpu", default=1, dtype=int)
 distribute = create_distribute(vgpus=vgpus)
 
 with distribute.scope():

@@ -18,9 +18,9 @@ from gpu_setup import create_distribute
 
 
 args = ArgParser(sys.argv[1:])
-vgpus = int(args.pop_get("--vgpu", default=1))
-cpu = bool(args.pop_get("--cpu", default=False))
-use_keras = bool(args.pop_get("--keras", default=True))
+vgpus = args.pop_get("--vgpu", default=1, dtype=int)
+cpu = args.pop_get("--cpu", default=False, dtype=bool)
+use_keras = args.pop_get("--keras", default=True, dtype=bool)
 distribute = create_distribute(vgpus=vgpus, do_cpu=cpu)
 
 problem = args.pop_get("--problem", "conv_train")

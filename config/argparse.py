@@ -33,12 +33,20 @@ class ArgParser:
         else:
             return False
 
-    def pop_get(self, arg, default=None):
+    def pop_get(self, arg, default=None, dtype=str):
         """Fetch arg from kwargs, and remove from kwargs if present."""
         if arg in self.kwargs:
             res = self.kwargs[arg]
             del self.kwargs[arg]
-            return res
+
+            if dtype is str:
+                return res
+            elif dtype is int:
+                return int(res)
+            elif dtype is float:
+                return float(res)
+            elif dtype is bool:
+                return res.lower() in ["true", "y", "yes", "t", "1"]
         else:
             return default
 

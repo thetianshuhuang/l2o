@@ -18,12 +18,12 @@ from gpu_setup import create_distribute
 
 
 args = ArgParser(sys.argv[1:])
-vgpus = int(args.pop_get("--vgpu", default=1))
+vgpus = args.pop_get("--vgpu", default=1, dtype=int)
 distribute = create_distribute(vgpus=vgpus)
 
 problem = args.pop_get("--problem", "conv_train")
 output = args.pop_get("--out", "eval")
-repeat = int(args.pop_get("--repeat", 10))
+repeat = args.pop_get("--repeat", 10, dtype=int)
 
 policy = l2o.policies.AdamOptimizer(
     learning_rate=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-07)

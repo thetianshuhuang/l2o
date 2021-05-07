@@ -53,16 +53,16 @@ if len(sys.argv) < 2:
 
 # Distribute args
 args = ArgParser(sys.argv[1:])
-vgpus = int(args.pop_get("--vgpu", default=1))
-do_cpu = bool(args.pop_get("--cpu", default=False))
+vgpus = args.pop_get("--vgpu", default=1, dtype=int)
+do_cpu = args.pop_get("--cpu", default=False, dtype=bool)
 distribute = create_distribute(vgpus=vgpus, do_cpu=do_cpu)
 
 # Core args
 problems = args.pop_get("--problem", "conv_train").split(",")
 targets = args.pop_get("--directory", "weights").split(",")
-repeat = int(args.pop_get("--repeat", 10))
-debug = bool(args.pop_get("--debug", False))
-show_info = bool(args.pop_get("--info", False))
+repeat = args.pop_get("--repeat", default=10, dtype=int)
+debug = args.pop_get("--debug", default=False, dtype=bool)
+show_info = args.pop_get("--info", default=False, dtype=bool)
 
 # Suffix
 suffix = args.pop_get("--suffix", "")
