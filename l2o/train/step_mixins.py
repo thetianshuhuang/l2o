@@ -57,7 +57,7 @@ class StepMixin:
             """
             # Noise step
             ptb = self.network.perturbation
-            ptb.reset()
+            ptb.reset(train=True)
             for _ in range(ptb.adversarial_attack_steps):
                 # We manually watch variables here since we only
                 # want to watch perturbable_variables, not trainable_variables.
@@ -81,7 +81,7 @@ class StepMixin:
                 zip(clipped, self.network.trainable_variables))
 
             # Don't forget to reset after use!
-            ptb.reset()
+            ptb.reset(train=False)
 
             return results
 

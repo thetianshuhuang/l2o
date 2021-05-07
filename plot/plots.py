@@ -143,6 +143,29 @@ def plot_loss(
     ax.set_xlabel("Time (s)" if time else "Epochs")
 
 
+def plot_accuracy(
+        ax, data, names, band_scale=0, validation=False,
+        time=False, adjust_init_time=True):
+    """Plot loss curve by epoch/time."""
+    key = "val_" if validation else ""
+
+    for d, n in zip(data, names):
+
+        if time:
+            x = np.mean(d["epoch_time"], axis=0)
+            if adjust_init_time:
+                x = _adjust_init_time(x)
+        else:
+            x = np.arange(d["epoch_time"].shape[1])
+
+        y = d[key + "sparse_categorical_accuracy"]
+        plot_band(ax, x, y, label=n, band_scale=band_scale)
+
+    ax.legend()
+    ax.set_ylabel("Validation Accuracy" if validation else "Training Accuracy")
+    ax.set_xlabel("Time (s)" if time else "Epochs")
+
+
 def plot_stats_batch(
         ax, data, names, start=0, end=0, use_time=False, sma=0, loss=True,
         band_scale=0):
@@ -173,4 +196,7 @@ def plot_stats_batch(
     ax.legend()
 
 
-EXPORTS = ["plot_phase", "plot_phase_swarm", "plot_stats_batch", "plot_loss"]
+EXPORTS = [
+    "plot_phase", "plot_phase_swarm", "plot_stats_batch",
+    "plot_loss", "plot_accuracy"
+]

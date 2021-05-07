@@ -86,7 +86,9 @@ class Results:
         self.dir_baseline = baseline
 
         self.baselines = {
-            k: k for k in os.listdir(baseline) if os.path.isdir(k)}
+            k: k for k in os.listdir(baseline)
+            if os.path.isdir(os.path.join(baseline, k))
+        }
         self.baselines.update(
             _read_json(os.path.join(baseline, "names.json")))
 

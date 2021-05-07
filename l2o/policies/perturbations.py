@@ -17,7 +17,7 @@ class BasePerturbation:
         """Prepare perturbation variables."""
         pass
 
-    def reset(self):
+    def reset(self, train=True):
         """Reset noise variables."""
         pass
 
@@ -51,6 +51,43 @@ class RandomPerturbation(BasePerturbation):
         return param + tf.random.normal(param.shape, mean=0.0, stddev=noise)
 
 
+class PersistentRandomPerturbation(BasePerturbation):
+    """Random gaussian noise which persists across iterations within an unroll.
+
+    Keyword Args
+    ------------
+    noise_stddev : float
+        IID gaussian stddev.
+    """
+
+    def __init__(self, noise_stddev=0.01):
+        self.noise_stddev = noise_stddev
+
+    def build(self, trainable_variables):
+        """Prepare perturbation variables."""
+        self.perturbable_variables = [
+            tf.Variable(tf.zeros_like(x), trainable=False)
+            for x in trainable_variables]
+        self._perturbable_variables = {
+            _var_key(t): p
+            for t, p in zip(trainable_variables, self.perturbable_variables)
+        }
+
+    def reset(self, train=True):
+        """Reset noise variables."""
+        if train:
+            for v in self.perturbable_variables:
+                v.assign(tf.random.normal(
+                    v.shape, mean=0.0, stddev=self.noise_stddev))
+        else:
+            for v in self.perturbable_variables:
+                v.assign(tf.zeros_like(v))
+
+    def add(self, param):
+        """Add noise to parameter."""
+        return param + self._perturbable_variables[_var_key(param)]
+
+
 class FGSMPerturbation(BasePerturbation):
     """Adversarial perturbation using fast gradient sign method.
 
@@ -80,7 +117,7 @@ class FGSMPerturbation(BasePerturbation):
             for t, p in zip(trainable_variables, self.perturbable_variables)
         }
 
-    def reset(self):
+    def reset(self, train=True):
         """Reset noise variables."""
         for v in self.perturbable_variables:
             v.assign(tf.zeros_like(v))

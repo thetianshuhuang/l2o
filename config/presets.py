@@ -185,7 +185,7 @@ OVERRIDE_PRESETS = {
         ["policy", "perturbation"], {
             "class_name": "PGDPerturbation",
             "config": {
-                "steps": 5, "magnitude": 0.0001,
+                "steps": 1, "magnitude": 0.0001,
                 "norm": "inf", "learning_rate": 0.1
             }
         }
@@ -193,12 +193,18 @@ OVERRIDE_PRESETS = {
     "cgd": [(
         ["policy", "perturbation"], {
             "class_name": "CGDPerturbation",
-            "config": {"steps": 2, "magnitude": 0.001}
+            "config": {"steps": 1, "magnitude": 0.001}
         }
     )],
     "gaussian_1e-2": [(
         ["policy", "perturbation"], {
             "class_name": "RandomPerturbation",
+            "config": {"noise_stddev": 0.01}
+        }
+    )],
+    "gaussian_persistent_1e-2": [(
+        ["policy", "perturbation"], {
+            "class_name": "PersistentRandomPerturbation",
             "config": {"noise_stddev": 0.01}
         }
     )],
