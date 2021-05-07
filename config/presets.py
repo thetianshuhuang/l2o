@@ -196,6 +196,12 @@ OVERRIDE_PRESETS = {
             "config": {"steps": 3, "magnitude": 0.005}
         }
     )],
+    "gaussian_1e-2": [(
+        ["policy", "perturbation"], {
+            "class_name": "RandomPerturbation",
+            "config": {"noise_stddev": 0.01}
+        }
+    )],
     "inoise_1e-1": [(["policy", "input_noise"], 0.1)],
     "inoise_1e-2": [(["policy", "input_noise"], 0.01)],
     "inoise_1e-3": [(["policy", "input_noise"], 0.001)],
