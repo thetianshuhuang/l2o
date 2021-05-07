@@ -181,7 +181,7 @@ class Results:
                 baselines + tests, problem=problem)
             func(ax, data, dnames, **kwargs)
         elif isinstance(tests, str):
-            data_b, dnames_b = self._gather_eval(baselines)
+            data_b, dnames_b = self._gather_eval(baselines, problem=problem)
 
             repl = self._get_test(tests)
             dnames, data = zip(*[

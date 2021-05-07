@@ -34,6 +34,14 @@ target_cfg = {
         "class_name": "rmsprop",
         "config": {"learning_rate": 0.005, "rho": 0.9}
     },
+    "adam_cifar": {
+        "class_name": "adam",
+        "config": {"learning_rate": 0.002, "beta_1": 0.9, "beta_2": 0.999}
+    },
+    "rmsprop_cifar": {
+        "class_name": "rmsprop",
+        "config": {"learning_rate": 0.002, "rho": 0.9}
+    },
     "sgd": {
         "class_name": "sgd",
         "config": {"learning_rate": 0.1}

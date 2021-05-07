@@ -48,12 +48,25 @@ class ReplicateResults:
 
     def boxplot(
             self, ax, problem="conv_train", stat="val_best",
-            aggregate_std=False, do_stderr=True, do_std=False, drop_top=False):
+            aggregate_std=False, do_stderr=True, do_std=False, drop_best=False,
+            drop_worst=False):
         """Box plot of training stats."""
         data = np.array([
             repl.get_eval_stats(problem=problem)[stat]
             for _, repl in self.replicates.items()
         ])
+
+        if drop_best:
+            means = np.mean(data, axis=1)
+            best_idx = np.argmin(means)
+            data = data[[
+                i for i, _ in enumerate(data) if i != best_idx]]
+
+        if drop_worst:
+            means = np.mean(data, axis=1)
+            worst_idx = np.argmax(means)
+            data = data[[
+                i for i, _ in enumerate(data) if i != worst_idx]]
 
         ax.boxplot(np.transpose(data))
         ax.set_title(self._display_name())
