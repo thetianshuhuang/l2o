@@ -20,6 +20,7 @@ from gpu_setup import create_distribute
 args = ArgParser(sys.argv[1:])
 vgpus = int(args.pop_get("--vgpu", default=1))
 cpu = bool(args.pop_get("--cpu", default=False))
+use_keras = bool(args.pop_get("--keras", default=True))
 distribute = create_distribute(vgpus=vgpus, do_cpu=cpu)
 
 problem = args.pop_get("--problem", "conv_train")
@@ -60,7 +61,12 @@ with distribute.scope():
     results = []
     for i in range(repeat):
         print("Evaluation Training {}/{}".format(i + 1, repeat))
-        results.append(evaluator(
-            tf.keras.optimizers.get(target_cfg), **kwargs))
+
+        if use_keras:
+            opt = tf.keras.optimizers.get(target_cfg)
+        else:
+            pol = l2o.deserialize.policy(target_cfg)
+            opt = pol.architecture(pol)
+        results.append(evaluator(opt, **kwargs))
     results = {k: np.stack([d[k] for d in results]) for k in results[0]}
     np.savez(os.path.join("baseline", target, problem), **results)

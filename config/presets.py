@@ -193,7 +193,7 @@ OVERRIDE_PRESETS = {
     "cgd": [(
         ["policy", "perturbation"], {
             "class_name": "CGDPerturbation",
-            "config": {"steps": 3, "magnitude": 0.005}
+            "config": {"steps": 2, "magnitude": 0.001}
         }
     )],
     "gaussian_1e-2": [(
