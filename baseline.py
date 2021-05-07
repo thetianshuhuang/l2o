@@ -28,23 +28,23 @@ problem = args.pop_get("--problem", "conv_train")
 target = args.pop_get("--optimizer", "adam")
 target_cfg = {
     "adam": {
-        "class_name": "adam",
+        "class_name": "Adam",
         "config": {"learning_rate": 0.005, "beta_1": 0.9, "beta_2": 0.999}
     },
     "rmsprop": {
-        "class_name": "rmsprop",
+        "class_name": "RMSProp",
         "config": {"learning_rate": 0.005, "rho": 0.9}
     },
     "adam_cifar": {
-        "class_name": "adam",
+        "class_name": "Adam",
         "config": {"learning_rate": 0.002, "beta_1": 0.9, "beta_2": 0.999}
     },
     "rmsprop_cifar": {
-        "class_name": "rmsprop",
+        "class_name": "RMSProp",
         "config": {"learning_rate": 0.002, "rho": 0.9}
     },
     "sgd": {
-        "class_name": "sgd",
+        "class_name": "SGD",
         "config": {"learning_rate": 0.1}
     }
 }[target]
