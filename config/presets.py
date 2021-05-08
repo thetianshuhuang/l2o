@@ -202,6 +202,18 @@ OVERRIDE_PRESETS = {
             "config": {"noise_stddev": 0.01}
         }
     )],
+    "gaussian_5e-3": [(
+        ["policy", "perturbation"], {
+            "class_name": "RandomPerturbation",
+            "config": {"noise_stddev": 0.005}
+        }
+    )],
+    "gaussian_2e-3": [(
+        ["policy", "perturbation"], {
+            "class_name": "RandomPerturbation",
+            "config": {"noise_stddev": 0.002}
+        }
+    )],
     "gaussian_persistent_1e-2": [(
         ["policy", "perturbation"], {
             "class_name": "PersistentRandomPerturbation",
