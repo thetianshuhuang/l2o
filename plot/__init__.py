@@ -2,8 +2,8 @@
 
 from .container import Results, plot_band
 from .scripts import (
-    plot_training, plot_phase, plot_stats_batch, plot_loss, plot_phase_swarm,
-    boxplot)
+    plot_training, plot_phase, plot_stats_batch, plot_loss, plot_accuracy,
+    plot_phase_swarm, boxplot)
 from . import plots
 
 __all__ = [
@@ -14,6 +14,7 @@ __all__ = [
     "plot_phase",
     "plot_stats_batch",
     "plot_loss",
+    "plot_accuracy",
     "plot_phase_swarm",
     "boxplot"
 ]

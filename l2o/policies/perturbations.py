@@ -44,7 +44,9 @@ class RandomPerturbation(BasePerturbation):
     def add(self, param):
         """Add noise to parameter."""
         if self.relative:
-            noise = self.noise_stddev * tf.norm(param, ord=2)
+            noise = (
+                self.noise_stddev * tf.norm(param, ord=2)
+                / tf.cast(tf.size(param), tf.float32))
         else:
             noise = self.noise_stddev
 

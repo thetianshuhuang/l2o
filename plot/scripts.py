@@ -87,6 +87,23 @@ def plot_loss(ctx, tests, rulers=[], sfx="", **kwargs):
     return fig, axs
 
 
+def plot_accuracy(ctx, tests, rulers=[], sfx="", **kwargs):
+    """Accuracy plot (1 row per test, val on left, train on right)."""
+    vh = len(tests)
+    fig, axs = plt.subplots(vh, 2, figsize=(16, 4 * vh))
+    for base, row in zip(tests, axs.reshape(vh, 2)):
+        ctx.plot_accuracy(
+            base, row[0], baselines=["adam"], validation=True, **kwargs)
+        ctx.plot_accuracy(
+            base, row[1], baselines=["adam"], validation=False, **kwargs)
+        for r in rulers:
+            row[0].axline(r, color='black')
+        row[0].set_title(ctx.get_name(base))
+        row[1].set_title(ctx.get_name(base))
+    fig.tight_layout()
+    return fig, axs
+
+
 def boxplot(ctx, tests, **kwargs):
     """Box plot of training stats."""
     fig, axs = plt.subplots(
