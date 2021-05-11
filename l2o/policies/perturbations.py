@@ -35,18 +35,22 @@ class RandomPerturbation(BasePerturbation):
         IID gaussian stddev.
     relative : bool
         Whether noise stddev is specified relative to the weight l2 magnitude.
+    epsilon : float
+        Epsilon value for sqrt.
     """
 
-    def __init__(self, noise_stddev=0.01, relative=False):
+    def __init__(self, noise_stddev=0.01, relative=False, epsilon=1e-8):
         self.noise_stddev = noise_stddev
         self.relative = relative
+        self.epsilon = epsilon
 
     def add(self, param):
         """Add noise to parameter."""
         if self.relative:
             noise = (
-                self.noise_stddev * tf.norm(param, ord=2)
-                / tf.cast(tf.size(param), tf.float32))
+                self.noise_stddev * tf.math.sqrt(
+                    tf.reduce_sum(tf.math.square(param) + self.epsilon)
+                ) / tf.cast(tf.size(param), tf.float32))
         else:
             noise = self.noise_stddev
 

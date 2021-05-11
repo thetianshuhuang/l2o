@@ -63,6 +63,14 @@ targets = args.pop_get("--directory", "weights").split(",")
 repeat = args.pop_get("--repeat", default=10, dtype=int)
 debug = args.pop_get("--debug", default=False, dtype=bool)
 show_info = args.pop_get("--info", default=False, dtype=bool)
+recursive = args.pop_check("--recursive")
+
+# Unpack recursive
+if recursive:
+    targets = [
+        os.path.join(t, d)
+        for t in targets for d in os.listdir(t)
+    ]
 
 # Suffix
 suffix = args.pop_get("--suffix", "")
