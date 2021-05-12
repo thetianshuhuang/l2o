@@ -16,6 +16,7 @@ def create_distribute(
         gpu_list = tf.config.list_physical_devices('GPU')
         for gpu in gpus.split(','):
             dev_list += gpu_list[int(gpu)]
+        tf.config.set_visible_devices(dev_list)
 
     gpus = tf.config.get_visible_devices('GPU')
     for gpu in gpus:
