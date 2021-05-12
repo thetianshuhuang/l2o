@@ -12,11 +12,10 @@ def create_distribute(
         return tf.distribute.MirroredStrategy(devices=["/CPU:0"])
 
     if gpus is not None:
-        dev_list = tf.config.list_physical_devices('CPU')
-        gpu_list = tf.config.list_physical_devices('GPU')
-        for gpu in gpus.split(','):
-            dev_list += gpu_list[int(gpu)]
-        tf.config.set_visible_devices(dev_list)
+        gpu_all = tf.config.list_physical_devices('GPU')
+        gpu_subset = [gpu_all[int(idx)] for idx in gpus.split(',')]
+        tf.config.set_visible_devices(
+            tf.config.list_physical_devices('CPU') + gpu_subset)
 
     gpus = tf.config.get_visible_devices('GPU')
     for gpu in gpus:
