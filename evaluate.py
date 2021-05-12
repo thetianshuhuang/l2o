@@ -54,8 +54,9 @@ if len(sys.argv) < 2:
 # Distribute args
 args = ArgParser(sys.argv[1:])
 vgpus = args.pop_get("--vgpu", default=1, dtype=int)
+gpus = args.pop_get("--gpus", default=None)
 do_cpu = args.pop_get("--cpu", default=False, dtype=bool)
-distribute = create_distribute(vgpus=vgpus, do_cpu=do_cpu)
+distribute = create_distribute(vgpus=vgpus, do_cpu=do_cpu, gpus=gpus)
 
 # Core args
 problems = args.pop_get("--problem", "conv_train").split(",")
