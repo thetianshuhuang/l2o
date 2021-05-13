@@ -49,8 +49,10 @@ class RandomPerturbation(BasePerturbation):
         if self.relative:
             noise = (
                 self.noise_stddev * tf.math.sqrt(
-                    tf.reduce_sum(tf.math.square(param) + self.epsilon)
-                ) / tf.cast(tf.size(param), tf.float32))
+                    tf.reduce_sum(
+                        tf.math.square(param) + self.epsilon)
+                    / tf.cast(tf.size(param), tf.float32)
+                ))
         else:
             noise = self.noise_stddev
 

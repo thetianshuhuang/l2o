@@ -13,6 +13,13 @@ Framework for L2O extending ```tf.keras.optimizers.Optimizer```.
 
 Note that tensorflow 2.2 or earlier is not compatible due to a bug in parsing nested structures in ```get_concrete_function```.
 
+## Common Errors
+
+- Some variation of
+```OperatorNotAllowedInGraphError: iterating over `tf.Tensor` is not allowed```: see https://github.com/tensorflow/tensorflow/issues/44146; caused by tensorflow dependency version mismatch.
+
+- GPUs not showing up: make sure the ```tensorflow-gpu``` conda package is installed, not just ```tensorflow```.
+
 ## Training Support
 
 ### Supported
