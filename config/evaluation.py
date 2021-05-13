@@ -199,6 +199,16 @@ EVALUATION_PROBLEMS = {
         "target": "Quadratic",
         "steps": 1000
     },
+    "conv_svhn": {
+        "config": {
+            "layers": [[16, 3, 1], 2, [32, 5, 1], 2],
+            "activation": "relu"
+        },
+        "target": "conv_classifier",
+        "dataset": "svhn",
+        "epochs": 25,
+        "batch_size": 128
+    },
 }
 
 

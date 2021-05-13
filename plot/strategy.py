@@ -51,22 +51,8 @@ class ReplicateResults:
             aggregate_std=False, do_stderr=True, do_std=False, drop_best=False,
             drop_worst=False):
         """Box plot of training stats."""
-        data = np.array([
-            repl.get_eval_stats(problem=problem)[stat]
-            for _, repl in self.replicates.items()
-        ])
-
-        if drop_best:
-            means = np.mean(data, axis=1)
-            best_idx = np.argmin(means)
-            data = data[[
-                i for i, _ in enumerate(data) if i != best_idx]]
-
-        if drop_worst:
-            means = np.mean(data, axis=1)
-            worst_idx = np.argmax(means)
-            data = data[[
-                i for i, _ in enumerate(data) if i != worst_idx]]
+        data = self.get_eval_stats(
+            problem=problem, drop_best=drop_best, drop_worst=drop_worst)[stat]
 
         ax.boxplot(np.transpose(data))
         ax.set_title(self._display_name())
@@ -89,6 +75,34 @@ class ReplicateResults:
                 err = 2 * np.sqrt(np.var(np.mean(data, axis=1)))
             ax.axhline(mean + err, color='C2')
             ax.axhline(mean - err, color='C2')
+
+    def _drop(self, d, best=True):
+        """Helper function to drop the best or worst case."""
+        for k, v in d.items():
+            means = np.mean(v, axis=1)
+            best_idx = np.argmin(means) if best else np.argmax(means)
+            d[k] = v[[i for i, _ in enumerate(v) if i != best_idx]]
+        return d
+
+    def get_eval_stats(self, drop_best=False, drop_worst=False, **kwargs):
+        """Get eval stats for all replicates, and stack into a single dict."""
+        res = []
+        for repl in self.replicates.values():
+            try:
+                res.append(repl.get_eval_stats(**kwargs))
+            except FileNotFoundError:
+                pass
+        res_dict = {
+            k: np.stack([r[k] for r in res])
+            for k in res[0]
+        }
+
+        if drop_best:
+            res_dict = self._drop(res_dict, best=True)
+        if drop_worst:
+            res_dict = self._drop(res_dict, best=False)
+
+        return res_dict
 
 
 class BaseResult:
@@ -183,14 +197,16 @@ class BaseResult:
         meta = self._complete_metadata(**meta)
         return _npload(self._path(dtype="eval", file=problem, **meta))
 
-    def get_eval_stats(self, problem="conv_train", **metadata):
+    def get_eval_stats(
+            self, problem="conv_train", drop_worst=False,
+            drop_best=False, **metadata):
         """Get evaluation statistics."""
         res = self.get_eval(problem=problem, **metadata)
         return {
             "val_best_index": np.argmin(res["val_loss"], axis=1),
             "val_best": np.log(np.min(res["val_loss"], axis=1)),
             "val_last": np.log(res["val_loss"][:, -1]),
-            "train_best_index": np.argmin(res["loss"]),
+            "train_best_index": np.argmin(res["loss"], axis=1),
             "train_best": np.log(np.min(res["loss"], axis=1)),
             "train_last": np.log(res["loss"][:, -1]),
             "train_10": np.log(res["loss"][:, 9])
