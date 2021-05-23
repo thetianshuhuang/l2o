@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import functools
 
+from scipy.ndimage import gaussian_filter1d
+
 from . import plots
 
 
@@ -27,7 +29,7 @@ class ReplicateResults:
         self.name = name
         self.replicates = {
             p: get_container(os.path.join(path, p), name=name + "/" + p)
-            for p in os.listdir(path)
+            for p in sorted(os.listdir(path))
         }
 
     @property
@@ -92,6 +94,7 @@ class ReplicateResults:
                 res.append(repl.get_eval_stats(**kwargs))
             except FileNotFoundError:
                 pass
+
         res_dict = {
             k: np.stack([r[k] for r in res])
             for k in res[0]
@@ -206,10 +209,16 @@ class BaseResult:
             "val_best_index": np.argmin(res["val_loss"], axis=1),
             "val_best": np.log(np.min(res["val_loss"], axis=1)),
             "val_last": np.log(res["val_loss"][:, -1]),
+            "val_meta": np.mean(np.log(res["val_loss"]), axis=1),
+            "val_stability": np.sqrt(np.var(
+                np.log(gaussian_filter1d(res["val_loss"], 2, mode='nearest'))
+                - np.log(res["val_loss"]), axis=1
+            )),
             "train_best_index": np.argmin(res["loss"], axis=1),
             "train_best": np.log(np.min(res["loss"], axis=1)),
             "train_last": np.log(res["loss"][:, -1]),
-            "train_10": np.log(res["loss"][:, 9])
+            "train_10": np.log(res["loss"][:, 9]),
+            "train_meta": np.mean(np.log(res["val_loss"]), axis=1),
         }
 
     def get_train_log(self, **metadata):

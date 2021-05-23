@@ -45,7 +45,23 @@ target_cfg = {
     },
     "sgd": {
         "class_name": "SGD",
-        "config": {"learning_rate": 0.1}
+        "config": {"learning_rate": 0.2}
+    },
+    "momentum": {
+        "class_name": "SGD",
+        "config": {"learning_rate": 0.5, "momentum": 0.9}
+    },
+    "momentum_custom": {
+        "class_name": "Momentum",
+        "config": {"learning_rate": 0.5, "beta_1": 0.9}
+    },
+    "addsign": {
+        "class_name": "AddSign",
+        "config": {"learning_rate": 0.1, "beta_1": 0.9, "beta_2": 0.999}
+    },
+    "powersign": {
+        "class_name": "PowerSign",
+        "config": {"learning_rate": 0.1, "beta_1": 0.9, "beta_2": 0.999}
     }
 }[target]
 

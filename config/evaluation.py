@@ -99,7 +99,7 @@ EVALUATION_PROBLEMS = {
         "target": "conv_classifier",
         "dataset": "mnist",
         "epochs": 25,
-        "batch_size": 64
+        "batch_size": 32
     },
     "conv_wider": {
         "config": {
@@ -205,7 +205,7 @@ EVALUATION_PROBLEMS = {
             "activation": "relu"
         },
         "target": "conv_classifier",
-        "dataset": "svhn",
+        "dataset": "svhn_cropped",
         "epochs": 25,
         "batch_size": 128
     },

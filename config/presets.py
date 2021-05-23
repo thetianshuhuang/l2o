@@ -196,46 +196,21 @@ OVERRIDE_PRESETS = {
             "config": {"steps": 1, "magnitude": 0.001}
         }
     )],
-    "gaussian_1e-2": [(
+    "gaussian": [(
         ["policy", "perturbation"], {
             "class_name": "RandomPerturbation",
-            "config": {"noise_stddev": 0.01}
+            "config": {"noise_stddev": 0.001}
         }
     )],
-    "gaussian_5e-3": [(
+    "gaussian_rel": [(
         ["policy", "perturbation"], {
             "class_name": "RandomPerturbation",
-            "config": {"noise_stddev": 0.005}
-        }
-    )],
-    "gaussian_2e-3": [(
-        ["policy", "perturbation"], {
-            "class_name": "RandomPerturbation",
-            "config": {"noise_stddev": 0.002}
-        }
-    )],
-    "gaussian_rel_1e-1": [(
-        ["policy", "perturbation"], {
-            "class_name": "RandomPerturbation",
-            "config": {"noise_stddev": 0.1, "relative": True}
-        }
-    )],
-    "gaussian_rel_1e-2": [(
-        ["policy", "perturbation"], {
-            "class_name": "RandomPerturbation",
-            "config": {"noise_stddev": 0.01, "relative": True}
-        }
-    )],
-    "gaussian_persistent_1e-2": [(
-        ["policy", "perturbation"], {
-            "class_name": "PersistentRandomPerturbation",
-            "config": {"noise_stddev": 0.01}
+            "config": {"noise_stddev": 0.001, "relative": True}
         }
     )],
     "inoise_1e-1": [(["policy", "input_noise"], 0.1)],
     "inoise_1e-2": [(["policy", "input_noise"], 0.01)],
     "inoise_1e-3": [(["policy", "input_noise"], 0.001)],
-
 }
 
 

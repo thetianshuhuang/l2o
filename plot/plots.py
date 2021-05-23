@@ -48,7 +48,7 @@ def plot_band(ax, x, y, band_scale=0, label=None, color=None, sma=0):
         lower = mean - band_scale * stddev
         upper = mean + band_scale * stddev
 
-    mean_line, = ax.plot(x, mean, label=label)
+    mean_line, = ax.plot(x, mean, label=label, color=color)
     ax.fill_between(x, lower, upper, alpha=0.25, color=mean_line.get_color())
     return mean_line
 
@@ -123,11 +123,15 @@ def plot_phase_swarm(ax, data, names, loss=False, lgd=True):
 
 def plot_loss(
         ax, data, names, band_scale=0, validation=False,
-        time=False, adjust_init_time=True):
+        time=False, adjust_init_time=True, legend=True, labels=True,
+        colors=None):
     """Plot loss curve by epoch/time."""
     key = "val_loss" if validation else "loss"
 
-    for d, n in zip(data, names):
+    if colors is None:
+        colors = [None for _ in data]
+
+    for d, n, c in zip(data, names, colors):
 
         if time:
             x = np.mean(d["epoch_time"], axis=0)
@@ -136,16 +140,19 @@ def plot_loss(
         else:
             x = np.arange(d["epoch_time"].shape[1])
 
-        plot_band(ax, x, np.log(d[key]), label=n, band_scale=band_scale)
+        plot_band(
+            ax, x, np.log(d[key]), label=n, band_scale=band_scale, color=c)
 
-    ax.legend()
-    ax.set_ylabel("Log Val Loss" if validation else "Log Training Loss")
-    ax.set_xlabel("Time (s)" if time else "Epochs")
+    if legend:
+        ax.legend()
+    if labels:
+        ax.set_ylabel("Log Val Loss" if validation else "Log Training Loss")
+        ax.set_xlabel("Time (s)" if time else "Epochs")
 
 
 def plot_accuracy(
         ax, data, names, band_scale=0, validation=False,
-        time=False, adjust_init_time=True):
+        time=False, adjust_init_time=True, legend=True):
     """Plot loss curve by epoch/time."""
     key = "val_" if validation else ""
 
@@ -161,7 +168,8 @@ def plot_accuracy(
         y = d[key + "sparse_categorical_accuracy"]
         plot_band(ax, x, y, label=n, band_scale=band_scale)
 
-    ax.legend()
+    if legend:
+        ax.legend()
     ax.set_ylabel("Validation Accuracy" if validation else "Training Accuracy")
     ax.set_xlabel("Time (s)" if time else "Epochs")
 
