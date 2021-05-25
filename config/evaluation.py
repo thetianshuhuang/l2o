@@ -65,6 +65,16 @@ EVALUATION_PROBLEMS = {
         "epochs": 25,
         "batch_size": 128
     },
+    "conv_fmnist": {
+        "config": {
+            "layers": [[16, 3, 1], 2, [32, 5, 1], 2],
+            "activation": "relu"
+        },
+        "target": "conv_classifier",
+        "dataset": "fashion_mnist",
+        "epochs": 25,
+        "batch_size": 128
+    },
     "conv_train_cifar10": {
         "config": {
             "layers": [[16, 3, 1], 2, [32, 5, 1], 2],

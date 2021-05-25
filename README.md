@@ -3,11 +3,13 @@ Gradient-based Learning to Optimize Framework for extending ```tf.keras.optimize
 
 ## Description of Modules
 
-- ```l2o.deserialize```: utilities used to deserialize json and command line arguments; used by ```train.py```, ```evaluation.py```, etc.
-- ```l2o.evaluate```: evaluation methods and optimizee prototypes for evaluation.
-- ```l2o.optimizer```: ```tf.keras.optimizers.Optimizer``` extension back end.
-- ```l2o.policies```: policy descriptions.
-- ```l2o.
+- ```l2o.deserialize```: utilities used to deserialize json and command line arguments; used by ```train.py```, ```evaluation.py```, etc
+- ```l2o.evaluate```: evaluation methods and optimizee prototypes for evaluation
+- ```l2o.optimizer```: ```tf.keras.optimizers.Optimizer``` extension back end
+- ```l2o.policies```: policy descriptions
+- ```l2o.problems```: optimizees used in training; dataset management
+- ```l2o.strategy```: training strategy (i.e. Curriculum Learning)
+- ```l2o.train```: truncated backpropagation implementation
 
 ## Dependencies
 
@@ -40,4 +42,8 @@ Gradient-based Learning to Optimize Framework for extending ```tf.keras.optimize
 - Training with model split between different GPUs
 
 ## Known Problems
-- some systems may be up to 2x slower than others, even with identical GPUs, sufficient RAM, and roughly equivalent CPUs. I believe this is due to some kernel launch inefficiency or CUDA/TF configuration problem.
+- Some systems may be up to 2x slower than others, even with identical GPUs, sufficient RAM, and roughly equivalent CPUs. I believe this is due to some kernel launch inefficiency or CUDA/TF configuration problem.
+- Sometimes, training will "NaN" out, and turn all optimizer weights to NaN. There is supposed to be a guard preventing NaN gradient updates from being committed, but it doesn't seem to be fully working.
+
+## Todos
+- Add optimizer export, quick loading. Optimizer export should export the final checkpoint and a file with just optimizer config; other information (i.e. training metadata) should be stored in a separate json. Config needed: ```policy/*```, ```strategy/validation_warmup * strategy/validation_unroll```, ```strategy/validaton_warmup_rate```.

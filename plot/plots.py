@@ -140,8 +140,10 @@ def plot_loss(
         else:
             x = np.arange(d["epoch_time"].shape[1])
 
+        # Dirty hack: replace NaN with 2.3
+        _data = np.nan_to_num(d[key], nan=2.3)
         plot_band(
-            ax, x, np.log(d[key]), label=n, band_scale=band_scale, color=c)
+            ax, x, np.log(_data), label=n, band_scale=band_scale, color=c)
 
     if legend:
         ax.legend()
