@@ -7,6 +7,7 @@ from . import train
 from . import strategy
 
 from .strategy import build, build_from_config
+from .distutils import package, load
 
 __all__ = [
     "optimizer",
@@ -16,4 +17,6 @@ __all__ = [
     "strategy",
     "build",
     "build_from_config",
+    "package",
+    "load"
 ]
