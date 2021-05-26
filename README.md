@@ -2,8 +2,6 @@
 
 Instructions for running Optimizer Distillation experiments; see below for framework info and setup instructions.
 
-See ```README.md``` for installation and dependency requirements.
-
 ### Load pre-trained optimizer
 
 Distilled optimizers use a L2O framework extending tf.keras.optimizers.Optimizer:
@@ -89,6 +87,9 @@ For PGD variants, the number of adversarial attack steps can also be modified:
 --policy/perturbation/config/steps=[Desired Steps]
 ```
 
+***
+
+***
 
 # Learn To Optimize
 Gradient-based Learning to Optimize Framework for extending ```tf.keras.optimizers.Optimizer```.
