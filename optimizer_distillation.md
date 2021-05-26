@@ -4,6 +4,21 @@ Instructions for running Optimizer Distillation experiments.
 
 See ```README.md``` for installation and dependency requirements.
 
+### Load pre-trained optimizer
+
+Distilled optimizers use a L2O framework extending tf.keras.optimizers.Optimizer:
+```python
+import tensorflow as tf
+import l2o
+
+# Folder is sorted as ```pre-trained/{distillation type}/{replicate #}
+opt = l2o.load("pre-trained/choice-large/7")
+# The following is True
+isinstance(opt, tf.keras.optimizers.Optimizer)
+```
+
+Pre-trained weights for Mean distillation (small pool), Min-max distillation (small pool), Choice distillation (small pool), and Choice distillation (large pool) are included. Each folder contains 8 replicates with varying performance.
+
 ### Mean, min-max distillation
 
 Training with min-max distillation, rnnprop as target, small pool, convolutional network for training:
