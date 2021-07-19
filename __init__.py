@@ -9,6 +9,10 @@ from . import strategy
 from .strategy import build, build_from_config
 from .distutils import package, load
 
+
+__author__ = "Tianshu Huang"
+__license__ = "MIT"
+
 __all__ = [
     "optimizer",
     "policies",

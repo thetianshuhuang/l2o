@@ -3,7 +3,8 @@ Gradient-based Learning to Optimize Framework for extending ```tf.keras.optimize
 
 ## Description of Modules
 
-- ```l2o.deserialize```: utilities used to deserialize json and command line arguments; used by ```train.py```, ```evaluation.py```, etc
+- ```l2o.deserialize```: utilities used to deserialize json and other arguments
+- ```l2o.distutils```: utilities for packaging optimizers for distribution
 - ```l2o.evaluate```: evaluation methods and optimizee prototypes for evaluation
 - ```l2o.optimizer```: ```tf.keras.optimizers.Optimizer``` extension back end
 - ```l2o.policies```: policy descriptions
