@@ -45,6 +45,3 @@ Gradient-based Learning to Optimize Framework for extending ```tf.keras.optimize
 ## Known Problems
 - Some systems may be up to 2x slower than others, even with identical GPUs, sufficient RAM, and roughly equivalent CPUs. I believe this is due to some kernel launch inefficiency or CUDA/TF configuration problem.
 - Sometimes, training will "NaN" out, and turn all optimizer weights to NaN. There is supposed to be a guard preventing NaN gradient updates from being committed, but it doesn't seem to be fully working.
-
-## Todos
-- Add optimizer export, quick loading. Optimizer export should export the final checkpoint and a file with just optimizer config; other information (i.e. training metadata) should be stored in a separate json. Config needed: ```policy/*```, ```strategy/validation_warmup * strategy/validation_unroll```, ```strategy/validaton_warmup_rate```.
