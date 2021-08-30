@@ -58,6 +58,10 @@ class BaseLearnToOptimizePolicy(tf.keras.Model):
 
         self.perturbation.build(self.trainable_variables)
 
+    def as_optimizer(self):
+        """Create actual keras optimizer (alias for self.architecture(self)."""
+        return self.architecture(self)
+
     def _force_build(self):
         """Force creation of variables.
 
