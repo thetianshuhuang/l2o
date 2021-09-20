@@ -191,6 +191,9 @@ def _huber_loss(a, delta=-1.):
 def state_distance(s1, s2, delta=-1., epsilon=1e-10):
     """Compute mean log parameter l2 distance between two states.
 
+    The distance is divided by the total number of parameters to maintain a
+    consistent magnitude as the number of parameters changes.
+
     Parameters
     ----------
     s1, s2 : object
