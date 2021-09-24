@@ -48,8 +48,8 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
     def init_layers(
             self, param_units=10, tensor_units=5, global_units=5,
             init_lr=(1e-6, 1e-2), timescales=1, epsilon=1e-10,
-            momentum_decay_bias_init=logit(0.1),
-            variance_decay_bias_init=logit(0.001),
+            momentum_decay_bias_init=logit(0.9),
+            variance_decay_bias_init=logit(0.999),
             use_gradient_shortcut=True, **kwargs):
         """Initialize layers."""
         assert(init_lr[0] > 0 and init_lr[1] > 0 and epsilon > 0)
@@ -114,8 +114,8 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
         # Eq 13
         # [var size, 1] -> [*var shape]
         shape = tf.shape(grads)
-        beta_g = 1 - tf.reshape(self.beta_g(states["param"]), shape)
-        beta_lambda = 1 - tf.reshape(self.beta_lambda(states["param"]), shape)
+        beta_g = tf.reshape(self.beta_g(states["param"]), shape)
+        beta_lambda = tf.reshape(self.beta_lambda(states["param"]), shape)
 
         # New momentum, variance
         # Eq 1, 2
