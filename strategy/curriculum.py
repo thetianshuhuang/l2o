@@ -154,7 +154,7 @@ class CurriculumLearningStrategy(BaseStrategy):
                 self._filter(stage=metadata["stage"])["validation"].idxmin()
             ]["period"]
         if "repeat" not in metadata:
-            metadata["period"] = self.summary.iloc[
+            metadata["repeat"] = self.summary.iloc[
                 self._filter(
                     stage=metadata["stage"], period=metadata["period"]
                 )["validation"].idxmin()
