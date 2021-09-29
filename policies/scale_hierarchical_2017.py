@@ -37,6 +37,8 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
     use_gradient_shortcut : bool
         Use shortcut connection adding linear transformation of momentum at
         various timescales to direction output?
+    learning_rate_momentum_init : float
+        Initial value for learning rate momentum logit.
     name : str
         Name of optimizer network
     **kwargs : dict
@@ -50,7 +52,9 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
             init_lr=(1e-6, 1e-2), timescales=1, epsilon=1e-10,
             momentum_decay_bias_init=logit(0.9),
             variance_decay_bias_init=logit(0.999),
-            use_gradient_shortcut=True, **kwargs):
+            use_gradient_shortcut=True,
+            learning_rate_momentum_init=3.2,
+            **kwargs):
         """Initialize layers."""
         assert(init_lr[0] > 0 and init_lr[1] > 0 and epsilon > 0)
         self.timescales = timescales
@@ -92,7 +96,8 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
 
         # Gamma parameter
         # Stored as a logit - the actual gamma used will be sigmoid(gamma)
-        self.gamma = tf.Variable(tf.zeros(()), trainable=True, name="gamma")
+        self.gamma = tf.Variable(
+            learning_rate_momentum_init, trainable=True, name="gamma")
 
     def call_global(self, states, global_state, training=False):
         """Equation 12.
