@@ -24,6 +24,8 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
     init_lr : float[2]
         Learning rate initialization range. Actual learning rate values are
         IID exp(unif(log(init_lr))).
+    lr_offset : float
+        Learning rate constant offset.
     timescales : int
         Number of timescales to compute momentum for.
     epsilon : float
@@ -49,7 +51,7 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
 
     def init_layers(
             self, param_units=10, tensor_units=5, global_units=5,
-            init_lr=(1e-6, 1e-2), timescales=1, epsilon=1e-10,
+            init_lr=(1e-6, 1e-2), lr_offset=1e-2, timescales=1, epsilon=1e-10,
             momentum_decay_bias_init=logit(0.9),
             variance_decay_bias_init=logit(0.999),
             use_gradient_shortcut=True,
@@ -59,6 +61,7 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
         assert(init_lr[0] > 0 and init_lr[1] > 0 and epsilon > 0)
         self.timescales = timescales
         self.init_lr = init_lr
+        self.lr_offset = lr_offset
         self.epsilon = epsilon
 
         # Parameter, Tensor, & Global RNNs (may have different size)
@@ -184,7 +187,8 @@ class ScaleHierarchicalOptimizer(BaseHierarchicalPolicy):
         if self.gradient_shortcut:
             d_theta += self.gradient_shortcut(m)
 
-        return tf.exp(eta) * tf.reshape(d_theta, tf.shape(param))
+        lr_actual = tf.exp(eta) + self.lr_offset
+        return lr_actual * tf.reshape(d_theta, tf.shape(param))
 
     def call(self, param, grads, states, global_state, training=False):
         """Optimizer Update.
