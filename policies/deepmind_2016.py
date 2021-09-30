@@ -15,6 +15,8 @@ class DMOptimizer(BaseCoordinateWisePolicy):
 
     Keyword Args
     ------------
+    learning_rate : float
+        Initial learning rate multiplier.
     layers : int[]
         Sizes of LSTM layers.
     name : str
@@ -25,8 +27,9 @@ class DMOptimizer(BaseCoordinateWisePolicy):
 
     default_name = "DMOptimizer"
 
-    def init_layers(self, layers=(20, 20), **kwargs):
+    def init_layers(self, learning_rate=0.1, layers=(20, 20), **kwargs):
         """Initialize layers."""
+        self.learning_rate = learning_rate
         self.recurrent = [
             LSTMCell(hsize, name="recurrent_{}".format(i), **kwargs)
             for i, hsize in enumerate(layers)]
@@ -43,7 +46,7 @@ class DMOptimizer(BaseCoordinateWisePolicy):
                 x, states[hidden_name], training=training)
         x = self.delta(x, training=training)
 
-        return tf.reshape(x, param.shape), states_new
+        return self.learning_rate * tf.reshape(x, param.shape), states_new
 
     def get_initial_state(self, var):
         """Get initial model state as a dictionary."""
