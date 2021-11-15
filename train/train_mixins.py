@@ -68,6 +68,10 @@ class TrainingMixin:
             w_meta, w_imit = (0.0, 1.0) if is_imitation else (1.0, 0.0)
         if self.il_mode == 'sum':
             w_meta, w_imit = (1.0, meta.p_teacher)
+        if self.il_mode == 'imitation':
+            w_meta, w_imit = (0.0, 1.0)
+        if self.il_mode == 'meta':
+            w_meta, w_imit = (1.0, 0.0)
 
         # Graph mode this function only
         params, summary = concrete_step(

@@ -70,3 +70,25 @@ class WhichTeacherCountCallback(BaseStepCallback):
         reduced = distribute.reduce(
             tf.distribute.ReduceOp.SUM, state, axis=None)
         return {"teacher_counts": reduced}
+
+
+class TeacherLossCallback(BaseStepCallback):
+    """Callback to record teacher losses.
+
+    NOTE: does not work in a distributed environment.
+    """
+
+    def __init__(self, parent):
+        self.n_teachers = len(parent.teachers)
+
+    def get_state(self, unroll):
+        """Get initial state."""
+        return tf.TensorArray(dtype=tf.float32, size=0, dynamic_size=True)
+
+    def on_step_end(self, state, index, current_obj, teacher_loss):
+        """Count argmax teacher loss."""
+        return state.write(index, teacher_loss)
+
+    def summarize(self, state, distribute):
+        """Generate summary."""
+        return {"teacher_loss": state.stack()}
