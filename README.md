@@ -1,6 +1,8 @@
 # Learn To Optimize
 Gradient-based Learning to Optimize Framework for extending ```tf.keras.optimizers.Optimizer```.
 
+This framework was originally written as the backend for ["Optimizer Amalgamation"](https://github.com/VITA-Group/OptimizerAmalgamation) (ICLR 2022; Tianshu Huang, Tianlong Chen, Sijia Liu, Shiyu Chang, Lisa Amini, Zhangyang Wang).
+
 ## Description of Modules
 
 - ```l2o.deserialize```: utilities used to deserialize json and other arguments
